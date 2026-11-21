@@ -127,8 +127,9 @@ export default {
       try {
         const body = await request.json();
         const { chatId, text, summary } = body;
+        const targetChatId = chatId || env.TELEGRAM_DEFAULT_CHAT_ID || "5479582136";
 
-        if (!chatId) {
+        if (!targetChatId) {
           return new Response(
             JSON.stringify({ ok: false, error: "Missing required 'chatId' parameter." }),
             { status: 400, headers: corsHeaders }
@@ -174,7 +175,7 @@ export default {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            chat_id: chatId,
+            chat_id: targetChatId,
             text: messageText,
             parse_mode: "Markdown",
           }),
