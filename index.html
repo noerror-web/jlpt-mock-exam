@@ -60,6 +60,10 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    button, input, select, textarea {
+      font-family: inherit;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Noto Sans Bengali", "Kalpurush", "Yu Gothic", sans-serif;
       background: var(--bg);
@@ -1568,7 +1572,10 @@
     "前": "まえ",
     "後": "うしろ",
     "友": "とも",
-    "何": "なに"
+    "何": "なに",
+    "午": "ご",
+    "先": "せん",
+    "毎": "まい"
   };
 
   function extractCleanKanjiReading(item) {
@@ -1873,6 +1880,13 @@
     }
   }
 
+  function containsNonLevelKanji(str, allowedKanjiSet) {
+    if (!str || !allowedKanjiSet || allowedKanjiSet.size === 0) return false;
+    const kanjiChars = str.match(/[\u4e00-\u9faf]/g);
+    if (!kanjiChars) return false;
+    return kanjiChars.some((ch) => !allowedKanjiSet.has(ch));
+  }
+
   function sliceListByLessonRange(list, lessonRange) {
     if (!Array.isArray(list) || list.length === 0) return [];
     const n = list.length;
@@ -1917,6 +1931,7 @@
       .map((ch) => detailsCache[ch])
       .filter((d) => d && ((d.kun_readings && d.kun_readings.length) || (d.on_readings && d.on_readings.length)));
 
+    const n5KanjiSet = level === "N5" ? new Set(kanjiList) : null;
     const cachedReadings = Object.values(detailsCache)
       .map((d) => extractCleanKanjiReading(d))
       .filter((r) => r.length >= 1 && r.length <= 5);
@@ -1939,6 +1954,9 @@
       let sent = null;
       if (!tatoebaCorsBlocked && questions.length < 6) {
         sent = await fetchTatoebaSentence(item.kanji);
+        if (sent && n5KanjiSet && containsNonLevelKanji(sent.jp.replace(item.kanji, ""), n5KanjiSet)) {
+          sent = null;
+        }
       }
 
       const promptRaw = sent
@@ -1995,6 +2013,23 @@
 
     if (pool.length < 5) return [];
 
+    let n5KanjiSet = null;
+    if (level === "N5") {
+      let n5List = loadJSON(STORAGE.kanjiList("N5"), null);
+      if (!Array.isArray(n5List) || n5List.length === 0) {
+        try {
+          const r = await fetchWithTimeout(`https://kanjiapi.dev/v1/kanji/jlpt-5`);
+          if (r.ok) {
+            n5List = await r.json();
+            saveJSON(STORAGE.kanjiList("N5"), n5List);
+          }
+        } catch {}
+      }
+      if (Array.isArray(n5List) && n5List.length > 0) {
+        n5KanjiSet = new Set(n5List);
+      }
+    }
+
     const defaultDistractors = ["まいあさ", "あした", "きのう", "ともだち", "がっこう", "せんせい", "びょういん", "えき", "でんしゃ", "ほん", "みず", "ごはん", "くるま", "としょかん", "てがみ", "しゃしん", "くだもの", "さかな", "おちゃ", "やすみ"];
     const candidates = shuffle(pool);
 
@@ -2002,13 +2037,25 @@
     for (const target of candidates) {
       if (questions.length >= needed) break;
 
+      // Filter out words containing non-N5 kanji when testing N5 (e.g., 嫌)
+      if (level === "N5" && n5KanjiSet && containsNonLevelKanji(target.word, n5KanjiSet)) {
+        continue;
+      }
+
       let sent = null;
       if (!tatoebaCorsBlocked && questions.length < 6) {
         sent = await fetchTatoebaSentence(target.word);
+        if (sent && level === "N5" && n5KanjiSet && containsNonLevelKanji(sent.jp.replace(target.word, ""), n5KanjiSet)) {
+          sent = null;
+        }
       }
 
       if (sent && sent.jp.includes(target.word)) {
-        const allWords = [...new Set(pool.filter((w) => w.word !== target.word && w.word.length <= 6).map((w) => w.word))];
+        const allWords = [...new Set(
+          pool
+            .filter((w) => w.word !== target.word && w.word.length <= 6 && (!n5KanjiSet || !containsNonLevelKanji(w.word, n5KanjiSet)))
+            .map((w) => w.word)
+        )];
         const distractors = shuffle(allWords.length >= 3 ? allWords : defaultDistractors).slice(0, 3);
         const choices = shuffle([target.word, ...distractors]);
         const blankedSentence = sent.jp.replace(target.word, "（　　）");
@@ -2267,11 +2314,14 @@ Return ONLY a valid JSON array matching this schema:
   // Guaranteed Backfill to ensure the exact requested number of questions is ALWAYS delivered
   function ensureQuestionCount(questions, targetCount, level, lessonRange, sectionFilter) {
     if (!Array.isArray(questions)) questions = [];
-    if (questions.length >= targetCount) {
-      return questions.slice(0, targetCount);
+    
+    // Only accept questions that match the requested sectionFilter
+    const filtered = questions.filter((q) => matchesSectionFilter(q.section, sectionFilter));
+    if (filtered.length >= targetCount) {
+      return filtered.slice(0, targetCount);
     }
 
-    const result = [...questions];
+    const result = [...filtered];
     const existingPrompts = new Set(result.map((q) => q.prompt || ""));
 
     // 1. Try matching section & lesson filter from CORE_QUESTION_BANK_N5
@@ -2289,7 +2339,7 @@ Return ONLY a valid JSON array matching this schema:
       existingPrompts.add(q.prompt);
     }
 
-    // 2. Try matching section filter only
+    // 2. Try matching section filter only (across all lesson scopes)
     if (result.length < targetCount) {
       const sectionOnly = shuffle(
         CORE_QUESTION_BANK_N5.filter(
@@ -2303,8 +2353,8 @@ Return ONLY a valid JSON array matching this schema:
       }
     }
 
-    // 3. Backfill any non-duplicate questions from CORE_QUESTION_BANK_N5
-    if (result.length < targetCount) {
+    // 3. If sectionFilter is 'all', backfill any remaining non-duplicate questions from CORE_QUESTION_BANK_N5
+    if (result.length < targetCount && sectionFilter === "all") {
       const remaining = shuffle(
         CORE_QUESTION_BANK_N5.filter((q) => !existingPrompts.has(q.prompt))
       );
@@ -2360,23 +2410,88 @@ Return ONLY a valid JSON array matching this schema:
           (q) => matchesLessonRange(q.lesson, lessonRange) && matchesSectionFilter(q.section, filter)
         );
 
-        let onlineItems = [];
-        try {
-          const kNeed = Math.ceil(totalCount * 0.5);
-          const vNeed = Math.ceil(totalCount * 0.5);
-          const [onlineK, onlineV] = await Promise.all([
-            fetchOnlineKanjiQuestions(level, lessonRange, kNeed),
-            fetchOnlineVocabQuestions(level, lessonRange, vNeed)
-          ]);
-          onlineItems = [...onlineK, ...onlineV];
-        } catch (err) {
-          console.warn("Online fetch error:", err);
+        if (filter === "vocab") {
+          let onlineItems = [];
+          try {
+            const kNeed = Math.ceil(totalCount * 0.5);
+            const vNeed = totalCount - kNeed;
+            const [onlineK, onlineV] = await Promise.all([
+              fetchOnlineKanjiQuestions(level, lessonRange, kNeed),
+              fetchOnlineVocabQuestions(level, lessonRange, vNeed)
+            ]);
+            onlineItems = [...onlineK, ...onlineV];
+          } catch (err) {
+            console.warn("Online fetch error:", err);
+          }
+          const candidatePool = shuffle([...customPool, ...onlineItems]);
+          generated = ensureQuestionCount(candidatePool, totalCount, level, lessonRange, "vocab");
+          statusLabel = `🌐 ${level} (${lessonRange}) 文字・語彙 Online + Core (${generated.length} Qs)`;
+        } else if (filter === "grammar") {
+          const coreGrammar = CORE_QUESTION_BANK_N5.filter((q) => matchesSectionFilter(q.section, "grammar"));
+          const candidatePool = shuffle([...customPool, ...coreGrammar]);
+          generated = ensureQuestionCount(candidatePool, totalCount, level, lessonRange, "grammar");
+          statusLabel = `🌐 ${level} (${lessonRange}) 文法 Core Bank (${generated.length} Qs)`;
+        } else if (filter === "reading") {
+          const coreReading = CORE_QUESTION_BANK_N5.filter((q) => matchesSectionFilter(q.section, "reading"));
+          const candidatePool = shuffle([...customPool, ...coreReading]);
+          generated = ensureQuestionCount(candidatePool, totalCount, level, lessonRange, "reading");
+          statusLabel = `🌐 ${level} (${lessonRange}) 読解 Core Bank (${generated.length} Qs)`;
+        } else {
+          const vCount = Math.max(1, Math.round(totalCount * 0.4));
+          const gCount = Math.max(1, Math.round(totalCount * 0.4));
+          const rCount = Math.max(1, totalCount - vCount - gCount);
+
+          let onlineItems = [];
+          try {
+            const kNeed = Math.ceil(vCount * 0.5);
+            const vNeed = vCount - kNeed;
+            const [onlineK, onlineV] = await Promise.all([
+              fetchOnlineKanjiQuestions(level, lessonRange, kNeed),
+              fetchOnlineVocabQuestions(level, lessonRange, vNeed)
+            ]);
+            onlineItems = [...onlineK, ...onlineV];
+          } catch (err) {
+            console.warn("Online fetch error:", err);
+          }
+
+          const vocabPart = ensureQuestionCount(
+            shuffle([...customPool.filter((q) => matchesSectionFilter(q.section, "vocab")), ...onlineItems]),
+            vCount,
+            level,
+            lessonRange,
+            "vocab"
+          );
+
+          const grammarPart = ensureQuestionCount(
+            shuffle([
+              ...customPool.filter((q) => matchesSectionFilter(q.section, "grammar")),
+              ...CORE_QUESTION_BANK_N5.filter((q) => matchesSectionFilter(q.section, "grammar"))
+            ]),
+            gCount,
+            level,
+            lessonRange,
+            "grammar"
+          );
+
+          const readingPart = ensureQuestionCount(
+            shuffle([
+              ...customPool.filter((q) => matchesSectionFilter(q.section, "reading")),
+              ...CORE_QUESTION_BANK_N5.filter((q) => matchesSectionFilter(q.section, "reading"))
+            ]),
+            rCount,
+            level,
+            lessonRange,
+            "reading"
+          );
+
+          generated = [...vocabPart, ...grammarPart, ...readingPart];
+          if (generated.length < totalCount) {
+            generated = ensureQuestionCount(generated, totalCount, level, lessonRange, "all");
+          } else if (generated.length > totalCount) {
+            generated = generated.slice(0, totalCount);
+          }
+          statusLabel = `🌐 ${level} (${lessonRange}) Full Written Mix (${generated.length} Qs)`;
         }
-
-        const candidatePool = shuffle([...customPool, ...onlineItems]);
-        generated = ensureQuestionCount(candidatePool, totalCount, level, lessonRange, filter);
-
-        statusLabel = `🌐 ${level} (${lessonRange}) Online + Core Set (${generated.length} Qs)`;
       }
 
       currentQuestions = generated;
