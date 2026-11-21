@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="author" content="Md Mominur Islam" />
   <title>JLPT N5 Practice & Mock Exam Generator — Md Mominur Islam</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --primary: #1d4ed8;
@@ -507,7 +510,7 @@
       box-shadow: var(--shadow);
       break-inside: avoid;
       transition: border-color 0.15s;
-      scroll-margin-top: 80px;
+      scroll-margin-top: 90px;
     }
     .q-card.focused-card { border-color: var(--accent); }
     .q-card.correct-card { border-color: var(--success-border); }
@@ -1007,11 +1010,11 @@
             <input type="password" id="telegramTokenInput" placeholder="Bot Token (or leave blank if using Cloudflare)" value="" style="flex:1 1 200px;" />
           </div>
           <div class="btn-row" style="margin-bottom:8px;">
-            <input type="text" id="telegramChatIdInput" placeholder="Your Telegram Chat ID (e.g. 123456789 or @username)" style="flex:1 1 180px;" />
+            <input type="text" id="telegramChatIdInput" placeholder="Your Telegram Chat ID" value="" style="flex:1 1 180px;" />
             <button type="button" class="btn-secondary" id="saveTelegramBtn">Save & Test</button>
           </div>
           <div class="btn-row" style="align-items:center;">
-            <button type="button" class="btn-secondary active-filter" id="toggleTelegramAutoBtn">Auto-Push: ON</button>
+            <button type="button" class="btn-secondary" id="toggleTelegramAutoBtn">Auto-Push: OFF</button>
             <span id="telegramStatusMsg" style="font-size:0.77rem;color:var(--text-muted);">Tip: Send /start to @bkttcmocktestbot & get your ID from @userinfobot</span>
           </div>
         </div>
@@ -1089,7 +1092,7 @@
 <aside class="kanji-popover" id="kanjiPopover" aria-live="polite">
   <div class="kp-top">
     <div class="kp-char" id="kpChar">駅</div>
-    <button type="button" class="kp-close" id="kpCloseBtn" aria-label="Close Dictionary">✕</button>
+    <button type="button" class="kp-close" id="kpCloseBtn" aria-label="Close Dictionary">&times;</button>
   </div>
   <div class="kp-body" id="kpBody">Loading kanji details...</div>
 </aside>
@@ -1324,7 +1327,7 @@
       section: "文字・語彙 (N5 Vocabulary & Kanji)",
       subtype: "問題5：用法 (Usage)",
       lesson: "L1-12",
-      prompt: "次のことばの　つかいかたで　いちばん　いいものは　どれですか。【おんがく】",
+      prompt: "<ruby>次<rt>つぎ</rt></ruby>のことばの　つかいかたで　いちばん　いいものは　どれですか。【おんがく】",
       options: [
         "まいばん　へやで　すきな　おんがくを　ききます。",
         "きのう　レストランで　おんがくを　たべました。",
@@ -1340,7 +1343,7 @@
       section: "文字・語彙 (N5 Vocabulary & Kanji)",
       subtype: "問題5：用法 (Usage)",
       lesson: "L1-12",
-      prompt: "次のことばの　つかいかたで　いちばん　いいものは　どれですか。【カメラ】",
+      prompt: "<ruby>次<rt>つぎ</rt></ruby>のことばの　つかいかたで　いちばん　いいものは　どれですか。【カメラ】",
       options: [
         "あたらしい　カメラで　きれいな　しゃしんを　とりました。",
         "きのう　カメラを　よみました。",
@@ -1367,7 +1370,7 @@
       section: "文法 (N5 Grammar)",
       subtype: "問題6：文の文法1 (Grammar Form)",
       lesson: "L1-12",
-      prompt: "あした　いっしょに　きょうとへ　（　　）か。",
+      prompt: "あした　いっしょに　きょうとへ　（　　）。",
       options: ["いきませんか", "いきましたか", "いかないでした", "いきますでした"],
       answer: 0,
       kana: "あした いっしょに きょうとへ いきませんか。",
@@ -1417,9 +1420,9 @@
       section: "文法 (N5 Grammar)",
       subtype: "問題7：★文の組み立て (Star Ordering)",
       lesson: "L1-12",
-      prompt: "日曜日　わたしは　＿＿　＿＿　★　＿＿　いきます。",
+      prompt: "<ruby>日曜日<rt>にちようび</rt></ruby>　わたしは　＿＿　＿＿　★　＿＿　いきます。",
       starData: {
-        before: "日曜日　わたしは",
+        before: "<ruby>日曜日<rt>にちようび</rt></ruby>　わたしは",
         after: "いきます。",
         ordered: ["ともだちと", "えいがを", "みに", "まちへ"],
         starPos: 2
@@ -1434,7 +1437,7 @@
       section: "読解 (N5 Reading Comprehension)",
       subtype: "問題8：内容理解（短文）",
       lesson: "L13-25",
-      passage: "【メモ】\nやまださんへ\nきょうは　<ruby>病院<rt>びょういん</rt></ruby>へ　いきますから、5じに　かえります。\nつくえの　うえに　<ruby>新<rt>あたら</rt></ruby>しい　<ruby>辞書<rt>じしょ</rt></ruby>が　あります。つかってください。",
+      passage: "【メモ】\nやまださんへ\nきょうは　<ruby>病院<rt>びょういん</rt></ruby>へ　いきますから、5じに　かえります。\nつくえの　うえに　<ruby>新<rt>あたら</rt></ruby>しい　<ruby>辞書<rt>じしょ</rt></ruby>が　あります。つかってください。\nたなか",
       prompt: "たなかさんは　どうして　5じに　かえりますか。",
       options: ["びょういんへ　いきますから", "じしょを　かいますから", "かいぎが　ありますから", "ともだちに　あいますから"],
       answer: 0,
@@ -1446,9 +1449,9 @@
       section: "読解 (N5 Reading Comprehension)",
       subtype: "問題8：内容理解（短文）",
       lesson: "L1-12",
-      passage: "【案内】\n今週の　土曜日に　みんなで　公園で　バーベキューを　します。\nじかん：午前11時から　午後3時まで\nばしょ：中央公園\nかいひ：1000えん\n※飲み物は　自分で　持ってきてください。",
-      prompt: "バーベキューに　行く人は　何を　持って行かなければなりませんか。",
-      options: ["飲み物", "お肉", "お金だけ（飲み物は要らない）", "お皿とコップ"],
+      passage: "【<ruby>案内<rt>あんない</rt></ruby>】\n<ruby>今週<rt>こんしゅう</rt></ruby>の　<ruby>土曜日<rt>どようび</rt></ruby>に　みんなで　<ruby>公園<rt>こうえん</rt></ruby>で　バーベキューを　します。\nじかん：<ruby>午前<rt>ごぜん</rt></ruby>11<ruby>時<rt>じ</rt></ruby>から　<ruby>午後<rt>ごご</rt></ruby>3<ruby>時<rt>じ</rt></ruby>まで\nばしょ：<ruby>中央公園<rt>ちゅうおうこうえん</rt></ruby>\nかいひ：1000えん\n※<ruby>飲<rt>の</rt></ruby>み<ruby>物<rt>もの</rt></ruby>は　<ruby>自分<rt>じぶん</rt></ruby>で　<ruby>持<rt>も</rt></ruby>ってきてください。",
+      prompt: "バーベキューに　<ruby>行<rt>い</rt></ruby>く<ruby>人<rt>ひと</rt></ruby>は　<ruby>何<rt>なに</rt></ruby>を　<ruby>持<rt>も</rt></ruby>って<ruby>行<rt>い</rt></ruby>かなければなりませんか。",
+      options: ["<ruby>飲<rt>の</rt></ruby>み<ruby>物<rt>もの</rt></ruby>", "お<ruby>肉<rt>にく</rt></ruby>", "お<ruby>金<rt>かね</rt></ruby>だけ（<ruby>飲<rt>の</rt></ruby>み<ruby>物<rt>もの</rt></ruby>は<ruby>要<rt>い</rt></ruby>らない）", "お<ruby>皿<rt>さら</rt></ruby>とコップ"],
       answer: 0,
       kana: "飲み物は 自分で 持ってきてください。",
       exp_en: "The notice says: 『飲み物は 自分で 持ってきてください』 ('Please bring drinks yourself').",
@@ -1541,7 +1544,39 @@
     );
   }
 
+  const KANJI_READING_OVERRIDES = {
+    "気": "き",
+    "日": "にち",
+    "月": "げつ",
+    "人": "ひと",
+    "生": "せい",
+    "本": "ほん",
+    "天": "てん",
+    "円": "えん",
+    "校": "こう",
+    "電": "でん",
+    "語": "ご",
+    "学": "がく",
+    "今": "いま",
+    "時": "じ",
+    "分": "ふん",
+    "半": "はん",
+    "万": "まん",
+    "千": "せん",
+    "百": "ひゃく",
+    "年": "ねん",
+    "前": "まえ",
+    "後": "うしろ",
+    "友": "とも",
+    "何": "なに"
+  };
+
   function extractCleanKanjiReading(item) {
+    if (!item) return "";
+    const kanjiChar = item.kanji || item.character || "";
+    if (kanjiChar && KANJI_READING_OVERRIDES[kanjiChar]) {
+      return KANJI_READING_OVERRIDES[kanjiChar];
+    }
     const kuns = Array.isArray(item.kun_readings) ? item.kun_readings : [];
     const ons = Array.isArray(item.on_readings) ? item.on_readings : [];
     const cleanKun = kuns.find((r) => !r.includes(".") && !r.includes("-"));
@@ -2419,7 +2454,9 @@ Return ONLY a valid JSON array matching this schema:
           reviewWrongOnly = false;
           renderQuestions();
         }
-        focusQuestion(idx, true);
+        requestAnimationFrame(() => {
+          focusQuestion(idx, true);
+        });
       });
       pills.appendChild(btn);
     });
@@ -2433,7 +2470,7 @@ Return ONLY a valid JSON array matching this schema:
     if (card) {
       card.classList.add("focused-card");
       if (shouldScroll) {
-        card.scrollIntoView({ behavior: "smooth", block: "center" });
+        card.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     }
     updateNavigatorUI();
@@ -3155,7 +3192,7 @@ Return ONLY a valid JSON array matching this schema:
   $("kpCloseBtn").addEventListener("click", () => $("kanjiPopover").classList.remove("open"));
 
 
-  let telegramAutoPush = localStorage.getItem(STORAGE.TELEGRAM_AUTOPUSH) !== "false";
+  let telegramAutoPush = localStorage.getItem(STORAGE.TELEGRAM_AUTOPUSH) === "true";
 
   function showToast(text, durationMs = 3500) {
     const toast = $("appToast");
@@ -3167,7 +3204,7 @@ Return ONLY a valid JSON array matching this schema:
 
   async function pushResultToTelegram(summary, isManual = false) {
     if (!summary) return false;
-    const chatId = $("telegramChatIdInput")?.value.trim() || localStorage.getItem(STORAGE.TELEGRAM_CHAT_ID);
+    const chatId = $("telegramChatIdInput")?.value.trim() || localStorage.getItem(STORAGE.TELEGRAM_CHAT_ID) || "";
 
     if (!isManual && !telegramAutoPush) return false;
 
@@ -3343,10 +3380,13 @@ Return ONLY a valid JSON array matching this schema:
   });
 
   $("saveTelegramBtn").addEventListener("click", async () => {
-    const token = $("telegramTokenInput").value.trim() || "8863407575:AAFICc_QFXygIzV-3h_Ia4U7ZRmnaOdpy9Y";
+    const token = $("telegramTokenInput").value.trim();
     const chatId = $("telegramChatIdInput").value.trim();
+    const cfUrl = ($("cloudflareUrlInput")?.value.trim() || localStorage.getItem(STORAGE.CLOUDFLARE_URL) || "").replace(/\/+$/, "");
 
-    localStorage.setItem(STORAGE.TELEGRAM_TOKEN, token);
+    if (token) localStorage.setItem(STORAGE.TELEGRAM_TOKEN, token);
+    else localStorage.removeItem(STORAGE.TELEGRAM_TOKEN);
+
     if (chatId) localStorage.setItem(STORAGE.TELEGRAM_CHAT_ID, chatId);
     else localStorage.removeItem(STORAGE.TELEGRAM_CHAT_ID);
 
@@ -3355,25 +3395,44 @@ Return ONLY a valid JSON array matching this schema:
       return;
     }
 
+    if (!token && !cfUrl) {
+      alert("Please enter a Telegram Bot Token or configure a Cloudflare Worker Proxy URL.");
+      return;
+    }
+
     // Send a test message
     try {
       $("saveTelegramBtn").disabled = true;
       $("saveTelegramBtn").textContent = "Testing...";
-      const res = await fetchWithTimeout(`https://api.telegram.org/bot${encodeURIComponent(token)}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: "🔔 *Telegram Bot Connected Successfully!*\nYour JLPT Mock Exam results will be auto-delivered here after submission.",
-          parse_mode: "Markdown"
-        })
-      }, 7000);
+
+      let res;
+      if (cfUrl) {
+        res = await fetchWithTimeout(`${cfUrl}/api/telegram`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chatId,
+            text: "🔔 *Telegram Bot Connected Successfully!*\nYour JLPT Mock Exam results will be auto-delivered here after submission."
+          })
+        }, 7000);
+      } else {
+        res = await fetchWithTimeout(`https://api.telegram.org/bot${encodeURIComponent(token)}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: "🔔 *Telegram Bot Connected Successfully!*\nYour JLPT Mock Exam results will be auto-delivered here after submission.",
+            parse_mode: "Markdown"
+          })
+        }, 7000);
+      }
+
       const json = await res.json();
       if (json.ok) {
         showToast("✅ Test message sent to Telegram!");
         alert("Success! Check your Telegram for the confirmation message.");
       } else {
-        alert("Telegram API Error: " + (json.description || "Failed to send message. Make sure you sent /start to @bkttcmocktestbot."));
+        alert("Telegram API Error: " + (json.description || json.error || "Failed to send message. Make sure you sent /start to your bot."));
       }
     } catch (err) {
       alert("Network error testing Telegram: " + err.message);
