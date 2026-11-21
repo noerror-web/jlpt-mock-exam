@@ -4,10 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="author" content="Md Mominur Islam" />
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/svg+xml" href="./icon.svg">
+  <meta name="theme-color" content="#1d4ed8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>JLPT N5 Practice & Mock Exam Generator — Md Mominur Islam</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --primary: #1d4ed8;
@@ -31,7 +36,11 @@
       --warn-text: #b45309;
       --warn-border: #fde68a;
       --radius: 14px;
+      --radius-sm: 8px;
+      --radius-full: 9999px;
       --shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+      --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      --font-scale: 1;
     }
 
     body.dark-mode {
@@ -91,15 +100,36 @@
     ruby { ruby-align: center; }
     rt { font-size: 0.62em; color: var(--primary-dark); font-weight: 600; }
 
-    /* Sticky Header */
+    /* Sticky Header - Max 56px on mobile */
     header {
       background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%);
       color: #fff;
-      padding: 12px 16px;
+      padding: 10px 16px;
       box-shadow: 0 2px 12px rgba(29, 78, 216, 0.25);
       position: sticky;
       top: 0;
       z-index: 50;
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+    }
+
+    @media (max-width: 640px) {
+      header {
+        padding: 6px 12px;
+        height: 52px;
+        min-height: 52px;
+        max-height: 54px;
+      }
+      .brand-titles h1 { font-size: 0.88rem !important; }
+      .brand-author { display: none; }
+      .lvl-btn { padding: 3px 8px !important; font-size: 0.76rem !important; }
+      .header-actions .icon-btn:not(#toggleSettingsBtn) { display: none !important; }
+      #toggleSettingsBtn {
+        padding: 5px 9px !important;
+        font-size: 0.82rem !important;
+      }
+      .timer-pill { padding: 4px 8px !important; font-size: 0.78rem !important; }
     }
 
     body.dark-mode header {
@@ -897,9 +927,235 @@
       transform: translateY(0);
     }
 
+
+    /* === Phase 3 UI/UX Upgrades === */
+    /* Resume In-Progress Exam Banner */
+    .resume-banner {
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border: 1.5px solid var(--primary-border);
+      color: var(--primary-dark);
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      animation: fadeIn 0.25s ease-out;
+    }
+    body.dark-mode .resume-banner {
+      background: linear-gradient(135deg, #111c33 0%, #172554 100%);
+      border-color: #1e3a8a;
+      color: #bfdbfe;
+    }
+    .resume-actions { display: flex; gap: 8px; }
+    .btn-resume {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-discard {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    /* Single Question View Progress & Floating Bottom Bar */
+    .view-switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .view-mode-pill {
+      display: inline-flex;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 2px;
+    }
+    .view-btn {
+      background: transparent;
+      border: none;
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+    .view-btn.active {
+      background: var(--card);
+      color: var(--primary);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .single-progress-wrap {
+      margin-bottom: 14px;
+    }
+    .single-progress-bar-bg {
+      height: 6px;
+      background: var(--surface-subtle);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .single-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent) 0%, var(--primary) 100%);
+      width: 0%;
+      transition: width 0.25s ease;
+    }
+    .single-bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      z-index: 45;
+      box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+    }
+    .single-bottom-bar.visible { display: flex; }
+    .single-nav-btn {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      min-width: 80px;
+      min-height: 44px;
+    }
+    .single-nav-btn.primary-btn {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .single-nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Flashcard Flip Card Styling */
+    .flashcard-stage {
+      perspective: 1000px;
+      margin: 18px 0;
+      min-height: 220px;
+      cursor: pointer;
+    }
+    .flashcard-inner {
+      position: relative;
+      width: 100%;
+      min-height: 220px;
+      text-align: center;
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-style: preserve-3d;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .flashcard-stage.flipped .flashcard-inner {
+      transform: rotateY(180deg);
+    }
+    .flashcard-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      min-height: 220px;
+      backface-visibility: hidden;
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--card);
+      border: 2px solid var(--border);
+    }
+    .flashcard-back {
+      transform: rotateY(180deg);
+      background: var(--surface-subtle);
+      border-color: var(--primary-border);
+    }
+    .flashcard-tag { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
+    .flashcard-prompt { font-size: 1.35rem; font-weight: 700; line-height: 1.4; color: var(--text); }
+    .flashcard-hint { font-size: 0.8rem; color: var(--text-muted); margin-top: 14px; opacity: 0.8; }
+    .flashcard-actions { display: flex; justify-content: center; gap: 12px; margin-top: 14px; }
+    .fc-btn {
+      padding: 10px 20px;
+      border-radius: 999px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      min-height: 44px;
+    }
+    .fc-btn-wrong { background: var(--error-bg); color: var(--error); border: 1.5px solid var(--error-border); }
+    .fc-btn-pass { background: var(--success); color: #fff; }
+
+    /* Results Dashboard Metric Bars */
+    .result-section-bar-wrap { margin-top: 8px; }
+    .result-bar-bg {
+      height: 8px;
+      background: var(--surface-subtle);
+      border-radius: 999px;
+      position: relative;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .result-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.6s ease;
+    }
+    .result-bar-target-marker {
+      position: absolute;
+      left: 32%;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 2;
+    }
+
+    /* Skeleton Loading Placeholder */
+    .skeleton-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+    .skeleton-line {
+      height: 14px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      background: linear-gradient(90deg, var(--surface-subtle) 25%, var(--border) 50%, var(--surface-subtle) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    /* Font Scale Custom Property */
+    .q-prompt, .passage-body {
+      font-size: calc(1.08rem * var(--font-scale, 1));
+    }
+
   </style>
 </head>
 <body>
+  <canvas id="confettiCanvas" style="position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:9999;display:none;"></canvas>
 
 <header>
   <div class="header-inner">
@@ -935,6 +1191,15 @@
   </div>
 
   <!-- Control Panel -->
+  <!-- Resume In-Progress Exam Banner -->
+  <div class="resume-banner" id="resumeBanner" style="display:none;" role="alert">
+    <div id="resumeText">⚠️ Unfinished JLPT exam found.</div>
+    <div class="resume-actions">
+      <button type="button" class="btn-resume" id="btnResumeExam">⚡ Resume</button>
+      <button type="button" class="btn-discard" id="btnDiscardExam">✕ Discard</button>
+    </div>
+  </div>
+
   <section class="panel">
     <!-- Lifetime Streak & Accuracy Strip -->
     <div class="lifetime-strip" id="lifetimeStrip">
@@ -1004,6 +1269,9 @@
       </button>
       <button type="button" class="btn-mistake-drill" id="practiceMistakesBtn" disabled>
         <span>🔁 Saved Mistakes (0)</span>
+      </button>
+      <button type="button" class="btn-mistake-drill" id="flashcardsBtn" disabled style="background:var(--surface-subtle);color:var(--text);border:1.5px solid var(--border);">
+        <span>🃏 Flashcards (0)</span>
       </button>
     </div>
 
@@ -1506,6 +1774,385 @@
       exp_en: "The notice says: 『飲み物は 自分で 持ってきてください』 ('Please bring drinks yourself').",
       exp_bn: "নোটিশে বলা হয়েছে: পানীয় নিজের সাথে নিয়ে আসতে হবে (飲み物は 自分で 持ってきてください)।"
     }
+  ,
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題1：漢字読み",
+      lesson: "L1-12",
+      prompt: "つくえの　うえに　<u>本</u>が　あります。",
+      options: ["ほん", "き", "みず", "かね"],
+      answer: 0,
+      kana: "つくえの うえに ほんが あります。",
+      exp_en: "「本」 is read 「ほん」 (book).",
+      exp_bn: "「本」-এর উচ্চারণ 「ほん」 (বই)।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題1：漢字読み",
+      lesson: "L1-12",
+      prompt: "きょうは　<u>月曜日</u>です。",
+      options: ["げつようび", "かようび", "すいようび", "きんようび"],
+      answer: 0,
+      kana: "きょうは げつようびです。",
+      exp_en: "「月曜日」 is read 「げつようび」 (Monday).",
+      exp_bn: "「月曜日」-এর উচ্চারণ 「げつようび」 (সোমবার)।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題1：漢字読み",
+      lesson: "L1-12",
+      prompt: "あそこに　<u>男</u>の　人が　います。",
+      options: ["おとこ", "おんな", "こども", "ひと"],
+      answer: 0,
+      kana: "あそこに おとこの ひとが います。",
+      exp_en: "「男」 is read 「おとこ」 (man/male).",
+      exp_bn: "「男」-এর উচ্চারণ 「おとこ」 (পুরুষ)।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題1：漢字読み",
+      lesson: "L1-12",
+      prompt: "<u>百</u>円の　りんごを　買いました。",
+      options: ["ひゃく", "せん", "まん", "えん"],
+      answer: 0,
+      kana: "ひゃくえんの りんごを かいました。",
+      exp_en: "「百」 is read 「ひゃく」 (100).",
+      exp_bn: "「百」-এর উচ্চারণ 「ひゃく」 (১০০)।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題1：漢字読み",
+      lesson: "L1-12",
+      prompt: "<u>白</u>い　シャツを　着ています。",
+      options: ["しろ", "あか", "くろ", "あお"],
+      answer: 0,
+      kana: "しろい シャツを きています。",
+      exp_en: "「白い」 is read 「しろい」 (white).",
+      exp_bn: "「白い」-এর উচ্চারণ 「しろい」 (সাদা)।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題2：表記",
+      lesson: "L1-12",
+      prompt: "<u>やま</u>に　のぼりました。",
+      options: ["山", "川", "田", "木"],
+      answer: 0,
+      kana: "やまに のぼりました。",
+      exp_en: "「やま」 is written with the kanji 「山」 (mountain).",
+      exp_bn: "「やま」-এর কাঞ্জি 「山」 (পাহাড়)।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題2：表記",
+      lesson: "L1-12",
+      prompt: "きれいな　<u>かわ</u>で　およぎました。",
+      options: ["川", "海", "池", "山"],
+      answer: 0,
+      kana: "きれいな かわで およぎました。",
+      exp_en: "「かわ」 is written with the kanji 「川」 (river).",
+      exp_bn: "「かわ」-এর কাঞ্জি 「川」 (নদী)।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題2：表記",
+      lesson: "L1-12",
+      prompt: "あしたは　<u>やすみ</u>です。",
+      options: ["休み", "体み", "本み", "木み"],
+      answer: 0,
+      kana: "あしたは やすみです。",
+      exp_en: "「やすみ」 is written in kanji as 「休み」 (rest/holiday).",
+      exp_bn: "「やすみ」-এর কাঞ্জি 「休み」 (ছুটি)।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題3：文脈規定",
+      lesson: "L1-12",
+      prompt: "あついですね。（　　）を　あけてください。",
+      options: ["まど", "つくえ", "いす", "ほん"],
+      answer: 0,
+      kana: "あついですね。まどを あけてください。",
+      exp_en: "When it is hot, opening the window (まど) makes sense.",
+      exp_bn: "গরম লাগলে জানালা (まど) খুলতে অনুরোধ করা প্রাসঙ্গিক।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題3：文脈規定",
+      lesson: "L1-12",
+      prompt: "ごはんを　たべるまえに、「（　　）」と　言います。",
+      options: ["いただきます", "ごちそうさま", "おやすみなさい", "さようなら"],
+      answer: 0,
+      kana: "ごはんを たべるまえに、「いただきます」と いいます。",
+      exp_en: "Before eating a meal in Japan, one says 「いただきます」.",
+      exp_bn: "খাবার শুরু করার আগে বলা হয় 「いただきます」।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題3：文脈規定",
+      lesson: "L13-25",
+      prompt: "えきから　うちまで　あるいて　10（　　）かかります。",
+      options: ["ぷん", "じかん", "ねん", "まい"],
+      answer: 0,
+      kana: "えきから うちまで あるいて 10ぷん かかります。",
+      exp_en: "To express minutes of walking duration, use 「〜ぷん/ふん」.",
+      exp_bn: "হাঁটার সময় (মিনিট) বোঝাতে 「〜ぷん」(10ぷん - ১০ মিনিট) ব্যবহৃত হয়।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題4：言い換え類義",
+      lesson: "L1-12",
+      prompt: "この　へやは　<u>せまい</u>です。",
+      options: ["ひろくない", "あかるくない", "あたらしくない", "たかくない"],
+      answer: 0,
+      kana: "この へやは せまいです。",
+      exp_en: "「せまい」 (narrow/small) is synonymous with 「ひろくない」 (not spacious).",
+      exp_bn: "「せまい」(সংকীর্ণ/ছোট) মানে 「ひろくない」(প্রশস্ত নয়)।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題5：用法",
+      lesson: "L1-12",
+      prompt: "「あおい」の　ただしい　つかいかたは　どれですか。",
+      options: [
+        "きれいな　あおい　そらを　見ました。",
+        "あおい　おんがくを　ききました。",
+        "あおい　じかんを　すごしました。",
+        "この　本は　とても　あおいです。"
+      ],
+      answer: 0,
+      kana: "きれいな あおい そらを みました。",
+      exp_en: "「あおい」 (blue) naturally modifies visual objects like the sky (そら).",
+      exp_bn: "নীল (あおい) শব্দটি আকাশ (そら)-এর সাথে স্বাভাবিকভাবে বসে।"
+    },
+    {
+      section: "文法 (N5 Grammar)",
+      subtype: "問題6：文の文法1",
+      lesson: "L1-12",
+      prompt: "わたしは　まいあさ　パン（　　）たべます。",
+      options: ["を", "に", "で", "へ"],
+      answer: 0,
+      kana: "わたしは まいあさ パンを たべます。",
+      exp_en: "The direct object of eating (たべます) takes the particle 「を」.",
+      exp_bn: "খাবারের কর্মপদ (Object) হিসেবে 「を」 পার্টিকেল বসে।"
+    },
+    {
+      section: "文法 (N5 Grammar)",
+      subtype: "問題6：文の文法1",
+      lesson: "L1-12",
+      prompt: "きょうは　バス（　　）かいしゃへ　行きました。",
+      options: ["で", "に", "を", "から"],
+      answer: 0,
+      kana: "きょうは バスで かいしゃへ いきました。",
+      exp_en: "Means of transportation uses the particle 「で」 (by bus).",
+      exp_bn: "যানবাহনের মাধ্যম বোঝাতে 「で」(বাসে করে) পার্টিকেল বসে।"
+    },
+    {
+      section: "文法 (N5 Grammar)",
+      subtype: "問題6：文の文法1",
+      lesson: "L1-12",
+      prompt: "にちようびに　ともだち（　　）あいました。",
+      options: ["に", "を", "で", "へ"],
+      answer: 0,
+      kana: "にちようびに ともだちに あいました。",
+      exp_en: "The target person met with 「会います」 takes the particle 「に」.",
+      exp_bn: "কারো সাথে দেখা করার ক্ষেত্রে ব্যক্তিবাচক শব্দের পর 「に」 পার্টিকেল বসে।"
+    },
+    {
+      section: "文法 (N5 Grammar)",
+      subtype: "問題6：文の文法1",
+      lesson: "L1-12",
+      prompt: "きょうしつに　がくせいが　5（　　）います。",
+      options: ["にん", "まい", "さつ", "ひき"],
+      answer: 0,
+      kana: "きょうしつに がくせいが 5にん います。",
+      exp_en: "Counter for counting people is 「人（にん）」.",
+      exp_bn: "মানুষ গণনার কাউন্টার হলো 「〜にん」(৫ জন - 5にん)।"
+    },
+    {
+      section: "文法 (N5 Grammar)",
+      subtype: "問題6：文の文法1",
+      lesson: "L13-25",
+      prompt: "日本へ　さくらを　（　　）に　行きます。",
+      options: ["見", "見て", "見ます", "見る"],
+      answer: 0,
+      kana: "にほんへ さくらを みに いきます。",
+      exp_en: "Purpose of going/coming: Verb stem (ます-form without ます) + に行きます.",
+      exp_bn: "উদ্দেশ্যমূলক গমনাগমন: Verb stem + に行きます (見に行きます - দেখতে যাই)।"
+    },
+    {
+      section: "文法 (N5 Grammar)",
+      subtype: "問題6：文の文法1",
+      lesson: "L13-25",
+      prompt: "ここで　しゃしんを　とっては　（　　）。",
+      options: ["いけません", "なりません", "ください", "あります"],
+      answer: 0,
+      kana: "ここで しゃしんを とっては いけません。",
+      exp_en: "Prohibition: 〜てはいけません ('must not do').",
+      exp_bn: "নিষেধাজ্ঞা বোঝাতে 〜てはいけません ('করা যাবে না') ব্যবহৃত হয়।"
+    },
+    {
+      section: "文法 (N5 Grammar)",
+      subtype: "問題6：文の文法1",
+      lesson: "L13-25",
+      prompt: "きのうは　あめが　（　　）から、どこへも　行きませんでした。",
+      options: ["ふった", "ふります", "ふる", "ふって"],
+      answer: 0,
+      kana: "きのうは あめが ふったから、どこへも いきませんでした。",
+      exp_en: "Reason with plain past before から: ふったから ('Because it rained yesterday').",
+      exp_bn: "অতীতের কারণ প্রকাশে Plain past + から (ふったから - বৃষ্টি পড়েছিল বলে)।"
+    },
+    {
+      section: "文法 (N5 Grammar)",
+      subtype: "問題6：文の文法1",
+      lesson: "L13-25",
+      prompt: "わたしは　かんじを　書くことが　（　　）。",
+      options: ["できます", "します", "なります", "あります"],
+      answer: 0,
+      kana: "わたしは かんじを かくことが できます。",
+      exp_en: "Ability: Verb dictionary form + ことが できます ('can do').",
+      exp_bn: "সক্ষমতা প্রকাশে Verb dictionary form + ことが できます ('করতে পারি')।"
+    },
+    {
+      section: "文法 (N5 Grammar)",
+      subtype: "問題6：文の文法1",
+      lesson: "L13-25",
+      prompt: "日本料理を　食べたことが　（　　）。",
+      options: ["あります", "います", "できます", "します"],
+      answer: 0,
+      kana: "にほんりょうりを たべたことが あります。",
+      exp_en: "Past experience: Verb た-form + ことが あります ('have experienced').",
+      exp_bn: "অতীত অভিজ্ঞতা বোঝাতে Verb た-form + ことが あります ব্যবহৃত হয়।"
+    },
+    {
+      section: "文法 (N5 Grammar)",
+      subtype: "問題6：文の文法1",
+      lesson: "L13-25",
+      prompt: "テレビを　（　　）まえに、おふろに　入ります。",
+      options: ["見る", "見て", "見た", "見ます"],
+      answer: 0,
+      kana: "テレビを みるまえに、おふろに はいります。",
+      exp_en: "Before doing an action: Verb dictionary form + まえに.",
+      exp_bn: "কোনো কাজ করার আগে বোঝাতে Verb dictionary form + まえに ব্যবহৃত হয়।"
+    },
+    {
+      section: "文法 (N5 Grammar)",
+      subtype: "問題7：★文の組み立て",
+      lesson: "L1-12",
+      prompt: "",
+      starData: {
+        before: "毎朝",
+        after: "飲みます。",
+        ordered: ["パンを", "食べて、", "牛乳を", "いっぱい"],
+        starPos: 2
+      },
+      options: ["牛乳を", "いっぱい", "パンを", "食べて、"],
+      answer: 0,
+      kana: "毎朝 パンを 食べて、 【★ 牛乳を】 いっぱい 飲みます。",
+      exp_en: "Order: 毎朝 パンを 食べて、 【★ 牛乳を】 いっぱい 飲みます。 Star is position 3 (牛乳を).",
+      exp_bn: "সঠিক বাক্যক্রম: 毎朝 パンを 食べて、 【★ 牛乳を】 いっぱい 飲みます। তারকার স্থানে '牛乳を'।"
+    },
+    {
+      section: "文法 (N5 Grammar)",
+      subtype: "問題7：★文の組み立て",
+      lesson: "L13-25",
+      prompt: "",
+      starData: {
+        before: "この",
+        after: "いいですか。",
+        ordered: ["カメラを", "使っても", "ここで", "ちょっと"],
+        starPos: 1
+      },
+      options: ["使っても", "カメラを", "ここで", "ちょっと"],
+      answer: 0,
+      kana: "この カメラを 【★ 使っても】 ここで ちょっと いいですか。",
+      exp_en: "Order: この カメラを 【★ 使っても】 ここで ちょっと いいですか。 Star is position 2 (使っても).",
+      exp_bn: "সঠিক ক্রম: この カメラを 【★ 使っても】 ここで ちょっと いいですか। তারকার স্থানে '使っても'।"
+    },
+    {
+      section: "文法 (N5 Grammar)",
+      subtype: "問題7：★文の組み立て",
+      lesson: "L13-25",
+      prompt: "",
+      starData: {
+        before: "日曜日は",
+        after: "します。",
+        ordered: ["掃除を", "したり、", "洗濯を", "したり"],
+        starPos: 2
+      },
+      options: ["洗濯を", "掃除を", "したり、", "したり"],
+      answer: 0,
+      kana: "日曜日は 掃除を したり、 【★ 洗濯を】 したり します。",
+      exp_en: "Order: 日曜日は 掃除を したり、 【★ 洗濯を】 したり します。 Star is position 3 (洗濯を).",
+      exp_bn: "সঠিক বাক্যক্রম: 日曜日は 掃除を したり、 【★ 洗濯を】 したり します। তারকার ঘরে '洗濯を'।"
+    },
+    {
+      section: "読解 (N5 Reading Comprehension)",
+      subtype: "問題8：内容理解（短文）",
+      lesson: "L1-12",
+      passage: "【メール】\nさとうさんへ\nあしたの　ランチですが、駅前の　新しい　ラーメン屋へ　行きませんか。\n12時半に　駅の　西口で　待っています。\nワン",
+      prompt: "ワンさんは　あした　何時に　どこで　待ちますか。",
+      options: [
+        "12時半に　駅の　西口で",
+        "12時に　ラーメン屋の　前で",
+        "1時半に　駅の　東口で",
+        "12時に　さとうさんの　うちで"
+      ],
+      answer: 0,
+      kana: "12時半に 駅の 西口で",
+      exp_en: "The email explicitly says: 『12時半に 駅の 西口で 待っています』.",
+      exp_bn: "ইমেলে স্পষ্টভাবে বলা হয়েছে: ১২:৩০ টায় স্টেশনের পশ্চিম মুখে অপেক্ষা করব।"
+    },
+    {
+      section: "読解 (N5 Reading Comprehension)",
+      subtype: "問題8：内容理解（短文）",
+      lesson: "L13-25",
+      passage: "【図書館の　注意】\n本は　1人　5さつまで　借りることができます。\n借りる期間は　2週間です。\n返却日を　守ってください。\n館内では　飲み物を　飲んではいけません。",
+      prompt: "図書館で　してはいけないことは　何ですか。",
+      options: [
+        "飲み物を　飲むこと",
+        "本を　5さつ　借りること",
+        "本を　2週間　読むこと",
+        "館内で　勉強すること"
+      ],
+      answer: 0,
+      kana: "飲み物を 飲むこと",
+      exp_en: "The notice says: 『館内では 飲み物を 飲んではいけません』 (Drinking is prohibited inside).",
+      exp_bn: "লাইব্রেরির নোটিশে পানীয় পান করা নিষিদ্ধ (飲み物を 飲んではいけません) বলা হয়েছে।"
+    },
+    {
+      section: "読解 (N5 Reading Comprehension)",
+      subtype: "問題8：内容理解（短文）",
+      lesson: "L1-12",
+      passage: "わたしは　毎朝　7時に　起きます。シャワーを　あびてから、パンと　たまごを　食べます。\nそれから、8時に　うちを　出て、電車で　学校へ　行きます。学校は　8時45分に　始まります。",
+      prompt: "この人は　朝ごはんの　前に　何をしますか。",
+      options: [
+        "シャワーを　あびます",
+        "学校へ　行きます",
+        "電車に　乗ります",
+        "勉強を　します"
+      ],
+      answer: 0,
+      kana: "シャワーを あびます。",
+      exp_en: "The passage states: 『シャワーを あびてから、パンと たまごを 食べます』 (After taking a shower, I eat breakfast).",
+      exp_bn: "প্যারাগ্রাফে বলা হয়েছে: শাওয়ার নেওয়ার পর সকালের নাস্তা করি।"
+    },
+    {
+      section: "読解 (N5 Reading Comprehension)",
+      subtype: "問題8：内容理解（短文）",
+      lesson: "L13-25",
+      passage: "きのう　デパートへ　行きました。母の　誕生日の　プレゼントに　青い　スカーフを　買いました。\nとても　きれいでしたが、少し　高かったです。でも、母は　とても　喜んでくれました。",
+      prompt: "この人は　母に　何を　あげましたか。",
+      options: [
+        "青い　スカーフ",
+        "高い　デパートの　服",
+        "おいしい　ケーキ",
+        "誕生日カード"
+      ],
+      answer: 0,
+      kana: "青い スカーフ",
+      exp_en: "The text says: 『母の 誕生日の プレゼントに 青い スカーフを 買いました』.",
+      exp_bn: "মায়ের জন্মদিনের উপহার হিসেবে নীল স্কার্ফ কিনে দিয়েছিলেন।"
+    }
+
   ];
   const COMPACT_FALLBACK_N5 = CORE_QUESTION_BANK_N5;
   const CORE_QUESTION_BANK_N4 = [
@@ -1769,6 +2416,252 @@
       exp_en: "The email explains: The meeting is moved from 10 AM to 2 PM, while the room remains the same (Meeting Room 2).",
       exp_bn: "ইমেলে বলা হয়েছে: মিটিংয়ের সময় সকাল ১০টা থেকে দুপুর ২টায় পরিবর্তন হয়েছে এবং স্থান একই থাকছে।"
     }
+  ,
+    {
+      section: "文字・語彙 (N4 Vocabulary & Kanji)",
+      subtype: "問題1：漢字読み",
+      lesson: "L26-35",
+      prompt: "かれの　意見に　<u>反対</u>しました。",
+      options: ["はんたい", "さんせい", "あんぜん", "きけん"],
+      answer: 0,
+      kana: "かれの いけんに はんたいしました。",
+      exp_en: "「反対」 is read 「はんたい」 (opposition/disagree).",
+      exp_bn: "「反対」-এর উচ্চারণ 「はんたい」 (বিরোধিতা/দ্বিমত)।"
+    },
+    {
+      section: "文字・語彙 (N4 Vocabulary & Kanji)",
+      subtype: "問題1：漢字読み",
+      lesson: "L26-35",
+      prompt: "急な　用事で　会議を　<u>中止</u>しました。",
+      options: ["ちゅうし", "ちゅうい", "きんし", "しゅうりょう"],
+      answer: 0,
+      kana: "きゅうな ようじで かいぎを ちゅうししました。",
+      exp_en: "「中止」 is read 「ちゅうし」 (cancellation/suspension).",
+      exp_bn: "「中止」-এর উচ্চারণ 「ちゅうし」 (বাতিল/স্থগিত)।"
+    },
+    {
+      section: "文字・語彙 (N4 Vocabulary & Kanji)",
+      subtype: "問題1：漢字読み",
+      lesson: "L36-40",
+      prompt: "パソコンの　<u>修理</u>を　お願いしました。",
+      options: ["しゅうり", "じゅんび", "れんしゅう", "しょうかい"],
+      answer: 0,
+      kana: "パソコンの しゅうりを おねがいしました。",
+      exp_en: "「修理」 is read 「しゅうり」 (repair).",
+      exp_bn: "「修理」-এর উচ্চারণ 「しゅうり」 (মেরামত)।"
+    },
+    {
+      section: "文字・語彙 (N4 Vocabulary & Kanji)",
+      subtype: "問題2：表記",
+      lesson: "L26-35",
+      prompt: "すきな　色を　<u>えらんで</u>ください。",
+      options: ["選んで", "運んで", "通んで", "進んで"],
+      answer: 0,
+      kana: "すきな いろを えらんでください。",
+      exp_en: "「えらぶ」 is written with the kanji 「選ぶ」 (to choose/select).",
+      exp_bn: "「えらぶ」-এর কাঞ্জি 「選ぶ」 (পছন্দ বা নির্বাচন করা)।"
+    },
+    {
+      section: "文字・語彙 (N4 Vocabulary & Kanji)",
+      subtype: "問題2：表記",
+      lesson: "L36-40",
+      prompt: "にもつを　車で　<u>はこびます</u>。",
+      options: ["運びます", "選びます", "通びます", "連びます"],
+      answer: 0,
+      kana: "にもつを くるまで はこびます。",
+      exp_en: "「はこぶ」 is written with the kanji 「運ぶ」 (to transport/carry).",
+      exp_bn: "「はこぶ」-এর কাঞ্জি 「運ぶ」 (বহন বা পরিবহন করা)।"
+    },
+    {
+      section: "文字・語彙 (N4 Vocabulary & Kanji)",
+      subtype: "問題3：文脈規定",
+      lesson: "L26-35",
+      prompt: "熱が　ありますから、（　　）無理を　しないでください。",
+      options: ["決して", "必ず", "すっかり", "やっと"],
+      answer: 0,
+      kana: "ねつが ありますから、けっして むりを しないでください。",
+      exp_en: "「決して〜ない」 means 'by no means / definitely do not'.",
+      exp_bn: "কোনোভাবেই বা কিছুতেই না বোঝাতে 「決して〜ない」 ব্যবহৃত হয়।"
+    },
+    {
+      section: "文字・語彙 (N4 Vocabulary & Kanji)",
+      subtype: "問題3：文脈規定",
+      lesson: "L36-40",
+      prompt: "さいふを　どこかに　（　　）しまいました。",
+      options: ["落として", "倒して", "こわして", "こぼして"],
+      answer: 0,
+      kana: "さいふを どこかに おとしてしまいました。",
+      exp_en: "「落とす」 means 'to drop/lose' an item.",
+      exp_bn: "মানিব্যাগ কোথাও ফেলে দিয়েছি (落としてしまいました)।"
+    },
+    {
+      section: "文字・語彙 (N4 Vocabulary & Kanji)",
+      subtype: "問題4：言い換え類義",
+      lesson: "L26-35",
+      prompt: "会議の　時間が　<u>たしか</u>　午後2時でした。",
+      options: ["たぶん", "ぜったいに", "かならず", "けっして"],
+      answer: 0,
+      kana: "かいぎの じかんが たしか ごご2じでした。",
+      exp_en: "「たしか」 used adverbially expresses 'if I remember correctly / probably' (たぶん/記憶では).",
+      exp_bn: "যদি ভুল না করে থাকি / সম্ভবত বোঝাতে 「たしか」 ব্যবহৃত হয়।"
+    },
+    {
+      section: "文字・語彙 (N4 Vocabulary & Kanji)",
+      subtype: "問題5：用法",
+      lesson: "L26-35",
+      prompt: "「熱心」の　ただしい　つかいかたは　どれですか。",
+      options: [
+        "かれは　いつも　熱心に　日本語を　勉強しています。",
+        "きょうの　スープは　とても　熱心で　おいしいです。",
+        "あしたは　熱心な　雨が　ふるでしょう。",
+        "この　へやは　熱心で　あたたかいです。"
+      ],
+      answer: 0,
+      kana: "かれは いつも ねっしんに にほんごを べんきょうしています。",
+      exp_en: "「熱心に」 means 'enthusiastically / diligently / zealously'.",
+      exp_bn: "আন্তরিকতা বা নিষ্ঠার সাথে পড়াশোনা বোঝাতে 「熱心に」(অধ্যবসায়ের সাথে) ব্যবহৃত হয়।"
+    },
+    {
+      section: "文法 (N4 Grammar)",
+      subtype: "問題6：文の文法1",
+      lesson: "L26-35",
+      prompt: "日本語を　上手に　話せる（　　）なりたいです。",
+      options: ["ように", "そうに", "ために", "ことに"],
+      answer: 0,
+      kana: "にほんごを じょうずに はなせるように なりたいです。",
+      exp_en: "Change of state with potential verb: Verb potential + ようになる ('come to be able to').",
+      exp_bn: "সক্ষমতার পরিবর্তন বোঝাতে Potential verb + ように + なりたい ('বলতে পারতে চাই')।"
+    },
+    {
+      section: "文法 (N4 Grammar)",
+      subtype: "問題6：文の文法1",
+      lesson: "L36-40",
+      prompt: "電車で　足を　（　　）しまいました。",
+      options: ["踏まれて", "踏んで", "踏ませて", "踏まれても"],
+      answer: 0,
+      kana: "でんしゃで あしを ふまれてしまいました。",
+      exp_en: "Suffering passive (迷惑の受身): 足を踏まれる ('to have one's foot stepped on').",
+      exp_bn: "অস্বস্তিকর প্যাসিভ রূপ (足を踏まれてしまいました - পায়ে পা লেগে যাওয়ার কষ্ট)।"
+    },
+    {
+      section: "文法 (N4 Grammar)",
+      subtype: "問題6：文の文法1",
+      lesson: "L36-40",
+      prompt: "部長に　おいしい　お酒を　（　　）。",
+      options: ["いただきました", "くださりました", "あげました", "やりました"],
+      answer: 0,
+      kana: "ぶちょうに おいしい おさけを いただきました。",
+      exp_en: "Humble receiving from a superior: 〜ていただく / 〜をいただく (humble equivalent of もらう).",
+      exp_bn: "উর্ধ্বতন ব্যক্তির কাছ থেকে কিছু গ্রহণ করার ক্ষেত্রে বিনীত রূপ 「いただきました」 বসে।"
+    },
+    {
+      section: "文法 (N4 Grammar)",
+      subtype: "問題6：文の文法1",
+      lesson: "L41-50",
+      prompt: "この　薬は　苦くて　（　　）にくいです。",
+      options: ["飲み", "飲む", "飲んで", "飲ま"],
+      answer: 0,
+      kana: "この くすりは にがくて のみにくいです。",
+      exp_en: "Hard to do: Verb stem + にくい (飲みます → 飲みにくい).",
+      exp_bn: "কোনো কাজ করা কঠিন বোঝাতে Verb stem + にくい (飲みにくい - খেতে কষ্টকর)।"
+    },
+    {
+      section: "文法 (N4 Grammar)",
+      subtype: "問題6：文の文法1",
+      lesson: "L41-50",
+      prompt: "あしたは　雪が　降る（　　）しれません。",
+      options: ["かも", "でも", "なら", "ほど"],
+      answer: 0,
+      kana: "あしたは ゆきが ふるかもしれません。",
+      exp_en: "Possibility: 〜かもしれない ('might / may').",
+      exp_bn: "সম্ভাবনা প্রকাশে 〜かもしれない ('হয়তো হতে পারে') ব্যবহৃত হয়।"
+    },
+    {
+      section: "文法 (N4 Grammar)",
+      subtype: "問題7：★文の組み立て",
+      lesson: "L26-35",
+      prompt: "",
+      starData: {
+        before: "時間が",
+        after: "説明できません。",
+        ordered: ["ないので、", "くわしく", "することが", "全部を"],
+        starPos: 1
+      },
+      options: ["くわしく", "ないので、", "全部を", "することが"],
+      answer: 0,
+      kana: "時間が ないので、 【★ くわしく】 全部を することが 説明できません。",
+      exp_en: "Order: 時間が ないので、 【★ くわしく】 全部を することが 説明できません。 Star is position 2 (くわしく).",
+      exp_bn: "সঠিক বাক্যক্রম: 時間が ないので、 【★ くわしく】 全部を することが 説明できません। তারকার ঘরে 'くわしく'।"
+    },
+    {
+      section: "文法 (N4 Grammar)",
+      subtype: "問題7：★文の組み立て",
+      lesson: "L36-40",
+      prompt: "",
+      starData: {
+        before: "日本語が",
+        after: "頑張ります。",
+        ordered: ["もっと", "上手に", "ように、", "話せる"],
+        starPos: 2
+      },
+      options: ["ように、", "もっと", "上手に", "話せる"],
+      answer: 0,
+      kana: "日本語が もっと 上手に 【★ ように、】 話せる 頑張ります。",
+      exp_en: "Order: 日本語が もっと (1) 上手に (2) 話せる (3) 【★ ように、】 (4) 頑張ります。 Star is position 4 (ように、).",
+      exp_bn: "সঠিক ক্রম: 日本語が もっと 上手に 話せる 【★ ように、】 頑張ります। তারকার ঘরে 'ように、'।"
+    },
+    {
+      section: "読解 (N4 Reading Comprehension)",
+      subtype: "問題8：内容理解（短文）",
+      lesson: "L26-35",
+      passage: "【アパートの　ルール】\nごみは　朝8時までに　指定の場所に　出してください。\n燃えるごみは　月曜日と　木曜日、燃えないごみは　第2水曜日です。\n夜の間は　ごみを　外に　置かないでください。動物が　散らかす恐れがあります。",
+      prompt: "アパートの　住民が　気をつけるべきことは　何ですか。",
+      options: [
+        "夜の間に　ごみを　外に出してはいけない。",
+        "燃えるごみは　水曜日の朝に出す。",
+        "ごみは　朝9時までに出せばよい。",
+        "第1水曜日に　燃えないごみを出す。"
+      ],
+      answer: 0,
+      kana: "夜の間に ごみを 外に出してはいけない。",
+      exp_en: "The rule states: 『夜の間は ごみを 外に 置かないでください』.",
+      exp_bn: "নিয়মে বলা হয়েছে: রাতের বেলায় বাইরে আবর্জনা রাখা যাবে না।"
+    },
+    {
+      section: "読解 (N4 Reading Comprehension)",
+      subtype: "問題8：内容理解（短文）",
+      lesson: "L36-40",
+      passage: "【イベント案内】\n今度の日曜日に　国際交流パーティーを　開きます。\n外国人と　日本人が　一緒に　各国の料理を　作って　食べます。\n場所：市民会館　3階調理室\n時間：午前11時〜午後2時\n費用：大人1500円（高校生以下は無料）",
+      prompt: "高校生が　このパーティーに　参加する場合、いくら払いますか。",
+      options: [
+        "0円（無料）",
+        "1500円",
+        "750円",
+        "3000円"
+      ],
+      answer: 0,
+      kana: "0円（無料）",
+      exp_en: "The notice says: 『高校生以下は無料』 (High school students and below are free of charge).",
+      exp_bn: "নোটিশে বলা হয়েছে: হাই স্কুলের ছাত্র বা তার কম বয়সীদের জন্য সম্পূর্ণ বিনামূল্যে (무료)।"
+    },
+    {
+      section: "読解 (N4 Reading Comprehension)",
+      subtype: "問題8：内容理解（短文）",
+      lesson: "L41-50",
+      passage: "【お知らせ】\nエレベーターの定期点検のため、明日午前9時から12時までエレベーターが停止します。\n点検中は非常階段をご利用ください。\nご不便をおかけしますが、ご理解とご協力をお願い申し上げます。\nマンション管理組合",
+      prompt: "明日の　午前10時に　上の階へ　行くには　どうしますか。",
+      options: [
+        "階段を　使う",
+        "エレベーターを　使う",
+        "12時まで　下で待つ",
+        "管理人に　頼む"
+      ],
+      answer: 0,
+      kana: "階段を 使う",
+      exp_en: "The notice instructs residents to use the stairs (非常階段をご利用ください) while the elevator is halted.",
+      exp_bn: "এলিভেটর বন্ধ থাকার সময় সিঁড়ি ব্যবহার করতে বলা হয়েছে।"
+    }
+
   ];
 
 
@@ -1795,8 +2688,93 @@
     CLOUDFLARE_URL: "jlpt_cloudflare_url_v4",
     kanjiList: (lvl) => `jlpt_${lvl}_kanji_list_v4`,
     kanjiDetails: (lvl) => `jlpt_${lvl}_kanji_details_v4`,
-    vocabPool: (lvl) => `jlpt_${lvl}_vocab_pool_v4`
+    vocabPool: (lvl) => `jlpt_${lvl}_vocab_pool_v4`,
+    ACTIVE_EXAM: "jlpt_active_exam_v4"
   };
+
+  function saveActiveExam() {
+    if (isGraded || currentQuestions.length === 0) {
+      localStorage.removeItem(STORAGE.ACTIVE_EXAM);
+      return;
+    }
+    const state = {
+      level: currentLevel,
+      scope: $("lessonRange").value,
+      filter: $("sectionFilter").value,
+      questions: currentQuestions,
+      userAnswers,
+      flagged: Array.from(flaggedQuestions),
+      starSlotsState,
+      remainingSeconds,
+      timestamp: Date.now()
+    };
+    saveJSON(STORAGE.ACTIVE_EXAM, state);
+  }
+
+  function checkResumeExam() {
+    const saved = loadJSON(STORAGE.ACTIVE_EXAM, null);
+    const banner = $("resumeBanner");
+    if (!saved || !Array.isArray(saved.questions) || saved.questions.length === 0) {
+      if (banner) banner.style.display = "none";
+      return;
+    }
+    // Only offer resume if saved within 48 hours
+    if (Date.now() - (saved.timestamp || 0) > 48 * 3600 * 1000) {
+      localStorage.removeItem(STORAGE.ACTIVE_EXAM);
+      if (banner) banner.style.display = "none";
+      return;
+    }
+    const answered = Object.keys(saved.userAnswers || {}).length;
+    const mins = Math.max(1, Math.round((saved.remainingSeconds || 0) / 60));
+    $("resumeText").innerHTML = `⚠️ In-progress <strong>JLPT ${saved.level}</strong> exam found (${answered}/${saved.questions.length} answered, ~${mins}m remaining).`;
+    banner.style.display = "flex";
+  }
+
+  function resumeActiveExam() {
+    const saved = loadJSON(STORAGE.ACTIVE_EXAM, null);
+    if (!saved) return;
+    setLevel(saved.level || "N5");
+    if (saved.scope) $("lessonRange").value = saved.scope;
+    if (saved.filter) $("sectionFilter").value = saved.filter;
+    currentQuestions = saved.questions;
+    userAnswers = saved.userAnswers || {};
+    flaggedQuestions = new Set(saved.flagged || []);
+    starSlotsState = saved.starSlotsState || {};
+    isGraded = false;
+    reviewWrongOnly = false;
+    focusedQIdx = 0;
+    $("resumeBanner").style.display = "none";
+    $("scoreCard").classList.remove("visible");
+
+    if (saved.remainingSeconds > 0) {
+      remainingSeconds = saved.remainingSeconds;
+      timerEndTime = Date.now() + remainingSeconds * 1000;
+      timerIsRunning = true;
+      $("timerDisplay").classList.add("active");
+      updateTimerText();
+      timerInterval = setInterval(() => {
+        const now = Date.now();
+        remainingSeconds = Math.max(0, Math.round((timerEndTime - now) / 1000));
+        if (remainingSeconds <= 60) $("timerDisplay").classList.add("warning");
+        if (remainingSeconds <= 0) {
+          stopTimer();
+          gradeExam(true);
+          alert("⏰ Time is up! Your exam has been graded.");
+          return;
+        }
+        updateTimerText();
+      }, 500);
+    }
+    $("statusBadge").textContent = `⚡ Resumed ${currentLevel} Exam (${currentQuestions.length} Qs)`;
+    renderQuestions();
+    showToast("Exam successfully resumed!");
+  }
+
+  function discardActiveExam() {
+    localStorage.removeItem(STORAGE.ACTIVE_EXAM);
+    $("resumeBanner").style.display = "none";
+    showToast("In-progress exam discarded.");
+  }
 
   const N4_RANGES = new Set(["L26-35", "L36-40", "L41-50"]);
   const N5_RANGES = new Set(["L1-25", "L1-12", "L13-25"]);
@@ -1816,6 +2794,10 @@
   let activeSlotCursor = {};
   let focusedQIdx = 0;
   let isGraded = false;
+  let viewMode = localStorage.getItem("jlpt_view_mode_v4") || "list"; // "list" | "single"
+  let flashcardIndex = 0;
+  let flashcardList = [];
+  let fontScale = parseFloat(localStorage.getItem("jlpt_font_scale_v4") || "1");
   let reviewWrongOnly = false;
   let lastScoreSummary = null;
   let timerInterval = null;
@@ -2082,6 +3064,12 @@
     const mBtn = $("practiceMistakesBtn");
     mBtn.disabled = mistakes.length === 0;
     mBtn.innerHTML = `<span>🔁 Saved Mistakes (${mistakes.length})</span>`;
+
+    const fcBtn = $("flashcardsBtn");
+    if (fcBtn) {
+      fcBtn.disabled = mistakes.length === 0;
+      fcBtn.innerHTML = `<span>🃏 Flashcards (${mistakes.length})</span>`;
+    }
 
     const stats = loadJSON(STORAGE.STATS, getDefaultStats());
     const acc = stats.totalSolved > 0 ? Math.round((stats.totalCorrect / stats.totalSolved) * 100) : 0;
@@ -2886,6 +3874,122 @@ Return ONLY a valid JSON array matching this schema:
     }
   }
 
+  let currentFcIndex = 0;
+  let flashcardDeck = [];
+
+  function startFlashcardMode() {
+    const mistakes = loadJSON(STORAGE.MISTAKES, []);
+    if (mistakes.length === 0) return;
+    flashcardDeck = shuffle(mistakes);
+    currentFcIndex = 0;
+    isGraded = false;
+    stopTimer();
+    $("timerDisplay").classList.remove("active");
+    $("scoreCard").classList.remove("visible");
+    $("submitBar").classList.remove("visible");
+    $("viewSwitchRow").style.display = "none";
+    $("singleBottomBar").classList.remove("visible");
+    $("navStrip").classList.remove("visible");
+    renderFlashcard();
+  }
+
+  function renderFlashcard() {
+    const container = $("examContainer");
+    if (flashcardDeck.length === 0 || currentFcIndex >= flashcardDeck.length) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <h2>🎉 Flashcard Session Complete!</h2>
+          <p>Great job reviewing your mistake bank.</p>
+          <button type="button" class="btn-generate" onclick="location.reload()" style="max-width:240px;margin:16px auto 0;">Return to Exam</button>
+        </div>
+      `;
+      $("statusBadge").textContent = "Flashcards Done";
+      updateStatsUI();
+      return;
+    }
+
+    const item = flashcardDeck[currentFcIndex];
+    const q = item.question;
+    const streak = item.streak || 0;
+    const ansText = (q.options && q.options[q.answer]) || "";
+
+    $("statusBadge").textContent = `🃏 Flashcard ${currentFcIndex + 1} of ${flashcardDeck.length} (Mastery: ${streak}/2)`;
+
+    container.innerHTML = `
+      <div style="max-width:620px;margin:0 auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-size:0.84rem;font-weight:700;color:var(--text-muted);">Card ${currentFcIndex + 1} / ${flashcardDeck.length}</span>
+          <span class="streak-tag">Mastery Streak: ${streak}/2</span>
+        </div>
+
+        <div class="flashcard-stage" id="fcCardStage" title="Tap to flip card">
+          <div class="flashcard-inner">
+            <div class="flashcard-face flashcard-front">
+              <div class="flashcard-tag">${escapeHTML(q.subtype || "JLPT Review")}</div>
+              ${q.passage ? `<div class="passage-box" style="text-align:left;max-height:120px;overflow-y:auto;margin-bottom:10px;font-size:0.9rem;">${sanitizeRichHTML(q.passage)}</div>` : ""}
+              <div class="flashcard-prompt">${sanitizeRichHTML(q.prompt || (q.starData ? q.starData.before + " ＿＿ ★ ＿＿ " + q.starData.after : ""))}</div>
+              <div class="flashcard-hint">👆 Tap or click to reveal answer & explanations</div>
+            </div>
+            <div class="flashcard-face flashcard-back">
+              <div class="flashcard-tag">正解 (Correct Answer)</div>
+              <div style="font-size:1.5rem;font-weight:800;color:var(--primary);margin:6px 0;">${escapeHTML(ansText)}</div>
+              ${q.kana ? `<div style="font-size:0.96rem;color:var(--text-muted);margin-bottom:8px;">ひらがな: ${escapeHTML(q.kana)}</div>` : ""}
+              ${q.exp_bn ? `<div class="exp-bn" style="font-size:0.86rem;margin-top:6px;">🇧🇩 ${escapeHTML(q.exp_bn)}</div>` : ""}
+              ${q.exp_en ? `<div class="exp-en" style="font-size:0.86rem;margin-top:4px;">🇬🇧 ${escapeHTML(q.exp_en)}</div>` : ""}
+            </div>
+          </div>
+        </div>
+
+        <div class="flashcard-actions">
+          <button type="button" class="fc-btn fc-btn-wrong" id="fcStillLearningBtn">❌ Still Learning</button>
+          <button type="button" class="fc-btn fc-btn-pass" id="fcMasteredBtn">✅ Mastered (+1 Streak)</button>
+        </div>
+
+        <div style="text-align:center;margin-top:16px;">
+          <button type="button" class="btn-discard" id="fcExitBtn">✕ Exit Flashcard Mode</button>
+        </div>
+      </div>
+    `;
+
+    const stage = $("fcCardStage");
+    stage.addEventListener("click", () => stage.classList.toggle("flipped"));
+
+    $("fcStillLearningBtn").addEventListener("click", () => {
+      item.streak = 0;
+      const bank = loadJSON(STORAGE.MISTAKES, []);
+      const idx = bank.findIndex((m) => m.id === item.id);
+      if (idx !== -1) {
+        bank[idx].streak = 0;
+        saveJSON(STORAGE.MISTAKES, bank);
+      }
+      currentFcIndex++;
+      renderFlashcard();
+    });
+
+    $("fcMasteredBtn").addEventListener("click", () => {
+      item.streak = (item.streak || 0) + 1;
+      const bank = loadJSON(STORAGE.MISTAKES, []);
+      const idx = bank.findIndex((m) => m.id === item.id);
+      if (idx !== -1) {
+        bank[idx].streak = (bank[idx].streak || 0) + 1;
+        if (bank[idx].streak >= 2) {
+          bank.splice(idx, 1);
+          showToast("🎉 Question mastered & cleared from mistake bank!");
+        } else {
+          showToast("Streak: 1/2! Get it right once more to clear.");
+        }
+        saveJSON(STORAGE.MISTAKES, bank);
+      }
+      currentFcIndex++;
+      renderFlashcard();
+    });
+
+    $("fcExitBtn").addEventListener("click", () => {
+      updateStatsUI();
+      location.reload();
+    });
+  }
+
   function startMistakeDrill() {
     const mistakes = loadJSON(STORAGE.MISTAKES, []);
     if (mistakes.length === 0) return;
@@ -3097,6 +4201,9 @@ Return ONLY a valid JSON array matching this schema:
         container.appendChild(pBox);
       }
 
+      const isCurrentSingle = viewMode === "single" && !isGraded;
+      if (isCurrentSingle && idx !== focusedQIdx) return;
+
       const card = document.createElement("article");
       card.className = "q-card";
       card.id = `q-card-${idx}`;
@@ -3252,9 +4359,83 @@ Return ONLY a valid JSON array matching this schema:
       container.innerHTML = `<div class="empty-state"><h2>🎉 Perfect Score! Zero Mistakes!</h2><p>Every question in this set was answered correctly.</p></div>`;
     }
 
-    $("submitBar").classList.toggle("visible", currentQuestions.length > 0 && !isGraded);
+    $("submitBar").classList.toggle("visible", currentQuestions.length > 0 && !isGraded && viewMode !== "single");
+    
+    // Single Question View Controls
+    const isSingleActive = viewMode === "single" && currentQuestions.length > 0 && !isGraded;
+    $("viewSwitchRow").style.display = currentQuestions.length > 0 ? "flex" : "none";
+    $("singleBottomBar").classList.toggle("visible", isSingleActive);
+    $("singleProgressWrap").style.display = isSingleActive ? "block" : "none";
+
+    if (isSingleActive) {
+      const answeredCount = Object.keys(userAnswers).length;
+      const pct = Math.round((answeredCount / currentQuestions.length) * 100);
+      $("singleProgressFill").style.width = `${pct}%`;
+      $("singleProgressText").textContent = `${focusedQIdx + 1} / ${currentQuestions.length} (${pct}% answered)`;
+      $("singleBottomCur").textContent = focusedQIdx + 1;
+      $("singleBottomTotal").textContent = currentQuestions.length;
+      $("singlePrevBtn").disabled = focusedQIdx === 0;
+      if (focusedQIdx === currentQuestions.length - 1) {
+        $("singleNextBtn").textContent = "Finish & Grade ✔";
+      } else {
+        $("singleNextBtn").textContent = "Next ▶";
+      }
+    }
+
+    saveActiveExam();
     updateNavigatorUI();
     buildPrintWorksheet();
+  }
+
+  // Canvas Confetti Celebration on Pass
+  function launchConfetti() {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const canvas = $("confettiCanvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    canvas.style.display = "block";
+
+    const colors = ["#1d4ed8", "#0284c7", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#8b5cf6"];
+    const particles = [];
+    for (let i = 0; i < 75; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * -canvas.height * 0.4,
+        w: Math.random() * 8 + 5,
+        h: Math.random() * 12 + 6,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        vx: (Math.random() - 0.5) * 3,
+        vy: Math.random() * 3 + 2.5,
+        rot: Math.random() * 360,
+        vRot: (Math.random() - 0.5) * 8
+      });
+    }
+
+    const start = performance.now();
+    function animate(time) {
+      const elapsed = time - start;
+      if (elapsed > 2800) {
+        canvas.style.display = "none";
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach((p) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rot += p.vRot;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rot * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      });
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
   }
 
   // =========================================================================
@@ -3361,6 +4542,7 @@ Return ONLY a valid JSON array matching this schema:
     if (passed) {
       passTag.textContent = `🎉 ${currentLevel} 合格 (PASS ≥ ${overallThreshold}% + 基準点クリア)`;
       passTag.className = "pass-tag pass";
+      launchConfetti();
     } else {
       let failDetail = pct < overallThreshold ? `総合点不足 (<${overallThreshold}%)` : "";
       if (!allSectionsPassed) {
@@ -3913,6 +5095,46 @@ Return ONLY a valid JSON array matching this schema:
     }
   });
 
+  // View Mode Switcher
+  $("btnViewList").addEventListener("click", () => {
+    viewMode = "list";
+    localStorage.setItem("jlpt_view_mode_v4", "list");
+    $("btnViewList").classList.add("active");
+    $("btnViewSingle").classList.remove("active");
+    renderQuestions();
+  });
+
+  $("btnViewSingle").addEventListener("click", () => {
+    viewMode = "single";
+    localStorage.setItem("jlpt_view_mode_v4", "single");
+    $("btnViewSingle").classList.add("active");
+    $("btnViewList").classList.remove("active");
+    renderQuestions();
+  });
+
+  // Single Question Bottom Bar
+  $("singlePrevBtn").addEventListener("click", () => {
+    if (focusedQIdx > 0) {
+      focusQuestion(focusedQIdx - 1, true);
+    }
+  });
+
+  $("singleNextBtn").addEventListener("click", () => {
+    if (focusedQIdx < currentQuestions.length - 1) {
+      focusQuestion(focusedQIdx + 1, true);
+    } else {
+      gradeExam(false);
+    }
+  });
+
+  $("singleJumpBtn").addEventListener("click", () => {
+    $("navStrip").scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+
+  // Resume In-Progress Exam Actions
+  $("btnResumeExam").addEventListener("click", resumeActiveExam);
+  $("btnDiscardExam").addEventListener("click", discardActiveExam);
+
   $("generateBtn").addEventListener("click", generateExam);
   $("practiceMistakesBtn").addEventListener("click", startMistakeDrill);
   $("gradeBtn").addEventListener("click", () => gradeExam(false));
@@ -4054,8 +5276,26 @@ Return ONLY a valid JSON array matching this schema:
   migrateStorage();
   applyToggleStatesUI();
   setLevel(currentLevel);
+  checkResumeExam();
+
+  // Register Service Worker for Offline PWA Capabilities
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js", { scope: "./" }).then(
+        (reg) => console.log("SW registered with scope:", reg.scope),
+        (err) => console.log("SW registration error:", err)
+      );
+    });
+  }
+
 })();
 </script>
   <div id="appToast" class="toast-msg"></div>
+  <!-- Floating Bottom Bar for Focus Mode -->
+  <div class="single-bottom-bar" id="singleBottomBar" aria-label="Question Navigation Bar">
+    <button type="button" class="single-nav-btn" id="singlePrevBtn">◀ Prev</button>
+    <button type="button" class="single-nav-btn" id="singleJumpBtn" style="font-size:0.84rem;">Q <span id="singleBottomCur">1</span> / <span id="singleBottomTotal">15</span> ▾</button>
+    <button type="button" class="single-nav-btn primary-btn" id="singleNextBtn">Next ▶</button>
+  </div>
 </body>
 </html>
