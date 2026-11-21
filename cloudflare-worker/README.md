@@ -16,8 +16,8 @@ Secures your **Telegram Bot Token** and **Google Gemini API Key** so they are ne
 5. Add your Secrets:
    - Go to your Worker's **Settings** ➔ **Variables and Secrets**.
    - Under **Secrets**, click **Add**:
-     - Name: `TELEGRAM_BOT_TOKEN` | Value: `8863407575:AAFICc_QFXygIzV-3h_Ia4U7ZRmnaOdpy9Y`
-     - Name: `GEMINI_API_KEY` | Value: *(Your Google Gemini API Key)*
+     - Name: `TELEGRAM_BOT_TOKEN` | Value: `YOUR_TELEGRAM_BOT_TOKEN`
+     - Name: `GEMINI_API_KEY` | Value: *(Your Google AI Studio API Key)*
    - Click **Deploy / Save**.
 6. Copy your Worker URL:
    - Example: `https://jlpt-mock-exam-proxy.<your-subdomain>.workers.dev`
@@ -35,7 +35,7 @@ npx wrangler login
 
 # Set Secrets
 npx wrangler secret put TELEGRAM_BOT_TOKEN
-# Paste: 8863407575:AAFICc_QFXygIzV-3h_Ia4U7ZRmnaOdpy9Y
+# Paste: YOUR_TELEGRAM_BOT_TOKEN
 
 npx wrangler secret put GEMINI_API_KEY
 # Paste: your_gemini_api_key
