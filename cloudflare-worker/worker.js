@@ -4,7 +4,7 @@
  * 
  * Environment Variables (Set in Cloudflare Dashboard -> Settings -> Variables):
  * - TELEGRAM_BOT_TOKEN: Your Telegram bot token (e.g. 8863407575:AAFICc_QFXygIzV-3h_Ia4U7ZRmnaOdpy9Y)
- * - GEMINI_API_KEY: Your Google Gemini API key (e.g. AIzaSy...)
+ * - GEMINI_API_KEY: Your Google Gemini API key (AIza... or AQ...)
  */
 
 export default {
@@ -18,7 +18,7 @@ export default {
         headers: {
           "Access-Control-Allow-Origin": origin,
           "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, Authorization",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization, X-API-Key",
           "Access-Control-Max-Age": "86400",
         },
       });
@@ -40,6 +40,8 @@ export default {
           service: "JLPT Mock Exam Cloudflare Proxy",
           author: "Md Mominur Islam",
           features: ["telegram-proxy", "gemini-proxy"],
+          hasTelegramToken: Boolean(env.TELEGRAM_BOT_TOKEN),
+          hasGeminiKey: Boolean(env.GEMINI_API_KEY),
         }),
         { status: 200, headers: corsHeaders }
       );
@@ -150,10 +152,15 @@ export default {
 
         for (const m of models) {
           try {
+            // Support both standard AIza keys and new AQ auth keys
             const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
             const gRes = await fetch(geminiUrl, {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: {
+                "Content-Type": "application/json",
+                "X-API-Key": apiKey,
+                "x-goog-api-key": apiKey
+              },
               body: JSON.stringify({
                 contents: [{ parts: [{ text: promptText }] }],
                 generationConfig: {
