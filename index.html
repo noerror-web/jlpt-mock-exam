@@ -1352,6 +1352,23 @@
     </div>
   </section>
 
+  <!-- Exam View Mode Switcher -->
+  <div class="view-switch-row" id="viewSwitchRow" style="display:none;">
+    <div class="view-mode-pill" role="group" aria-label="Exam Display Mode">
+      <button type="button" class="view-btn active" id="btnViewList" title="Show all questions in scrolling list">📜 List View</button>
+      <button type="button" class="view-btn" id="btnViewSingle" title="One question at a time with focus mode">🔲 Focus Mode</button>
+    </div>
+    <div class="single-progress-wrap" id="singleProgressWrap" style="display:none; flex-grow:1; max-width:260px;">
+      <div style="display:flex; justify-content:space-between; font-size:0.78rem; font-weight:600; color:var(--text-muted);">
+        <span>Progress</span>
+        <span id="singleProgressText">1 / 15</span>
+      </div>
+      <div class="single-progress-bar-bg">
+        <div class="single-progress-fill" id="singleProgressFill"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Question Navigator Bar -->
   <nav class="nav-strip" id="navStrip" aria-label="Question Navigator">
     <div class="nav-header">
