@@ -124,7 +124,8 @@
       .brand-titles h1 { font-size: 0.88rem !important; }
       .brand-author { display: none; }
       .lvl-btn { padding: 3px 8px !important; font-size: 0.76rem !important; }
-      .header-actions .icon-btn:not(#toggleSettingsBtn) { display: none !important; }
+      .header-actions .icon-btn:not(#toggleSettingsBtn):not(#toggleLangBtn) { display: none !important; }
+      #toggleLangBtn { padding: 4px 8px !important; font-size: 0.78rem !important; }
       #toggleSettingsBtn {
         padding: 5px 9px !important;
         font-size: 0.82rem !important;
@@ -1420,6 +1421,12 @@
   <footer class="app-footer">
     JLPT N5 / N4 Practice & Mock Exam Generator &bull; Author: <strong>Md Mominur Islam</strong>
   </footer>
+  <!-- Floating Bottom Bar for Focus Mode -->
+  <div class="single-bottom-bar" id="singleBottomBar" aria-label="Question Navigation Bar">
+    <button type="button" class="single-nav-btn" id="singlePrevBtn">◀ Prev</button>
+    <button type="button" class="single-nav-btn" id="singleJumpBtn" style="font-size:0.84rem;">Q <span id="singleBottomCur">1</span> / <span id="singleBottomTotal">15</span> ▾</button>
+    <button type="button" class="single-nav-btn primary-btn" id="singleNextBtn">Next ▶</button>
+  </div>
 </main>
 
 <!-- Floating Kanji Inline Dictionary Popover -->
@@ -5113,30 +5120,30 @@ Return ONLY a valid JSON array matching this schema:
   });
 
   // View Mode Switcher
-  $("btnViewList").addEventListener("click", () => {
+  $("btnViewList")?.addEventListener("click", () => {
     viewMode = "list";
     localStorage.setItem("jlpt_view_mode_v4", "list");
-    $("btnViewList").classList.add("active");
-    $("btnViewSingle").classList.remove("active");
+    $("btnViewList")?.classList.add("active");
+    $("btnViewSingle")?.classList.remove("active");
     renderQuestions();
   });
 
-  $("btnViewSingle").addEventListener("click", () => {
+  $("btnViewSingle")?.addEventListener("click", () => {
     viewMode = "single";
     localStorage.setItem("jlpt_view_mode_v4", "single");
-    $("btnViewSingle").classList.add("active");
-    $("btnViewList").classList.remove("active");
+    $("btnViewSingle")?.classList.add("active");
+    $("btnViewList")?.classList.remove("active");
     renderQuestions();
   });
 
   // Single Question Bottom Bar
-  $("singlePrevBtn").addEventListener("click", () => {
+  $("singlePrevBtn")?.addEventListener("click", () => {
     if (focusedQIdx > 0) {
       focusQuestion(focusedQIdx - 1, true);
     }
   });
 
-  $("singleNextBtn").addEventListener("click", () => {
+  $("singleNextBtn")?.addEventListener("click", () => {
     if (focusedQIdx < currentQuestions.length - 1) {
       focusQuestion(focusedQIdx + 1, true);
     } else {
@@ -5144,13 +5151,13 @@ Return ONLY a valid JSON array matching this schema:
     }
   });
 
-  $("singleJumpBtn").addEventListener("click", () => {
-    $("navStrip").scrollIntoView({ behavior: "smooth", block: "center" });
+  $("singleJumpBtn")?.addEventListener("click", () => {
+    $("navStrip")?.scrollIntoView({ behavior: "smooth", block: "center" });
   });
 
   // Resume In-Progress Exam Actions
-  $("btnResumeExam").addEventListener("click", resumeActiveExam);
-  $("btnDiscardExam").addEventListener("click", discardActiveExam);
+  $("btnResumeExam")?.addEventListener("click", resumeActiveExam);
+  $("btnDiscardExam")?.addEventListener("click", discardActiveExam);
 
   $("generateBtn").addEventListener("click", generateExam);
   $("practiceMistakesBtn").addEventListener("click", startMistakeDrill);
@@ -5308,11 +5315,6 @@ Return ONLY a valid JSON array matching this schema:
 })();
 </script>
   <div id="appToast" class="toast-msg"></div>
-  <!-- Floating Bottom Bar for Focus Mode -->
-  <div class="single-bottom-bar" id="singleBottomBar" aria-label="Question Navigation Bar">
-    <button type="button" class="single-nav-btn" id="singlePrevBtn">◀ Prev</button>
-    <button type="button" class="single-nav-btn" id="singleJumpBtn" style="font-size:0.84rem;">Q <span id="singleBottomCur">1</span> / <span id="singleBottomTotal">15</span> ▾</button>
-    <button type="button" class="single-nav-btn primary-btn" id="singleNextBtn">Next ▶</button>
-  </div>
+
 </body>
 </html>
