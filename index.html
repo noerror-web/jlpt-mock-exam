@@ -1004,7 +1004,7 @@
             Automatically push score slips and section breakdowns to your Telegram bot (<a href="https://t.me/bkttcmocktestbot" target="_blank" style="color:var(--primary);font-weight:600;text-decoration:none;">@bkttcmocktestbot</a>) upon submitting the exam.
           </p>
           <div class="btn-row" style="margin-bottom:8px;">
-            <input type="password" id="telegramTokenInput" placeholder="Telegram Bot Token" value="8863407575:AAFICc_QFXygIzV-3h_Ia4U7ZRmnaOdpy9Y" style="flex:1 1 200px;" />
+            <input type="password" id="telegramTokenInput" placeholder="Bot Token (or leave blank if using Cloudflare)" value="" style="flex:1 1 200px;" />
           </div>
           <div class="btn-row" style="margin-bottom:8px;">
             <input type="text" id="telegramChatIdInput" placeholder="Your Telegram Chat ID (e.g. 123456789 or @username)" style="flex:1 1 180px;" />
@@ -1013,6 +1013,19 @@
           <div class="btn-row" style="align-items:center;">
             <button type="button" class="btn-secondary active-filter" id="toggleTelegramAutoBtn">Auto-Push: ON</button>
             <span id="telegramStatusMsg" style="font-size:0.77rem;color:var(--text-muted);">Tip: Send /start to @bkttcmocktestbot & get your ID from @userinfobot</span>
+          </div>
+        </div>
+        <div class="drawer-box">
+          <h3>☁️ Cloudflare Worker Proxy (Secure Keys)</h3>
+          <p>
+            Securely route Telegram alerts and Google Gemini AI via your free Cloudflare Worker. Keeps your bot tokens and API keys 100% private.
+          </p>
+          <div class="btn-row" style="margin-bottom:8px;">
+            <input type="text" id="cloudflareUrlInput" placeholder="Cloudflare Worker URL (https://...workers.dev)" style="flex:1 1 200px;" />
+            <button type="button" class="btn-secondary" id="saveCloudflareBtn">Save & Test</button>
+          </div>
+          <div class="btn-row">
+            <span id="cloudflareStatusMsg" style="font-size:0.77rem;color:var(--text-muted);">See <code>cloudflare-worker/</code> in repo for 2-min deploy guide.</span>
           </div>
         </div>
 </div>
@@ -1464,6 +1477,7 @@
     TELEGRAM_TOKEN: "jlpt_telegram_token_v4",
     TELEGRAM_CHAT_ID: "jlpt_telegram_chat_id_v4",
     TELEGRAM_AUTOPUSH: "jlpt_telegram_autopush_v4",
+    CLOUDFLARE_URL: "jlpt_cloudflare_url_v4",
     kanjiList: (lvl) => `jlpt_${lvl}_kanji_list_v4`,
     kanjiDetails: (lvl) => `jlpt_${lvl}_kanji_details_v4`,
     vocabPool: (lvl) => `jlpt_${lvl}_vocab_pool_v4`
@@ -2070,6 +2084,26 @@ Return ONLY a valid JSON array matching this schema:
   }
 ]`;
 
+    // Check if Cloudflare Worker URL is configured
+    const cfUrl = ($("cloudflareUrlInput")?.value.trim() || localStorage.getItem(STORAGE.CLOUDFLARE_URL) || "").replace(/\/+$/, "");
+    if (cfUrl) {
+      try {
+        const cfRes = await fetchWithTimeout(`${cfUrl}/api/gemini`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ promptText, model: "gemini-2.5-flash" })
+        }, 26000);
+        const cfData = await cfRes.json();
+        if (cfData.ok && Array.isArray(cfData.data)) {
+          return cfData.data.map((q) => normalizeQuestion(q, level, lessonRange)).filter(Boolean);
+        }
+        if (!apiKey) throw new Error(cfData.error || "Cloudflare Gemini proxy error");
+      } catch (cfErr) {
+        if (!apiKey) throw cfErr;
+        console.warn("Cloudflare Gemini proxy failed, falling back to direct key:", cfErr);
+      }
+    }
+
     const models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
     let lastError = null;
 
@@ -2274,8 +2308,9 @@ Return ONLY a valid JSON array matching this schema:
       const apiKey = $("geminiKeyInput").value.trim() || localStorage.getItem(STORAGE.GEMINI_KEY) || "";
 
       if (mode === "gemini") {
-        if (!apiKey) {
-          alert("Please enter your Gemini API key in 'Tools & API' first, or switch to 'Online Live APIs + Sentences (No Key)'.");
+        const cfUrl = ($("cloudflareUrlInput")?.value.trim() || localStorage.getItem(STORAGE.CLOUDFLARE_URL) || "").replace(/\/+$/, "");
+        if (!apiKey && !cfUrl) {
+          alert("Please enter your Gemini API key or Cloudflare Proxy URL in 'Tools & API' first, or switch to 'Online Live APIs + Sentences (No Key)'.");
           $("settingsDrawer").classList.add("open");
           return;
         }
@@ -3132,7 +3167,6 @@ Return ONLY a valid JSON array matching this schema:
 
   async function pushResultToTelegram(summary, isManual = false) {
     if (!summary) return false;
-    const token = $("telegramTokenInput")?.value.trim() || localStorage.getItem(STORAGE.TELEGRAM_TOKEN) || "8863407575:AAFICc_QFXygIzV-3h_Ia4U7ZRmnaOdpy9Y";
     const chatId = $("telegramChatIdInput")?.value.trim() || localStorage.getItem(STORAGE.TELEGRAM_CHAT_ID);
 
     if (!isManual && !telegramAutoPush) return false;
@@ -3146,55 +3180,94 @@ Return ONLY a valid JSON array matching this schema:
     }
 
     const candidate = ($("candidateNameInput")?.value.trim() || localStorage.getItem(STORAGE.CANDIDATE_NAME) || "Student");
-    const badge = summary.passed ? "✅ PASS (合格ライン ≥ 60%)" : "❌ KEEP PRACTICING (< 60%)";
+    const cfUrl = ($("cloudflareUrlInput")?.value.trim() || localStorage.getItem(STORAGE.CLOUDFLARE_URL) || "").replace(/\/+$/, "");
 
-    let secText = "";
-    Object.entries(summary.sectionStats || {}).forEach(([secName, st]) => {
-      const sPct = Math.round((st.correct / st.total) * 100);
-      secText += `• ${secName}: ${st.correct}/${st.total} (${sPct}%)\n`;
-    });
+    // 1. Prioritize Cloudflare Proxy (Keeps Bot Token 100% Private)
+    if (cfUrl) {
+      try {
+        const cfRes = await fetchWithTimeout(`${cfUrl}/api/telegram`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chatId,
+            summary: {
+              ...summary,
+              candidate
+            }
+          })
+        }, 8000);
 
-    const msg = [
-      `🎯 *JLPT ${summary.level} EXAM SUBMISSION*`,
-      `━━━━━━━━━━━━━━━━━━━━`,
-      `👤 *Candidate:* ${candidate}`,
-      `📅 *Date:* ${summary.dateStr}`,
-      `📚 *Scope:* ${summary.scope}`,
-      `📊 *Score:* *${summary.correctTotal} / ${summary.total} (${summary.pct}%)*`,
-      `🏁 *Result:* ${badge}`,
-      `━━━━━━━━━━━━━━━━━━━━`,
-      `📋 *Section Breakdown:*`,
-      secText.trim(),
-      `━━━━━━━━━━━━━━━━━━━━`,
-      `🤖 *Author:* Md Mominur Islam`
-    ].join("\n");
-
-    try {
-      const url = `https://api.telegram.org/bot${encodeURIComponent(token)}/sendMessage`;
-      const res = await fetchWithTimeout(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: msg,
-          parse_mode: "Markdown"
-        })
-      }, 8000);
-
-      const json = await res.json();
-      if (json.ok) {
-        showToast("🚀 Results sent to your Telegram bot!");
-        return true;
-      } else {
-        console.warn("Telegram API error:", json);
-        if (isManual) alert("Telegram Error: " + (json.description || "Could not deliver message."));
-        return false;
+        const cfData = await cfRes.json();
+        if (cfData.ok) {
+          showToast("🚀 Results sent via Cloudflare to Telegram!");
+          return true;
+        } else {
+          console.warn("Cloudflare Telegram error:", cfData);
+          if (isManual) alert("Cloudflare Proxy Error: " + (cfData.error || cfData.description || "Failed to deliver."));
+        }
+      } catch (cfErr) {
+        console.warn("Cloudflare Proxy connection error:", cfErr);
       }
-    } catch (err) {
-      console.warn("Failed to push to Telegram:", err);
-      if (isManual) alert("Network error connecting to Telegram API: " + err.message);
+    }
+
+    // 2. Direct Telegram API fallback if user entered bot token directly
+    const directToken = $("telegramTokenInput")?.value.trim() || localStorage.getItem(STORAGE.TELEGRAM_TOKEN);
+    if (!directToken && !cfUrl) {
+      if (isManual) alert("Please enter either a Cloudflare Proxy URL or a Telegram Bot Token in 'Tools & API'.");
       return false;
     }
+
+    if (directToken) {
+      const badge = summary.passed ? "✅ PASS (合格ライン ≥ 60%)" : "❌ KEEP PRACTICING (< 60%)";
+      let secText = "";
+      Object.entries(summary.sectionStats || {}).forEach(([secName, st]) => {
+        const sPct = Math.round((st.correct / st.total) * 100);
+        secText += `• ${secName}: ${st.correct}/${st.total} (${sPct}%)\n`;
+      });
+
+      const msg = [
+        `🎯 *JLPT ${summary.level} EXAM SUBMISSION*`,
+        `━━━━━━━━━━━━━━━━━━━━`,
+        `👤 *Candidate:* ${candidate}`,
+        `📅 *Date:* ${summary.dateStr}`,
+        `📚 *Scope:* ${summary.scope}`,
+        `📊 *Score:* *${summary.correctTotal} / ${summary.total} (${summary.pct}%)*`,
+        `🏁 *Result:* ${badge}`,
+        `━━━━━━━━━━━━━━━━━━━━`,
+        `📋 *Section Breakdown:*`,
+        secText.trim(),
+        `━━━━━━━━━━━━━━━━━━━━`,
+        `🤖 *Author:* Md Mominur Islam`
+      ].join("\n");
+
+      try {
+        const url = `https://api.telegram.org/bot${encodeURIComponent(directToken)}/sendMessage`;
+        const res = await fetchWithTimeout(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: msg,
+            parse_mode: "Markdown"
+          })
+        }, 8000);
+
+        const json = await res.json();
+        if (json.ok) {
+          showToast("🚀 Results sent to your Telegram bot!");
+          return true;
+        } else {
+          console.warn("Telegram API error:", json);
+          if (isManual) alert("Telegram Error: " + (json.description || "Could not deliver message."));
+          return false;
+        }
+      } catch (err) {
+        console.warn("Failed to push to Telegram:", err);
+        if (isManual) alert("Network error connecting to Telegram API: " + err.message);
+        return false;
+      }
+    }
+    return false;
   }
 
   // PC Keyboard Shortcuts
@@ -3316,6 +3389,38 @@ Return ONLY a valid JSON array matching this schema:
       return;
     }
     pushResultToTelegram(lastScoreSummary, true);
+  });
+
+  
+  const savedCfUrl = localStorage.getItem(STORAGE.CLOUDFLARE_URL);
+  if (savedCfUrl) $("cloudflareUrlInput").value = savedCfUrl;
+
+  $("saveCloudflareBtn").addEventListener("click", async () => {
+    const cfUrl = $("cloudflareUrlInput").value.trim().replace(/\/+$/, "");
+    if (!cfUrl) {
+      localStorage.removeItem(STORAGE.CLOUDFLARE_URL);
+      alert("Cloudflare Proxy URL cleared.");
+      return;
+    }
+    localStorage.setItem(STORAGE.CLOUDFLARE_URL, cfUrl);
+    $("saveCloudflareBtn").disabled = true;
+    $("saveCloudflareBtn").textContent = "Testing...";
+
+    try {
+      const res = await fetchWithTimeout(`${cfUrl}/health`, {}, 6000);
+      if (res.ok) {
+        const data = await res.json();
+        showToast("☁️ Cloudflare Proxy Connected!");
+        alert("Success! Cloudflare Worker proxy is online: " + (data.service || "Connected"));
+      } else {
+        alert("Worker responded with HTTP " + res.status + ". Verify your worker is deployed.");
+      }
+    } catch (e) {
+      alert("Could not reach Cloudflare Worker: " + e.message + "\nCheck URL and make sure your worker is deployed.");
+    } finally {
+      $("saveCloudflareBtn").disabled = false;
+      $("saveCloudflareBtn").textContent = "Save & Test";
+    }
   });
 
   // Initialize saved state
