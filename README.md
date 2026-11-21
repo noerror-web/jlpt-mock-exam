@@ -35,8 +35,8 @@ A ready-to-deploy Cloudflare Worker is included in the [`cloudflare-worker/`](cl
 1. Open [dash.cloudflare.com](https://dash.cloudflare.com) ➔ **Compute (Workers & Pages)** ➔ **Create Worker**.
 2. Paste the contents of [`cloudflare-worker/worker.js`](cloudflare-worker/worker.js).
 3. Under Worker **Settings** ➔ **Variables and Secrets**, add:
-   - `TELEGRAM_BOT_TOKEN`: Your Telegram Bot Token (`8863407575:AAFICc_...`)
-   - `GEMINI_API_KEY`: Your Google AI Studio API Key (`AIza...`)
+   - `TELEGRAM_BOT_TOKEN`: Your Telegram Bot Token (`YOUR_TELEGRAM_BOT_TOKEN`)
+   - `GEMINI_API_KEY`: Your Google AI Studio API Key (`AQ...` or `AIza...`)
 4. Copy your Worker URL (`https://...workers.dev`) and paste it in **⚙️ Tools & API** ➔ **Cloudflare Worker URL**.
 5. Your frontend is now completely key-free and secure!
 
