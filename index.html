@@ -1021,7 +1021,7 @@
             Securely route Telegram alerts and Google Gemini AI via your free Cloudflare Worker. Keeps your bot tokens and API keys 100% private.
           </p>
           <div class="btn-row" style="margin-bottom:8px;">
-            <input type="text" id="cloudflareUrlInput" placeholder="Cloudflare Worker URL (https://...workers.dev)" style="flex:1 1 200px;" />
+            <input type="text" id="cloudflareUrlInput" placeholder="Cloudflare Worker URL" value="https://jlpt-mock-exam-proxy.mominurislam.workers.dev" style="flex:1 1 200px;" />
             <button type="button" class="btn-secondary" id="saveCloudflareBtn">Save & Test</button>
           </div>
           <div class="btn-row">
@@ -2085,7 +2085,7 @@ Return ONLY a valid JSON array matching this schema:
 ]`;
 
     // Check if Cloudflare Worker URL is configured
-    const cfUrl = ($("cloudflareUrlInput")?.value.trim() || localStorage.getItem(STORAGE.CLOUDFLARE_URL) || "").replace(/\/+$/, "");
+    const cfUrl = ($("cloudflareUrlInput")?.value.trim() || localStorage.getItem(STORAGE.CLOUDFLARE_URL) || "https://jlpt-mock-exam-proxy.mominurislam.workers.dev").replace(/\/+$/, "");
     if (cfUrl) {
       try {
         const cfRes = await fetchWithTimeout(`${cfUrl}/api/gemini`, {
@@ -3392,7 +3392,7 @@ Return ONLY a valid JSON array matching this schema:
   });
 
   
-  const savedCfUrl = localStorage.getItem(STORAGE.CLOUDFLARE_URL);
+  const savedCfUrl = localStorage.getItem(STORAGE.CLOUDFLARE_URL) || "https://jlpt-mock-exam-proxy.mominurislam.workers.dev";
   if (savedCfUrl) $("cloudflareUrlInput").value = savedCfUrl;
 
   $("saveCloudflareBtn").addEventListener("click", async () => {
