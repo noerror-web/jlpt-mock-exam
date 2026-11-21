@@ -1,10 +1,10 @@
 /**
  * JLPT Mock Exam Cloudflare Worker Proxy
- * Secures Telegram Bot Token and Google Gemini API Key server-side.
+ * Secures Telegram Bot Token and Gemini API Key server-side.
  * 
- * Environment Variables (Set in Cloudflare Dashboard -> Settings -> Variables):
- * - TELEGRAM_BOT_TOKEN: Your Telegram bot token (e.g. 8863407575:AAFICc_QFXygIzV-3h_Ia4U7ZRmnaOdpy9Y)
- * - GEMINI_API_KEY: Your Google Gemini API key (AIza... or AQ...)
+ * Environment Variables (Set in Cloudflare Dashboard or via wrangler secret put):
+ * - TELEGRAM_BOT_TOKEN: Your Telegram bot token
+ * - GEMINI_API_KEY: Your Google AI Studio API key (supports both "AQ." and "AIza" formats)
  */
 
 export default {
@@ -18,7 +18,7 @@ export default {
         headers: {
           "Access-Control-Allow-Origin": origin,
           "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, Authorization, X-API-Key",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization, x-goog-api-key",
           "Access-Control-Max-Age": "86400",
         },
       });
@@ -34,6 +34,8 @@ export default {
 
     // Health / info endpoint
     if (pathname === "/" || pathname === "/health") {
+      const activeKey = env.GEMINI_API_KEY || env.VERTEX_API_KEY || "";
+      const isAQ = activeKey.startsWith("AQ.");
       return new Response(
         JSON.stringify({
           status: "online",
@@ -41,7 +43,8 @@ export default {
           author: "Md Mominur Islam",
           features: ["telegram-proxy", "gemini-proxy"],
           hasTelegramToken: Boolean(env.TELEGRAM_BOT_TOKEN),
-          hasGeminiKey: Boolean(env.GEMINI_API_KEY),
+          hasApiKey: Boolean(activeKey),
+          keyType: activeKey ? (isAQ ? "Google AI Studio Auth Key (AQ.)" : "Google AI Studio Standard Key (AIza)") : "None",
         }),
         { status: 200, headers: corsHeaders }
       );
@@ -125,9 +128,9 @@ export default {
       }
     }
 
-    // 2. GEMINI AI PROXY ENDPOINT (/api/gemini)
+    // 2. GEMINI PROXY ENDPOINT (/api/gemini)
     if (pathname === "/api/gemini" && request.method === "POST") {
-      const apiKey = env.GEMINI_API_KEY;
+      const apiKey = env.GEMINI_API_KEY || env.VERTEX_API_KEY;
       if (!apiKey) {
         return new Response(
           JSON.stringify({ ok: false, error: "GEMINI_API_KEY is not configured in Worker environment variables." }),
@@ -138,7 +141,7 @@ export default {
       try {
         const body = await request.json();
         const promptText = body.promptText;
-        const model = body.model || "gemini-2.5-flash";
+        const requestedModel = body.model;
 
         if (!promptText) {
           return new Response(
@@ -147,22 +150,31 @@ export default {
           );
         }
 
-        const models = [model, "gemini-2.0-flash", "gemini-1.5-flash"];
+        // Fast & stable modern Gemini models on generativelanguage.googleapis.com
+        const models = [
+          requestedModel,
+          "gemini-flash-lite-latest",
+          "gemini-flash-latest",
+          "gemini-2.5-flash",
+          "gemini-3.8-flash",
+        ].filter(Boolean);
+
         let lastError = null;
 
         for (const m of models) {
           try {
-            // Support both standard AIza keys and new AQ auth keys
-            const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
-            const gRes = await fetch(geminiUrl, {
+            // Generative Language API (works with both AQ. authorization keys and AIza standard keys via x-goog-api-key)
+            const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`;
+            const reqHeaders = {
+              "Content-Type": "application/json",
+              "x-goog-api-key": apiKey,
+            };
+
+            const gRes = await fetch(targetUrl, {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-API-Key": apiKey,
-                "x-goog-api-key": apiKey
-              },
+              headers: reqHeaders,
               body: JSON.stringify({
-                contents: [{ parts: [{ text: promptText }] }],
+                contents: [{ role: "user", parts: [{ text: promptText }] }],
                 generationConfig: {
                   responseMimeType: "application/json",
                   temperature: 0.85,
@@ -172,18 +184,23 @@ export default {
 
             if (!gRes.ok) {
               const errJson = await gRes.json().catch(() => ({}));
-              lastError = new Error(`${m} HTTP ${gRes.status}: ${errJson?.error?.message || "Gemini error"}`);
+              lastError = new Error(`${m} HTTP ${gRes.status}: ${errJson?.error?.message || "AI error"}`);
               continue;
             }
 
             const gData = await gRes.json();
             const rawText = gData?.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (!rawText) throw new Error("Empty candidate text from Gemini");
+            if (!rawText) throw new Error("Empty candidate text from AI model");
 
             const cleaned = rawText.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
             const parsed = JSON.parse(cleaned);
 
-            return new Response(JSON.stringify({ ok: true, data: parsed, modelUsed: m }), {
+            return new Response(JSON.stringify({
+              ok: true,
+              data: parsed,
+              modelUsed: m,
+              keyFormat: apiKey.startsWith("AQ.") ? "Authorization Key (AQ.)" : "Standard Key (AIza)"
+            }), {
               status: 200,
               headers: corsHeaders,
             });
@@ -192,7 +209,7 @@ export default {
           }
         }
 
-        throw lastError || new Error("All Gemini models failed.");
+        throw lastError || new Error("All AI models failed: " + (lastError?.message || "unknown error"));
       } catch (err) {
         return new Response(
           JSON.stringify({ ok: false, error: err.message }),
