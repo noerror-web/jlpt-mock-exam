@@ -1,0 +1,14 @@
+name = "jlpt-mock-exam-proxy"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+# Environment Variables / Secrets to set in Cloudflare:
+# 1. TELEGRAM_BOT_TOKEN
+# 2. GEMINI_API_KEY
+#
+# Deploy command:
+# npx wrangler deploy
+#
+# Or add secrets via CLI:
+# npx wrangler secret put TELEGRAM_BOT_TOKEN
+# npx wrangler secret put GEMINI_API_KEY
