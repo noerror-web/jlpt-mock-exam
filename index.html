@@ -1044,7 +1044,7 @@
   // =========================================================================
   // 1. ULTRA-COMPACT FALLBACK SEED (Used only if 100% offline with empty cache)
   // =========================================================================
-  const COMPACT_FALLBACK_N5 = [
+  const CORE_QUESTION_BANK_N5 = [
     {
       section: "文字・語彙 (N5 Vocabulary & Kanji)",
       subtype: "問題1：漢字読み (Kanji Reading)",
@@ -1054,7 +1054,117 @@
       answer: 0,
       kana: "まいにち えきまで あるきます。",
       exp_en: "「駅」 is read 「えき」 and means 'station'.",
-      exp_bn: "「駅」-এর উচ্চারণ 「えき」 এবং এর অর্থ 'স্টেশন'।"
+      exp_bn: "「駅」-এর সঠিক পাঠ হলো 「えき」 (অর্থ: স্টেশন)।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題1：漢字読み (Kanji Reading)",
+      lesson: "L1-12",
+      prompt: "つくえの　うえに　<u>本</u>が　あります。",
+      options: ["ほん", "き", "みず", "くるま"],
+      answer: 0,
+      kana: "つくえの うえに ほんが あります。",
+      exp_en: "「本」 is read 「ほん」 and means 'book'.",
+      exp_bn: "「本」-এর সঠিক পাঠ হলো 「ほん」 (অর্থ: বই)।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題1：漢字読み (Kanji Reading)",
+      lesson: "L1-12",
+      prompt: "あしたは　<u>日曜日</u>です。",
+      options: ["にちようび", "げつようび", "かようび", "すいようび"],
+      answer: 0,
+      kana: "あしたは にちようびです。",
+      exp_en: "「日曜日」 is read 「にちようび」 and means 'Sunday'.",
+      exp_bn: "「日曜日」-এর সঠিক পাঠ হলো 「にちようび」 (অর্থ: রবিবার)।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題1：漢字読み (Kanji Reading)",
+      lesson: "L1-12",
+      prompt: "わたしの　いえは　<u>山</u>の　ちかくです。",
+      options: ["やま", "かわ", "うみ", "まち"],
+      answer: 0,
+      kana: "わたしの いえは やまの ちかくです。",
+      exp_en: "「山」 is read 「やま」 and means 'mountain'.",
+      exp_bn: "「山」-এর সঠিক পাঠ হলো 「やま」 (অর্থ: পাহাড় বা পর্বত)।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題1：漢字読み (Kanji Reading)",
+      lesson: "L1-12",
+      prompt: "この　<u>川</u>で　さかなを　つりました。",
+      options: ["かわ", "いけ", "うみ", "みず"],
+      answer: 0,
+      kana: "この かわで さかなを つりました。",
+      exp_en: "「川」 is read 「かわ」 and means 'river'.",
+      exp_bn: "「川」-এর সঠিক পাঠ হলো 「かわ」 (অর্থ: নদী)।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題1：漢字読み (Kanji Reading)",
+      lesson: "L1-12",
+      prompt: "あそこに　いる　<u>人</u>は　だれですか。",
+      options: ["ひと", "おとこ", "おんな", "こども"],
+      answer: 0,
+      kana: "あそこに いる ひとは だれですか。",
+      exp_en: "「人」 is read 「ひと」 and means 'person'.",
+      exp_bn: "「人」-এর সঠিক পাঠ হলো 「ひと」 (অর্থ: ব্যক্তি বা মানুষ)।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題1：漢字読み (Kanji Reading)",
+      lesson: "L1-12",
+      prompt: "まいあさ　<u>電車</u>で　かいしゃへ　いきます。",
+      options: ["でんしゃ", "じてんしゃ", "じどうしゃ", "ひこうき"],
+      answer: 0,
+      kana: "まいあさ でんしゃで かいしゃへ いきます。",
+      exp_en: "「電車」 is read 「でんしゃ」 and means 'train'.",
+      exp_bn: "「電車」-এর সঠিক পাঠ হলো 「でんしゃ」 (অর্থ: ট্রেন)।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題2：表記 (Orthography)",
+      lesson: "L13-25",
+      prompt: "こうえんで　しゃしんを　<u>とり</u>ました。",
+      options: ["撮り", "通り", "取り", "借り"],
+      answer: 0,
+      kana: "こうえんで しゃしんを とりました。",
+      exp_en: "To take a photograph is written with the kanji 「撮る」 (しゃしんを撮る).",
+      exp_bn: "ছবি তোলার ক্ষেত্রে 「撮る」 (撮りました) কাঞ্জি ব্যবহার করা হয়।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題2：表記 (Orthography)",
+      lesson: "L1-12",
+      prompt: "まいあさ　6じに　<u>おき</u>ます。",
+      options: ["起き", "行行", "歩き", "聞き"],
+      answer: 0,
+      kana: "まいあさ 6じに おきます。",
+      exp_en: "「おきます」 (to wake up) is written as 「起きます」 in kanji.",
+      exp_bn: "ঘুম থেকে ওঠা বা জাগ্রত হওয়া অর্থে 「起きる」 (起きます) কাঞ্জি বসে।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題2：表記 (Orthography)",
+      lesson: "L1-12",
+      prompt: "つめたい　<u>みず</u>を　のみたいです。",
+      options: ["水", "木", "金", "火"],
+      answer: 0,
+      kana: "つめたい みずを のみたいです。",
+      exp_en: "「みず」 (water) is written as 「水」.",
+      exp_bn: "পানির সঠিক কাঞ্জি রূপ হলো 「水」 (みず)।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題2：表記 (Orthography)",
+      lesson: "L1-12",
+      prompt: "きょうは　あさから　<u>あめ</u>が　ふっています。",
+      options: ["雨", "雪", "雲", "風"],
+      answer: 0,
+      kana: "きょうは あさから あめが ふっています。",
+      exp_en: "「あめ」 (rain) is written as 「雨」.",
+      exp_bn: "বৃষ্টির সঠিক কাঞ্জি রূপ হলো 「雨」 (あめ)।"
     },
     {
       section: "文字・語彙 (N5 Vocabulary & Kanji)",
@@ -1064,8 +1174,128 @@
       options: ["つけて", "けして", "あけて", "しめて"],
       answer: 0,
       kana: "へやが くらいですから、でんきを つけて ください。",
-      exp_en: "「でんきを つける」 means 'to turn on the light' (since the room is dark / くらい).",
-      exp_bn: "ঘর অন্ধকার (くらい) তাই 「でんきを つけて ください」 অর্থাৎ 'লাইট জ্বালিয়ে দিন' হবে।"
+      exp_en: "「でんきを つける」 means 'to turn on the light' (room is dark / くらい).",
+      exp_bn: "ঘর অন্ধকার (くらい) হওয়ায় 「でんきを つけて ください」 (লাইট জ্বালিয়ে দিন) সঠিক।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題3：文脈規定 (Context Vocabulary)",
+      lesson: "L13-25",
+      prompt: "へやが　あついですから、まどを　（　　）ましょうか。",
+      options: ["あけ", "しめ", "つけ", "けし"],
+      answer: 0,
+      kana: "へやが あついですから、まどを あけましょうか。",
+      exp_en: "「まどを あける」 means 'to open the window' because it is hot (あつい).",
+      exp_bn: "ঘর গরম (あつい) হওয়ায় 「まどを あけましょうか」 (জানালা খুলে দেব কি?) সঠিক।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題3：文脈規定 (Context Vocabulary)",
+      lesson: "L1-12",
+      prompt: "バスが　きませんから、（　　）で　いきましょう。",
+      options: ["タクシー", "エレベーター", "プール", "カメラ"],
+      answer: 0,
+      kana: "バスが きませんから、タクシーで いきましょう。",
+      exp_en: "Because the bus isn't coming, let's take a taxi (タクシー).",
+      exp_bn: "বাস আসছে না, তাই 「タクシー」 (ট্যাক্সি) দিয়ে যাওয়া যুক্তিযুক্ত।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題3：文脈規定 (Context Vocabulary)",
+      lesson: "L1-12",
+      prompt: "うちから　えきまで　あるいて　15（　　）かかります。",
+      options: ["ふん", "かい", "まい", "さつ"],
+      answer: 0,
+      kana: "うちから えきまで あるいて じゅうごふん かかります。",
+      exp_en: "For minutes of time, the counter 「〜ふん / 〜ぷん」 is used: 15ふん (15 minutes).",
+      exp_bn: "সময় (মিনিট) গণনার কাউন্টার হলো 「〜ふん」 (১৫ মিনিট)।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題3：文脈規定 (Context Vocabulary)",
+      lesson: "L1-12",
+      prompt: "わたしは　まいあさ　パンと　たまごを　（　　）。",
+      options: ["たべます", "のみます", "よみます", "かきます"],
+      answer: 0,
+      kana: "わたしは まいあさ パンと たまごを たべます。",
+      exp_en: "Bread and eggs are food, so the verb is 「たべます」 (to eat).",
+      exp_bn: "পাউরুটি ও ডিম খাবার জিনিস, তাই ক্রিয়াপদ হবে 「たべます」 (খাই)।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題3：文脈規定 (Context Vocabulary)",
+      lesson: "L1-12",
+      prompt: "としょかんで　しずかに　ほんを　（　　）。",
+      options: ["よみます", "ききます", "うたいます", "あそびます"],
+      answer: 0,
+      kana: "としょかんで しずかに ほんを よみます。",
+      exp_en: "At the library, you quietly read books (ほんを よみます).",
+      exp_bn: "লাইব্রেরিতে শান্তভাবে বই পড়া (ほんを よみます) হয়।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題3：文脈規定 (Context Vocabulary)",
+      lesson: "L1-12",
+      prompt: "らいしゅう　テストが　ありますから、たくさん　（　　）します。",
+      options: ["べんきょう", "かいもの", "さんぽ", "りょこう"],
+      answer: 0,
+      kana: "らいしゅう テストが ありますから、たくさん べんきょうします。",
+      exp_en: "Because there is a test next week, I will study a lot (べんきょうします).",
+      exp_bn: "আগামী সপ্তাহে পরীক্ষা আছে, তাই অনেক পড়াশোনা (べんきょう) করব।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題4：言い換え類義 (Paraphrase)",
+      lesson: "L1-12",
+      prompt: "きのうは　<u>てんきが　よかった</u>です。",
+      options: ["はれました", "あめが　ふりました", "さむかったです", "くもりでした"],
+      answer: 0,
+      kana: "きのうは てんきが よかったです。＝ はれました。",
+      exp_en: "「てんきが よかった」 (the weather was good) means it was sunny (はれました).",
+      exp_bn: "「てんきが よかった」 (আবহাওয়া ভালো ছিল) বলতে রৌদ্রোজ্জ্বল দিন (はれました) বোঝায়।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題4：言い換え類義 (Paraphrase)",
+      lesson: "L1-12",
+      prompt: "わたしは　きょう　<u>ひま</u>です。",
+      options: ["じかんが　あります", "いそがしいです", "びょうきです", "おかねが　ありません"],
+      answer: 0,
+      kana: "わたしは きょう ひまです。＝ じかんが あります。",
+      exp_en: "「ひま」 (free / not busy) means having free time (じかんが あります).",
+      exp_bn: "「ひま」 (অবসর / ব্যস্তহীন) অর্থ হলো সময় থাকা (じかんが あります)।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題5：用法 (Usage)",
+      lesson: "L1-12",
+      prompt: "次のことばの　つかいかたで　いちばん　いいものは　どれですか。【おんがく】",
+      options: [
+        "まいばん　へやで　すきな　おんがくを　ききます。",
+        "きのう　レストランで　おんがくを　たべました。",
+        "えきまで　おんがくで　いきました。",
+        "あした　あめが　おんがくでしょう。"
+      ],
+      answer: 0,
+      kana: "まいばん へやで すきな おんがくを ききます。",
+      exp_en: "「おんがく」 means 'music' and is listened to: おんがくを ききます.",
+      exp_bn: "「おんがく」 (সঙ্গীত/গান) শোনার বিষয়: おんがくを ききます (গান শুনি)।"
+    },
+    {
+      section: "文字・語彙 (N5 Vocabulary & Kanji)",
+      subtype: "問題5：用法 (Usage)",
+      lesson: "L1-12",
+      prompt: "次のことばの　つかいかたで　いちばん　いいものは　どれですか。【カメラ】",
+      options: [
+        "あたらしい　カメラで　きれいな　しゃしんを　とりました。",
+        "きのう　カメラを　よみました。",
+        "すずしいですから、カメラを　のみましょう。",
+        "この　カメラは　とても　あまいです。"
+      ],
+      answer: 0,
+      kana: "あたらしい カメラで きれいな しゃしんを とりました。",
+      exp_en: "「カメラ」 is used to take photographs: カメラで しゃしんを とる.",
+      exp_bn: "「カメラ」 দিয়ে ছবি তোলা হয়: カメラで しゃしんを とりました (ক্যামেরা দিয়ে ছবি তুলেছি)।"
     },
     {
       section: "文法 (N5 Grammar)",
@@ -1076,7 +1306,40 @@
       answer: 0,
       kana: "にほんへ いったら、ふじさんに のぼりたいです。",
       exp_en: "〜たい attaches to the verb ます-stem: のぼります → のぼりたい ('want to climb').",
-      exp_bn: "ক্রিয়ার ます-stem এর সাথে 〜たい যুক্ত হয়ে ইচ্ছা বোঝায়: のぼります → のぼりたい ('উঠতে চাই')।"
+      exp_bn: "ক্রিয়ার ます-stem এর সাথে 〜たい যুক্ত হয়ে ইচ্ছা প্রকাশ করে: のぼります → のぼりたい (উঠতে চাই)।"
+    },
+    {
+      section: "文法 (N5 Grammar)",
+      subtype: "問題6：文の文法1 (Grammar Form)",
+      lesson: "L1-12",
+      prompt: "あした　いっしょに　きょうとへ　（　　）か。",
+      options: ["いきませんか", "いきましたか", "いかないでした", "いきますでした"],
+      answer: 0,
+      kana: "あした いっしょに きょうとへ いきませんか。",
+      exp_en: "〜ませんか is used for inviting someone politely ('Won't you go with me?').",
+      exp_bn: "কাউকে বিনীতভাবে আমন্ত্রণ জানাতে 〜ませんか ব্যবহৃত হয়: いきませんか (একসাথে যাবেন কি?)।"
+    },
+    {
+      section: "文法 (N5 Grammar)",
+      subtype: "問題6：文の文法1 (Grammar Form)",
+      lesson: "L13-25",
+      prompt: "びょういんの　なかで　たばこを　すっては　（　　）。",
+      options: ["いけません", "ください", "いいです", "ありません"],
+      answer: 0,
+      kana: "びょういんの なかで たばこを すっては いけません。",
+      exp_en: "〜てはいけません expresses prohibition ('must not do').",
+      exp_bn: "নিষেধাজ্ঞা বোঝাতে 〜てはいけません ব্যবহৃত হয় (ধূমপান করা নিষেধ)।"
+    },
+    {
+      section: "文法 (N5 Grammar)",
+      subtype: "問題6：文の文法1 (Grammar Form)",
+      lesson: "L1-12",
+      prompt: "きのう　スーパーで　りんご（　　）みかんなどを　かいました。",
+      options: ["や", "と", "も", "に"],
+      answer: 0,
+      kana: "きのう スーパーで りんごや みかんなどを かいました。",
+      exp_en: "「〜や〜など」 is used for non-exhaustive listing ('apples, oranges, and such').",
+      exp_bn: "উদাহরণস্বরূপ কয়েকটি বস্তু উল্লেখ করতে 「〜や〜など」 (যেমন: আপেল এবং কমলা ইত্যাদি) বসে।"
     },
     {
       section: "文法 (N5 Grammar)",
@@ -1096,6 +1359,23 @@
       exp_bn: "সঠিক ক্রম: えきの (১) ちかくの (২) ★みせで (৩) ほんを (৪) — 'স্টেশনের কাছের দোকানে বই কিনেছিলাম।'"
     },
     {
+      section: "文法 (N5 Grammar)",
+      subtype: "問題7：★文の組み立て (Star Ordering)",
+      lesson: "L1-12",
+      prompt: "日曜日　わたしは　＿＿　＿＿　★　＿＿　いきます。",
+      starData: {
+        before: "日曜日　わたしは",
+        after: "いきます。",
+        ordered: ["ともだちと", "えいがを", "みに", "まちへ"],
+        starPos: 2
+      },
+      options: ["みに", "まちへ", "ともだちと", "えいがを"],
+      answer: 0,
+      kana: "にちようび わたしは ともだちと えいがを みに まちへ いきます。",
+      exp_en: "Order: ともだちと (1) えいがを (2) ★みに (3) まちへ (4) — 'On Sunday I am going to town with a friend to watch a movie.'",
+      exp_bn: "সঠিক ক্রম: ともだちと (১) えいがを (২) ★みに (৩) まちへ (৪) — 'রবিবার বন্ধুর সাথে মুভি দেখতে শহরে যাব।'"
+    },
+    {
       section: "読解 (N5 Reading Comprehension)",
       subtype: "問題8：内容理解（短文）",
       lesson: "L13-25",
@@ -1106,8 +1386,21 @@
       kana: "びょういんへ いきますから。",
       exp_en: "The memo says: きょうは びょういんへ いきますから、5じに かえります ('Because I am going to the hospital today, I will go home at 5').",
       exp_bn: "মেমোতে লেখা আছে: আজ হাসপাতালে যাব তাই ৫টায় বাড়ি ফিরব।"
+    },
+    {
+      section: "読解 (N5 Reading Comprehension)",
+      subtype: "問題8：内容理解（短文）",
+      lesson: "L1-12",
+      passage: "【案内】\n今週の　土曜日に　みんなで　公園で　バーベキューを　します。\nじかん：午前11時から　午後3時まで\nばしょ：中央公園\nかいひ：1000えん\n※飲み物は　自分で　持ってきてください。",
+      prompt: "バーベキューに　行く人は　何を　持って行かなければなりませんか。",
+      options: ["飲み物", "お肉", "お金だけ（飲み物は要らない）", "お皿とコップ"],
+      answer: 0,
+      kana: "飲み物は 自分で 持ってきてください。",
+      exp_en: "The notice says: 『飲み物は 自分で 持ってきてください』 ('Please bring drinks yourself').",
+      exp_bn: "নোটিশে বলা হয়েছে: পানীয় নিজের সাথে নিয়ে আসতে হবে (飲み物は 自分で 持ってきてください)।"
     }
   ];
+  const COMPACT_FALLBACK_N5 = CORE_QUESTION_BANK_N5;
 
   // =========================================================================
   // 2. STATE & STORAGE KEYS
@@ -1510,8 +1803,10 @@
     }
 
     const scopedList = sliceListByLessonRange(kanjiList, lessonRange);
+    const candidatePool = scopedList.length >= 8 ? scopedList : kanjiList;
     const detailsCache = loadJSON(STORAGE.kanjiDetails(level), {});
-    const picked = shuffle(scopedList.length >= 4 ? scopedList : kanjiList).slice(0, needed + 6);
+    // Pick enough kanji so we can meet 'needed'
+    const picked = shuffle(candidatePool).slice(0, Math.min(candidatePool.length, Math.max(needed * 2 + 6, 30)));
     const uncached = picked.filter((ch) => !detailsCache[ch]);
 
     if (uncached.length > 0) {
@@ -1532,13 +1827,7 @@
       .map((d) => extractCleanKanjiReading(d))
       .filter((r) => r.length >= 1 && r.length <= 5);
 
-    const baseDistractors = ["やま", "かわ", "みず", "ひ", "つき", "ひと", "くに", "ほん", "くるま", "でん", "がく", "こう", "せん", "まい", "じかん", "うん", "てん", "けい", "せつ"];
-
-    const sentenceMap = {};
-    for (const item of valid.slice(0, needed)) {
-      sentenceMap[item.kanji] = await fetchTatoebaSentence(item.kanji);
-      if (tatoebaCorsBlocked) break;
-    }
+    const baseDistractors = ["やま", "かわ", "みず", "ひ", "つき", "ひと", "くに", "ほん", "くるま", "でん", "がく", "こう", "せん", "まい", "じかん", "うん", "てん", "けい", "せつ", "あめ", "ゆき", "みち", "いえ", "もん", "うみ", "はな"];
 
     const questions = [];
     for (const item of valid) {
@@ -1549,14 +1838,18 @@
       const meaning = (item.meanings && item.meanings.slice(0, 2).join(", ")) || "";
       const lengthMatched = [...new Set([...cachedReadings, ...baseDistractors])]
         .filter((r) => r !== cleanR && Math.abs(r.length - cleanR.length) <= 2);
-      const pool = shuffle(lengthMatched.length >= 3 ? lengthMatched : [...new Set([...cachedReadings, ...baseDistractors])].filter((r) => r !== cleanR));
-      if (pool.length < 3) continue;
+      const distractorPool = shuffle(lengthMatched.length >= 3 ? lengthMatched : [...new Set([...cachedReadings, ...baseDistractors])].filter((r) => r !== cleanR));
+      if (distractorPool.length < 3) continue;
 
-      const choices = shuffle([cleanR, ...pool.slice(0, 3)]);
-      const sent = sentenceMap[item.kanji];
+      const choices = shuffle([cleanR, ...distractorPool.slice(0, 3)]);
+      let sent = null;
+      if (!tatoebaCorsBlocked && questions.length < 6) {
+        sent = await fetchTatoebaSentence(item.kanji);
+      }
+
       const promptRaw = sent
         ? sent.jp.replace(item.kanji, `<u>${item.kanji}</u>`)
-        : `この漢字「<u>${item.kanji}</u>」の　よみかたは　どれですか。（意味: ${meaning}）`;
+        : `この漢字「<u>${item.kanji}</u>」の　よみかたは　どれですか。${meaning ? `（意味: ${meaning}）` : ""}`;
 
       questions.push({
         section: `文字・語彙 (${level} Vocabulary & Kanji)`,
@@ -1579,47 +1872,50 @@
     const poolKey = STORAGE.vocabPool(level);
     let pool = loadJSON(poolKey, []);
 
-    try {
-      const offset = Math.floor(Math.random() * 450);
-      const res = await fetchWithTimeout(
-        `https://jlpt-vocab-api.vercel.app/api/words?level=${apiLvl}&limit=40&offset=${offset}`
-      );
-      if (res.ok) {
-        const data = await res.json();
-        const words = Array.isArray(data) ? data : (data.words || []);
-        const cleaned = words.filter((w) => w && w.word && w.meaning);
-        if (cleaned.length > 0) {
+    // Ensure we have a healthy pool of vocabulary words
+    if (pool.length < Math.max(needed * 2, 35)) {
+      try {
+        const offset = Math.floor(Math.random() * 250);
+        const [res1, res2] = await Promise.allSettled([
+          fetchWithTimeout(`https://jlpt-vocab-api.vercel.app/api/words?level=${apiLvl}&limit=40&offset=${offset}`),
+          fetchWithTimeout(`https://jlpt-vocab-api.vercel.app/api/words?level=${apiLvl}&limit=40&offset=${offset + 40}`)
+        ]);
+        const newWords = [];
+        for (const r of [res1, res2]) {
+          if (r.status === "fulfilled" && r.value.ok) {
+            const data = await r.value.json();
+            const wList = Array.isArray(data) ? data : (data.words || []);
+            wList.filter((w) => w && w.word && w.meaning).forEach((w) => newWords.push(w));
+          }
+        }
+        if (newWords.length > 0) {
           const map = new Map(pool.map((w) => [w.word, w]));
-          cleaned.forEach((w) => map.set(w.word, w));
-          pool = Array.from(map.values()).slice(-350);
+          newWords.forEach((w) => map.set(w.word, w));
+          pool = Array.from(map.values()).slice(-450);
           saveJSON(poolKey, pool);
         }
+      } catch (e) {
+        if (pool.length < 5) throw e;
       }
-    } catch (e) {
-      if (pool.length < 8) throw e;
     }
 
-    if (pool.length < 8) return [];
-    const candidates = shuffle(pool).slice(0, needed + 5);
+    if (pool.length < 5) return [];
 
-    const sentenceMap = {};
-    for (const w of candidates.slice(0, needed)) {
-      sentenceMap[w.word] = await fetchTatoebaSentence(w.word);
-      if (tatoebaCorsBlocked) break;
-    }
+    const defaultDistractors = ["まいあさ", "あした", "きのう", "ともだち", "がっこう", "せんせい", "びょういん", "えき", "でんしゃ", "ほん", "みず", "ごはん", "くるま", "としょかん", "てがみ", "しゃしん", "くだもの", "さかな", "おちゃ", "やすみ"];
+    const candidates = shuffle(pool);
 
     const questions = [];
     for (const target of candidates) {
       if (questions.length >= needed) break;
-      const sent = sentenceMap[target.word];
+
+      let sent = null;
+      if (!tatoebaCorsBlocked && questions.length < 6) {
+        sent = await fetchTatoebaSentence(target.word);
+      }
 
       if (sent && sent.jp.includes(target.word)) {
-        const targetEnd = target.word.slice(-1);
         const allWords = [...new Set(pool.filter((w) => w.word !== target.word && w.word.length <= 6).map((w) => w.word))];
-        const similarEnd = allWords.filter((w) => w.slice(-1) === targetEnd);
-        const distractors = shuffle(similarEnd.length >= 3 ? similarEnd : allWords).slice(0, 3);
-        if (distractors.length < 3) continue;
-
+        const distractors = shuffle(allWords.length >= 3 ? allWords : defaultDistractors).slice(0, 3);
         const choices = shuffle([target.word, ...distractors]);
         const blankedSentence = sent.jp.replace(target.word, "（　　）");
         questions.push({
@@ -1633,12 +1929,10 @@
           exp_en: `「${target.word}」 (${target.meaning}) fits the sentence context.`,
           exp_bn: `বাক্যের অর্থ অনুযায়ী 「${target.word}」 (${target.meaning}) সবচেয়ে উপযুক্ত।`
         });
-      } else if (target.furigana && target.furigana !== target.word && Math.random() < 0.5) {
+      } else if (target.furigana && target.furigana !== target.word) {
         const allReadings = [...new Set(pool.filter((w) => w.furigana && w.furigana !== target.furigana).map((w) => w.furigana))];
-        const lenMatched = allReadings.filter((r) => Math.abs(r.length - target.furigana.length) <= 2);
-        const distractors = shuffle(lenMatched.length >= 3 ? lenMatched : allReadings).slice(0, 3);
-        if (distractors.length < 3) continue;
-
+        const poolDistractors = allReadings.length >= 3 ? allReadings : defaultDistractors.filter((d) => d !== target.furigana);
+        const distractors = shuffle(poolDistractors).slice(0, 3);
         const choices = shuffle([target.furigana, ...distractors]);
         questions.push({
           section: `文字・語彙 (${level} Vocabulary & Kanji)`,
@@ -1655,9 +1949,9 @@
         const uniqueMeanings = [...new Set(
           pool.filter((w) => w.meaning && w.meaning !== target.meaning).map((w) => w.meaning)
         )];
-        const distractors = shuffle(uniqueMeanings).slice(0, 3);
-        if (distractors.length < 3) continue;
-
+        const fallbackMeanings = ["morning", "tomorrow", "friend", "book", "car", "station", "water", "study", "travel", "house", "weather", "music", "hospital", "school", "teacher"];
+        const meaningDistractors = uniqueMeanings.length >= 3 ? uniqueMeanings : fallbackMeanings.filter((m) => m !== target.meaning);
+        const distractors = shuffle(meaningDistractors).slice(0, 3);
         const choices = shuffle([target.meaning, ...distractors]);
         const displayWord = target.furigana && target.furigana !== target.word
           ? `<ruby>${target.word}<rt>${target.furigana}</rt></ruby>`
@@ -1695,7 +1989,7 @@
     return `\nIMPORTANT PERSONALIZATION — The student recently missed these topics:\n${summaries.join("\n")}\nInclude fresh variations testing at least 40% of these exact grammar points or vocabulary patterns (without copying the exact sentences verbatim).`;
   }
 
-  async function generateViaGemini(apiKey, level, lessonRange, count, sectionFilter) {
+  async function generateGeminiSingleCall(apiKey, level, lessonRange, count, sectionFilter) {
     const scopeMap = {
       "L1-25": "JLPT N5 / Minna no Nihongo Lessons 1–25 (particles, 〜たい, 〜ない, 〜てform, 〜たあとで, basic adjectives)",
       "L1-12": "JLPT N5 Early / Minna no Nihongo Lessons 1–12 (desu/masu, basic particles は/が/を/に/で/へ, い/な adjectives, comparisons)",
@@ -1746,7 +2040,7 @@ Return ONLY a valid JSON array matching this schema:
               generationConfig: { responseMimeType: "application/json", temperature: 0.85 }
             })
           },
-          22000
+          24000
         );
 
         if (!res.ok) {
@@ -1763,7 +2057,7 @@ Return ONLY a valid JSON array matching this schema:
         const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (!rawText) throw new Error("Empty response from Gemini");
 
-        const cleaned = rawText.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
+        const cleaned = rawText.replace(/^\`\`\`json\s*/i, "").replace(/\`\`\`\s*$/i, "").trim();
         const parsed = JSON.parse(cleaned);
         if (!Array.isArray(parsed) || parsed.length === 0) throw new Error("Invalid JSON array");
 
@@ -1773,6 +2067,24 @@ Return ONLY a valid JSON array matching this schema:
       }
     }
     throw lastError || new Error("Gemini API request failed");
+  }
+
+  async function generateViaGemini(apiKey, level, lessonRange, count, sectionFilter) {
+    // If count > 14, split into two parallel calls so output tokens never truncate the JSON
+    if (count > 14) {
+      const c1 = Math.ceil(count / 2);
+      const c2 = Math.floor(count / 2);
+      const [r1, r2] = await Promise.allSettled([
+        generateGeminiSingleCall(apiKey, level, lessonRange, c1, sectionFilter),
+        generateGeminiSingleCall(apiKey, level, lessonRange, c2, sectionFilter)
+      ]);
+      const list1 = r1.status === "fulfilled" && Array.isArray(r1.value) ? r1.value : [];
+      const list2 = r2.status === "fulfilled" && Array.isArray(r2.value) ? r2.value : [];
+      const combined = [...list1, ...list2];
+      if (combined.length > 0) return combined;
+      throw (r1.reason || r2.reason || new Error("Gemini parallel requests failed"));
+    }
+    return generateGeminiSingleCall(apiKey, level, lessonRange, count, sectionFilter);
   }
 
   function normalizeQuestion(q, fallbackLevel = "N5", fallbackLesson = "L1-25") {
@@ -1838,6 +2150,60 @@ Return ONLY a valid JSON array matching this schema:
     return classifySectionKey(qSection) === filter;
   }
 
+  // Guaranteed Backfill to ensure the exact requested number of questions is ALWAYS delivered
+  function ensureQuestionCount(questions, targetCount, level, lessonRange, sectionFilter) {
+    if (!Array.isArray(questions)) questions = [];
+    if (questions.length >= targetCount) {
+      return questions.slice(0, targetCount);
+    }
+
+    const result = [...questions];
+    const existingPrompts = new Set(result.map((q) => q.prompt || ""));
+
+    // 1. Try matching section & lesson filter from CORE_QUESTION_BANK_N5
+    const matched = shuffle(
+      CORE_QUESTION_BANK_N5.filter(
+        (q) => !existingPrompts.has(q.prompt) &&
+               matchesSectionFilter(q.section, sectionFilter) &&
+               matchesLessonRange(q.lesson, lessonRange)
+      )
+    );
+
+    for (const q of matched) {
+      if (result.length >= targetCount) break;
+      result.push(q);
+      existingPrompts.add(q.prompt);
+    }
+
+    // 2. Try matching section filter only
+    if (result.length < targetCount) {
+      const sectionOnly = shuffle(
+        CORE_QUESTION_BANK_N5.filter(
+          (q) => !existingPrompts.has(q.prompt) && matchesSectionFilter(q.section, sectionFilter)
+        )
+      );
+      for (const q of sectionOnly) {
+        if (result.length >= targetCount) break;
+        result.push(q);
+        existingPrompts.add(q.prompt);
+      }
+    }
+
+    // 3. Backfill any non-duplicate questions from CORE_QUESTION_BANK_N5
+    if (result.length < targetCount) {
+      const remaining = shuffle(
+        CORE_QUESTION_BANK_N5.filter((q) => !existingPrompts.has(q.prompt))
+      );
+      for (const q of remaining) {
+        if (result.length >= targetCount) break;
+        result.push(q);
+        existingPrompts.add(q.prompt);
+      }
+    }
+
+    return result.slice(0, targetCount);
+  }
+
   async function generateExam() {
     const level = currentLevel;
     const mode = $("sourceMode").value;
@@ -1868,11 +2234,12 @@ Return ONLY a valid JSON array matching this schema:
           $("settingsDrawer").classList.add("open");
           return;
         }
-        generated = await generateViaGemini(apiKey, level, lessonRange, totalCount, filter);
+        const geminiRes = await generateViaGemini(apiKey, level, lessonRange, totalCount, filter);
+        generated = ensureQuestionCount(geminiRes, totalCount, level, lessonRange, filter);
         const hasWeak = weakFocus && loadJSON(STORAGE.MISTAKES, []).length > 0;
         statusLabel = hasWeak
-          ? `✨ ${level} (${lessonRange}) Gemini AI • Weak-Topic Focus`
-          : `✨ ${level} (${lessonRange}) via Gemini AI`;
+          ? `✨ ${level} (${lessonRange}) Gemini AI • Weak-Topic Focus (${generated.length} Qs)`
+          : `✨ ${level} (${lessonRange}) via Gemini AI (${generated.length} Qs)`;
       } else {
         const customPool = loadJSON(STORAGE.CUSTOM_POOL, []).filter(
           (q) => matchesLessonRange(q.lesson, lessonRange) && matchesSectionFilter(q.section, filter)
@@ -1880,43 +2247,21 @@ Return ONLY a valid JSON array matching this schema:
 
         let onlineItems = [];
         try {
-          if (filter === "vocab" || filter === "all") {
-            const kNeed = Math.ceil(totalCount * 0.45);
-            const vNeed = Math.floor(totalCount * 0.55);
-            const [onlineK, onlineV] = await Promise.all([
-              fetchOnlineKanjiQuestions(level, lessonRange, kNeed),
-              fetchOnlineVocabQuestions(level, lessonRange, vNeed)
-            ]);
-            onlineItems = [...onlineK, ...onlineV];
-          } else if (apiKey) {
-            generated = await generateViaGemini(apiKey, level, lessonRange, totalCount, filter);
-            statusLabel = `✨ ${level} (${lessonRange}) via Gemini AI`;
-          } else if (customPool.length === 0) {
-            const [onlineK, onlineV] = await Promise.all([
-              fetchOnlineKanjiQuestions(level, lessonRange, Math.ceil(totalCount * 0.4)),
-              fetchOnlineVocabQuestions(level, lessonRange, Math.floor(totalCount * 0.6))
-            ]);
-            onlineItems = [...onlineK, ...onlineV];
-            statusLabel = `🌐 ${level} Vocab/Kanji (Add Gemini key in Tools for Grammar/Reading)`;
-          }
+          const kNeed = Math.ceil(totalCount * 0.5);
+          const vNeed = Math.ceil(totalCount * 0.5);
+          const [onlineK, onlineV] = await Promise.all([
+            fetchOnlineKanjiQuestions(level, lessonRange, kNeed),
+            fetchOnlineVocabQuestions(level, lessonRange, vNeed)
+          ]);
+          onlineItems = [...onlineK, ...onlineV];
         } catch (err) {
           console.warn("Online fetch error:", err);
         }
 
-        if (generated.length === 0) {
-          const combined = shuffle([...customPool, ...onlineItems]);
-          if (combined.length > 0) {
-            generated = combined.slice(0, totalCount);
-            if (!statusLabel) {
-              statusLabel = customPool.length > 0
-                ? `🌐 ${level} (${lessonRange}) Live APIs + Custom (${generated.length} Qs)`
-                : `🌐 ${level} (${lessonRange}) Live Online APIs (${generated.length} Qs)`;
-            }
-          } else {
-            generated = COMPACT_FALLBACK_N5.slice(0, totalCount);
-            statusLabel = "📴 Offline Micro-Seed (Connect internet or import JSON)";
-          }
-        }
+        const candidatePool = shuffle([...customPool, ...onlineItems]);
+        generated = ensureQuestionCount(candidatePool, totalCount, level, lessonRange, filter);
+
+        statusLabel = `🌐 ${level} (${lessonRange}) Online + Core Set (${generated.length} Qs)`;
       }
 
       currentQuestions = generated;
