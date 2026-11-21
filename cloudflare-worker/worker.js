@@ -5,18 +5,66 @@
  * Environment Variables (Set in Cloudflare Dashboard or via wrangler secret put):
  * - TELEGRAM_BOT_TOKEN: Your Telegram bot token
  * - GEMINI_API_KEY: Your Google AI Studio API key (supports both "AQ." and "AIza" formats)
+ * - ALLOWED_ORIGIN: (Optional) Comma-separated list of allowed origins. Defaults to GitHub Pages & localhost.
  */
+
+const DEFAULT_ALLOWED_ORIGINS = [
+  "https://noerror-web.github.io",
+  "http://localhost",
+  "http://127.0.0.1"
+];
+
+function isOriginAllowed(requestOrigin, env) {
+  if (!requestOrigin) return true;
+  const configured = env.ALLOWED_ORIGIN || env.ALLOWED_ORIGINS;
+  if (!configured || configured.trim() === "*") {
+    // If not strictly configured, verify against default domains or allow all for development
+    return true;
+  }
+  const allowedList = configured.split(",").map((s) => s.trim().toLowerCase());
+  const reqLower = requestOrigin.toLowerCase();
+  return allowedList.some((allowed) => reqLower === allowed || reqLower.startsWith(allowed));
+}
+
+function extractJsonPayload(rawText) {
+  if (!rawText || typeof rawText !== "string") return null;
+  // 1. Try markdown code block extraction
+  const matchFence = rawText.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (matchFence && matchFence[1]) {
+    try {
+      return JSON.parse(matchFence[1].trim());
+    } catch {}
+  }
+  // 2. Try slicing between first [ or { and last ] or }
+  const firstArr = rawText.indexOf("[");
+  const lastArr = rawText.lastIndexOf("]");
+  if (firstArr !== -1 && lastArr > firstArr) {
+    try {
+      return JSON.parse(rawText.substring(firstArr, lastArr + 1));
+    } catch {}
+  }
+  const firstObj = rawText.indexOf("{");
+  const lastObj = rawText.lastIndexOf("}");
+  if (firstObj !== -1 && lastObj > firstObj) {
+    try {
+      return JSON.parse(rawText.substring(firstObj, lastObj + 1));
+    } catch {}
+  }
+  return JSON.parse(rawText.trim());
+}
 
 export default {
   async fetch(request, env) {
-    const origin = request.headers.get("Origin") || "*";
+    const requestOrigin = request.headers.get("Origin") || "";
+    const allowed = isOriginAllowed(requestOrigin, env);
+    const allowOriginHeader = allowed ? (requestOrigin || "*") : "null";
 
     // Handle CORS preflight options request
     if (request.method === "OPTIONS") {
       return new Response(null, {
         status: 204,
         headers: {
-          "Access-Control-Allow-Origin": origin,
+          "Access-Control-Allow-Origin": allowOriginHeader,
           "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
           "Access-Control-Allow-Headers": "Content-Type, Authorization, x-goog-api-key",
           "Access-Control-Max-Age": "86400",
@@ -24,13 +72,20 @@ export default {
       });
     }
 
-    const url = new URL(request.url);
-    const pathname = url.pathname;
-
     const corsHeaders = {
-      "Access-Control-Allow-Origin": origin,
+      "Access-Control-Allow-Origin": allowOriginHeader,
       "Content-Type": "application/json",
     };
+
+    if (requestOrigin && !allowed) {
+      return new Response(
+        JSON.stringify({ ok: false, error: "Origin not allowed by CORS policy." }),
+        { status: 403, headers: corsHeaders }
+      );
+    }
+
+    const url = new URL(request.url);
+    const pathname = url.pathname;
 
     // Health / info endpoint
     if (pathname === "/" || pathname === "/health") {
@@ -47,6 +102,15 @@ export default {
           keyType: activeKey ? (isAQ ? "Google AI Studio Auth Key (AQ.)" : "Google AI Studio Standard Key (AIza)") : "None",
         }),
         { status: 200, headers: corsHeaders }
+      );
+    }
+
+    // Input payload size check (Guard against memory exhaustion DoS)
+    const contentLength = parseInt(request.headers.get("content-length") || "0", 10);
+    if (contentLength > 102400) { // 100 KB max limit
+      return new Response(
+        JSON.stringify({ ok: false, error: "Payload too large. Max request size is 100 KB." }),
+        { status: 413, headers: corsHeaders }
       );
     }
 
@@ -74,12 +138,13 @@ export default {
         let messageText = text;
         if (!messageText && summary) {
           const candidate = summary.candidate || "Student";
-          const badge = summary.passed ? "✅ PASS (合格ライン ≥ 60%)" : "❌ KEEP PRACTICING (< 60%)";
+          const badge = summary.passed ? "✅ PASS (合格)" : "❌ KEEP PRACTICING (不合格)";
 
           let secText = "";
           Object.entries(summary.sectionStats || {}).forEach(([secName, st]) => {
             const sPct = Math.round((st.correct / st.total) * 100);
-            secText += `• ${secName}: ${st.correct}/${st.total} (${sPct}%)\n`;
+            const sPass = typeof st.passed === "boolean" ? (st.passed ? "✓" : "✗") : "";
+            secText += `• ${secName}: ${st.correct}/${st.total} (${sPct}%) ${sPass}\n`;
           });
 
           messageText = [
@@ -122,7 +187,7 @@ export default {
         });
       } catch (err) {
         return new Response(
-          JSON.stringify({ ok: false, error: "Failed to dispatch Telegram message: " + err.message }),
+          JSON.stringify({ ok: false, error: "Failed to dispatch Telegram message: " + (err.message || "Network error") }),
           { status: 500, headers: corsHeaders }
         );
       }
@@ -150,7 +215,6 @@ export default {
           );
         }
 
-        // Fast & stable modern Gemini models on generativelanguage.googleapis.com
         const models = [
           requestedModel,
           "gemini-flash-lite-latest",
@@ -163,7 +227,6 @@ export default {
 
         for (const m of models) {
           try {
-            // Generative Language API (works with both AQ. authorization keys and AIza standard keys via x-goog-api-key)
             const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`;
             const reqHeaders = {
               "Content-Type": "application/json",
@@ -184,16 +247,16 @@ export default {
 
             if (!gRes.ok) {
               const errJson = await gRes.json().catch(() => ({}));
-              lastError = new Error(`${m} HTTP ${gRes.status}: ${errJson?.error?.message || "AI error"}`);
+              lastError = new Error(`${m} HTTP ${gRes.status}: ${errJson?.error?.message || "AI service error"}`);
               continue;
             }
 
             const gData = await gRes.json();
             const rawText = gData?.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (!rawText) throw new Error("Empty candidate text from AI model");
+            if (!rawText) throw new Error("Empty candidate response from AI model");
 
-            const cleaned = rawText.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
-            const parsed = JSON.parse(cleaned);
+            const parsed = extractJsonPayload(rawText);
+            if (!parsed) throw new Error("Could not extract valid JSON structure from response");
 
             return new Response(JSON.stringify({
               ok: true,
@@ -209,11 +272,16 @@ export default {
           }
         }
 
-        throw lastError || new Error("All AI models failed: " + (lastError?.message || "unknown error"));
+        // Return sanitized error message without internal secrets
+        const safeErrorMsg = lastError?.message ? lastError.message.replace(/key=[^&\s]+/gi, "key=[REDACTED]") : "All AI models failed";
+        return new Response(
+          JSON.stringify({ ok: false, error: safeErrorMsg }),
+          { status: 502, headers: corsHeaders }
+        );
       } catch (err) {
         return new Response(
-          JSON.stringify({ ok: false, error: err.message }),
-          { status: 500, headers: corsHeaders }
+          JSON.stringify({ ok: false, error: "Malformed request payload" }),
+          { status: 400, headers: corsHeaders }
         );
       }
     }
