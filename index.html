@@ -60,6 +60,20 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    :focus-visible {
+      outline: 2.5px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
     button, input, select, textarea {
       font-family: inherit;
     }
@@ -798,8 +812,23 @@
       }
       .print-header h1 { font-size: 16pt; margin-bottom: 4px; }
       .print-meta-line { display: flex; justify-content: space-between; font-size: 10pt; color: #334155; }
-      .passage-box { background: #f8fafc !important; border: 1px solid #cbd5e1 !important; color: #0f172a !important; }
-      .q-card { box-shadow: none; border: 1px solid #cbd5e1 !important; padding: 12px; margin-bottom: 10px; background: #fff !important; color: #0f172a !important; }
+      .passage-box {
+        background: #f8fafc !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #0f172a !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      .q-card {
+        box-shadow: none;
+        border: 1px solid #cbd5e1 !important;
+        padding: 12px;
+        margin-bottom: 10px;
+        background: #fff !important;
+        color: #0f172a !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
       .kanji-tap { border-bottom: none !important; }
       .slot-pill {
         min-width: 54px;
@@ -820,6 +849,22 @@
       }
       .print-answer-key h2 { font-size: 14pt; border-bottom: 1.5px solid #0f172a; padding-bottom: 6px; margin-bottom: 12px; }
       .print-ans-item { margin-bottom: 8px; font-size: 9.5pt; border-bottom: 1px dashed #cbd5e1; padding-bottom: 6px; }
+    }
+
+    @media (max-width: 640px) {
+      .kanji-popover {
+        bottom: 0;
+        right: 0;
+        left: 0;
+        width: 100%;
+        max-height: 55vh;
+        overflow-y: auto;
+        border-radius: 18px 18px 0 0;
+        border-bottom: none;
+        box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.4);
+        padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+        z-index: 100;
+      }
     }
 
     @media (max-width: 560px) {
@@ -1463,6 +1508,269 @@
     }
   ];
   const COMPACT_FALLBACK_N5 = CORE_QUESTION_BANK_N5;
+  const CORE_QUESTION_BANK_N4 = [
+    {
+      section: "文字・語彙 (N4 Vocabulary & Kanji)",
+      subtype: "問題1：漢字読み",
+      lesson: "L26-35",
+      prompt: "図書館で　本を　<u>借りました</u>。",
+      options: ["かりました", "かしました", "かえしました", "とりました"],
+      answer: 0,
+      kana: "としょかんで ほんを かりました。",
+      exp_en: "「借りました」 is read 「かりました」 (to borrow).",
+      exp_bn: "「借りました」-এর সঠিক উচ্চারণ 「かりました」 (ধার করেছিলাম)।"
+    },
+    {
+      section: "文字・語彙 (N4 Vocabulary & Kanji)",
+      subtype: "問題1：漢字読み",
+      lesson: "L26-35",
+      prompt: "この　道は　車がたくさん　<u>通ります</u>。",
+      options: ["とおります", "わたります", "とまります", "まがります"],
+      answer: 0,
+      kana: "この みちは くるまが たくさん とおります。",
+      exp_en: "「通ります」 is read 「とおります」 (to pass through/go along).",
+      exp_bn: "「通ります」-এর সঠিক উচ্চারণ 「とおります」 (চলাচল করে)।"
+    },
+    {
+      section: "文字・語彙 (N4 Vocabulary & Kanji)",
+      subtype: "問題1：漢字読み",
+      lesson: "L36-40",
+      prompt: "テストのときは　時間に　<u>注意</u>してください。",
+      options: ["ちゅうい", "じゅんび", "しょうかい", "しゅっせき"],
+      answer: 0,
+      kana: "テストのときは じかんに ちゅういしてください。",
+      exp_en: "「注意」 is read 「ちゅうい」 (caution/attention).",
+      exp_bn: "「注意」-এর সঠিক উচ্চারণ 「ちゅうい」 (সতর্কতা / মনোযোগ)।"
+    },
+    {
+      section: "文字・語彙 (N4 Vocabulary & Kanji)",
+      subtype: "問題1：漢字読み",
+      lesson: "L36-40",
+      prompt: "日本で　いろいろな　<u>経験</u>を　しました。",
+      options: ["けいけん", "じっけん", "あんない", "れんしゅう"],
+      answer: 0,
+      kana: "にほんで いろいろな けいけんを しました。",
+      exp_en: "「経験」 is read 「けいけん」 (experience).",
+      exp_bn: "「経験」-এর সঠিক উচ্চারণ 「けいけん」 (অভিজ্ঞতা)।"
+    },
+    {
+      section: "文字・語彙 (N4 Vocabulary & Kanji)",
+      subtype: "問題1：漢字読み",
+      lesson: "L26-35",
+      prompt: "駅から　遠くて　とても　<u>不便</u>です。",
+      options: ["ふべん", "ふあん", "へんじ", "べんり"],
+      answer: 0,
+      kana: "えきから とおくて とても ふべんです。",
+      exp_en: "「不便」 is read 「ふべん」 (inconvenient).",
+      exp_bn: "「不便」-এর সঠিক উচ্চারণ 「ふべん」 (অসুবিধাজনক)।"
+    },
+    {
+      section: "文字・語彙 (N4 Vocabulary & Kanji)",
+      subtype: "問題2：表記",
+      lesson: "L26-35",
+      prompt: "駅前で　観光の　<u>あんない</u>の　紙をもらいました。",
+      options: ["案内", "案內", "安内", "定内"],
+      answer: 0,
+      kana: "えきまえで かんこうの あんないの かみを もらいました。",
+      exp_en: "「あんない」 is written in kanji as 「案内」 (guidance/information).",
+      exp_bn: "「あんない」-এর কাঞ্জি রূপ 「案内」 (দিকনির্দেশনা/গাইড)।"
+    },
+    {
+      section: "文字・語彙 (N4 Vocabulary & Kanji)",
+      subtype: "問題2：表記",
+      lesson: "L36-40",
+      prompt: "先生に　文法の　使い方を　<u>せつめい</u>してもらいました。",
+      options: ["説明", "設明", "説名", "設名"],
+      answer: 0,
+      kana: "せんせいに ぶんぽうの つかいかたを せつめいしてもらいました。",
+      exp_en: "「せつめい」 is written in kanji as 「説明」 (explanation).",
+      exp_bn: "「せつめい」-এর কাঞ্জি রূপ 「説明」 (ব্যাখ্যা)।"
+    },
+    {
+      section: "文字・語彙 (N4 Vocabulary & Kanji)",
+      subtype: "問題3：文脈規定",
+      lesson: "L26-35",
+      prompt: "バスが　来ないので、（　　）タクシーに　乗りました。",
+      options: ["急いで", "決して", "必ず", "すっかり"],
+      answer: 0,
+      kana: "バスが こないので、いそいで タクシーに のりました。",
+      exp_en: "「急いで」 (in a hurry) naturally fits the situation of hurrying because the bus didn't come.",
+      exp_bn: "বাস না আসায় দ্রুত ট্যাক্সি নিলাম (急いで - তাড়াহুড়ো করে)।"
+    },
+    {
+      section: "文字・語彙 (N4 Vocabulary & Kanji)",
+      subtype: "問題3：文脈規定",
+      lesson: "L26-35",
+      prompt: "あした　友達と　映画を　見に行く（　　）を　しました。",
+      options: ["約束", "用事", "予定", "連絡"],
+      answer: 0,
+      kana: "あした ともだちと えいがを みにいく やくそくを しました。",
+      exp_en: "「約束をする」 means 'to make a promise/appointment' with someone.",
+      exp_bn: "বন্ধুর সাথে মুভি দেখতে যাওয়ার ওয়াদা বা অ্যাপয়েন্টমেন্ট করলাম (約束 - প্রতিশ্রুতি)।"
+    },
+    {
+      section: "文字・語彙 (N4 Vocabulary & Kanji)",
+      subtype: "問題4：言い換え類義",
+      lesson: "L41-50",
+      prompt: "どうぞ　<u>遠慮しないで</u>　食べてください。",
+      options: ["きをつかわないで", "いそがないで", "あきらめないで", "こまらないで"],
+      answer: 0,
+      kana: "どうぞ えんりょしないで たべてください。",
+      exp_en: "「遠慮しないで」 means without hesitation / without holding back (気を遣わないで).",
+      exp_bn: "「遠慮しないで」 মানে দ্বিধা না করে স্বাচ্ছন্দ্যে (気を遣わないで)।"
+    },
+    {
+      section: "文字・語彙 (N4 Vocabulary & Kanji)",
+      subtype: "問題5：用法",
+      lesson: "L26-35",
+      prompt: "「都合」の　つかいかたで　ただしいものは　どれですか。",
+      options: [
+        "あしたは　都合が　わるいので、あさってに　しましょう。",
+        "都合を　あけて　まどを　ふいてください。",
+        "この　料理は　とても　都合が　おいしいです。",
+        "都合が　ふって　みちが　白くなりました。"
+      ],
+      answer: 0,
+      kana: "あしたは つごうが わるいので、あさってに しましょう。",
+      exp_en: "「都合がわるい」 is the standard collocation meaning 'the timing/schedule is inconvenient'.",
+      exp_bn: "সুবিধাজনক সময় বোঝাতে 「都合がわるい」(সময় না থাকা/সুবিধা না হওয়া) ব্যবহৃত হয়।"
+    },
+    {
+      section: "文法 (N4 Grammar)",
+      subtype: "問題6：文の文法1",
+      lesson: "L26-35",
+      prompt: "宿題を　家に　（　　）しまいました。",
+      options: ["忘れて", "忘れた", "忘れる", "忘れ"],
+      answer: 0,
+      kana: "しゅくだいを いえに わすれてしまいました。",
+      exp_en: "〜てしまう expresses regretful or irreversible action. Form: て-form + しまいました.",
+      exp_bn: "অনুতাপ বা অনাকাঙ্ক্ষিত ঘটনা বোঝাতে て-form + しまいました (忘れてしまいました - ভুল করে ফেলে এসেছি)।"
+    },
+    {
+      section: "文法 (N4 Grammar)",
+      subtype: "問題6：文の文法1",
+      lesson: "L26-35",
+      prompt: "旅行に　行く前に、ホテルの　予約を　して（　　）。",
+      options: ["おきます", "あります", "みます", "しまいます"],
+      answer: 0,
+      kana: "りょこうに いくまえに、ホテルの よやくを しておきます。",
+      exp_en: "〜ておく expresses performing an action in advance in preparation.",
+      exp_bn: "ভবিষ্যতের প্রস্তুতির জন্য কোনো কাজ আগেভাগে করে রাখা বোঝাতে 〜ておきます ব্যবহৃত হয়।"
+    },
+    {
+      section: "文法 (N4 Grammar)",
+      subtype: "問題6：文の文法1",
+      lesson: "L26-35",
+      prompt: "壁に　きれいな　カレンダーが　かけて（　　）。",
+      options: ["あります", "います", "おきます", "みます"],
+      answer: 0,
+      kana: "かべに きれいな カレンダーが かけてあります。",
+      exp_en: "Transitive verb て-form + あります expresses a resulting state intentionally created.",
+      exp_bn: "কোনো উদ্দেশ্য নিয়ে কাজ করে রাখার ফলে সৃষ্ট বর্তমান অবস্থা বোঝাতে 〜てあります ব্যবহৃত হয়।"
+    },
+    {
+      section: "文法 (N4 Grammar)",
+      subtype: "問題6：文の文法1",
+      lesson: "L26-35",
+      prompt: "頭が　痛い（　　）、きょうは　早く　帰ってもいいですか。",
+      options: ["んですが", "のでが", "からが", "ですが"],
+      answer: 0,
+      kana: "あたまが いたいんですが、きょうは はやく かえってもいいですか。",
+      exp_en: "〜んです/〜んですが is used when offering an explanatory premise before asking a question or permission.",
+      exp_bn: "অনুমতি চাওয়ার পূর্বে কারণ বা পটভূমি ব্যাখ্যা করতে 〜んですが ব্যবহৃত হয়।"
+    },
+    {
+      section: "文法 (N4 Grammar)",
+      subtype: "問題6：文の文法1",
+      lesson: "L26-35",
+      prompt: "テレビを　（　　）ながら、勉強してはいけません。",
+      options: ["見", "見て", "見ない", "見る"],
+      answer: 0,
+      kana: "テレビを みながら、べんきょうしてはいけません。",
+      exp_en: "〜ながら attaches to the verb stem (ます-form without ます): 見ます → 見ながら.",
+      exp_bn: "একই সাথে দুটি কাজ করা বোঝাতে Verb stem + ながら (見ながら - দেখতে দেখতে)।"
+    },
+    {
+      section: "文法 (N4 Grammar)",
+      subtype: "問題6：文の文法1",
+      lesson: "L36-40",
+      prompt: "毎朝　早く　起きる（　　）に　しています。",
+      options: ["よう", "そう", "こと", "ため"],
+      answer: 0,
+      kana: "まいあさ はやく おきるように しています。",
+      exp_en: "〜ようにする/している indicates an ongoing conscious effort or habit.",
+      exp_bn: "অভ্যাস গড়ে তোলা বা সচেতন প্রচেষ্টা বোঝাতে Verb dictionary form + ようにしている ব্যবহৃত হয়।"
+    },
+    {
+      section: "文法 (N4 Grammar)",
+      subtype: "問題7：★文の組み立て",
+      lesson: "L26-35",
+      prompt: "",
+      starData: {
+        before: "きのう",
+        after: "行きました。",
+        ordered: ["友達と", "いっしょに", "映画館へ", "映画を　見に"],
+        starPos: 2
+      },
+      options: ["映画館へ", "映画を　見に", "友達と", "いっしょに"],
+      answer: 0,
+      kana: "きのう 友達と いっしょに 【★ 映画館へ】 映画を 見に 行きました。",
+      exp_en: "Correct order: きのう 友達と (1) いっしょに (2) 【★ 映画館へ】 (3) 映画を 見に (4) 行きました。 Star is position 3 (映画館へ).",
+      exp_bn: "সঠিক বাক্যক্রম: きのう 友達と (১) いっしょに (২) 【★ 映画館へ】 (৩) 映画を 見に (৪) 行きました। তারকার ঘরে ৩য় পদ (映画館へ) বসেছে।"
+    },
+    {
+      section: "文法 (N4 Grammar)",
+      subtype: "問題7：★文の組み立て",
+      lesson: "L36-40",
+      prompt: "",
+      starData: {
+        before: "ここは",
+        after: "ところです。",
+        ordered: ["静かで", "勉強が", "とても", "よく　できる"],
+        starPos: 2
+      },
+      options: ["とても", "よく　できる", "静かで", "勉強が"],
+      answer: 0,
+      kana: "ここは 静かで 勉強が 【★ とても】 よく できる ところです。",
+      exp_en: "Correct order: ここは 静かで (1) 勉強が (2) 【★ とても】 (3) よく できる (4) ところです。 Star is position 3 (とても).",
+      exp_bn: "সঠিক ক্রম: ここは 静かで (১) 勉強が (২) 【★ とても】 (৩) よく できる (৪) ところです। তারকার ঘরে 'とても'।"
+    },
+    {
+      section: "読解 (N4 Reading Comprehension)",
+      subtype: "問題8：内容理解（短文）",
+      lesson: "L26-35",
+      passage: "【スピーチコンテストの　おしらせ】\n来月の　15日に　留学生スピーチコンテストを　行います。\nテーマは「日本に　来て　おどろいたこと」です。\nスピーチの時間は　1人　5分以内です。\n参加したい人は、今月の　25日までに　受付へ　申込書を　出してください。\n参加費は　無料です。",
+      prompt: "スピーチコンテストに　出たい人は　いつまでに　何をしなければなりませんか。",
+      options: [
+        "今月の　25日までに　申込書を出さなければならない。",
+        "来月の　15日までに　参加費を払わなければならない。",
+        "今月の　15日までに　5分間のスピーチを録音しなければならない。",
+        "来月の　25日までに　受付でテストを受けなければならない。"
+      ],
+      answer: 0,
+      kana: "今月の 25日までに 申込書を出さなければならない。",
+      exp_en: "The notice states: 『今月の 25日までに 受付へ 申込書を 出してください』 (Please submit the application form by the 25th of this month).",
+      exp_bn: "নোটিশে বলা হয়েছে: এই মাসের ২৫ তারিখের মধ্যে আবেদনপত্র জমা দিতে হবে।"
+    },
+    {
+      section: "読解 (N4 Reading Comprehension)",
+      subtype: "問題8：内容理解（短文）",
+      lesson: "L36-40",
+      passage: "【メール】\n件名：あしたの　会議の　じかんへんこう\n田中課長、お疲れ様です。ミラーです。\nあしたの　午前10時からの　会議ですが、林さんが　急な出張になったため、午後2時からに　変更になりました。\n場所は　同じ　第2会議室です。\nよろしく　お願いいたします。",
+      prompt: "あしたの　会議は　どうなりましたか。",
+      options: [
+        "時間は　午後2時からになり、場所は　変わらない。",
+        "時間は　午前10時のままで、場所だけ　変わった。",
+        "会議は　中止（キャンセル）になった。",
+        "林さんだけが　午後2時に　第1会議室へ行く。"
+      ],
+      answer: 0,
+      kana: "時間は 午後2時からになり、場所は 変わらない。",
+      exp_en: "The email explains: The meeting is moved from 10 AM to 2 PM, while the room remains the same (Meeting Room 2).",
+      exp_bn: "ইমেলে বলা হয়েছে: মিটিংয়ের সময় সকাল ১০টা থেকে দুপুর ২টায় পরিবর্তন হয়েছে এবং স্থান একই থাকছে।"
+    }
+  ];
+
 
   // =========================================================================
   // 2. STATE & STORAGE KEYS
@@ -1524,7 +1832,47 @@
   }
 
   function saveJSON(key, val) {
-    try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { console.warn("Storage full:", e); }
+    try {
+      localStorage.setItem(key, JSON.stringify(val));
+    } catch (e) {
+      console.warn("Storage full, attempting quota recovery by clearing transient caches:", e);
+      try {
+        // Clear non-critical sentence and kanji details caches to recover quota
+        localStorage.removeItem(STORAGE.SENTENCES);
+        localStorage.removeItem(STORAGE.kanjiDetails("N5"));
+        localStorage.removeItem(STORAGE.kanjiDetails("N4"));
+        localStorage.setItem(key, JSON.stringify(val));
+        console.info("Storage quota recovered successfully.");
+      } catch (retryErr) {
+        console.error("Storage write failed after recovery attempt:", retryErr);
+      }
+    }
+  }
+
+  // Safe migration of legacy storage keys
+  function migrateStorage() {
+    try {
+      const legacyMistakesKeys = ["jlpt_mistakes", "jlpt_mistake_bank", "jlpt_mistake_bank_v3"];
+      if (!localStorage.getItem(STORAGE.MISTAKES)) {
+        for (const k of legacyMistakesKeys) {
+          const old = localStorage.getItem(k);
+          if (old) {
+            localStorage.setItem(STORAGE.MISTAKES, old);
+            break;
+          }
+        }
+      }
+      if (!localStorage.getItem(STORAGE.STATS)) {
+        const oldStats = localStorage.getItem("jlpt_stats_v3") || localStorage.getItem("jlpt_stats");
+        if (oldStats) localStorage.setItem(STORAGE.STATS, oldStats);
+      }
+      if (!localStorage.getItem(STORAGE.CUSTOM_POOL)) {
+        const oldPool = localStorage.getItem("jlpt_custom_pool_v3");
+        if (oldPool) localStorage.setItem(STORAGE.CUSTOM_POOL, oldPool);
+      }
+    } catch (e) {
+      console.warn("Storage migration error:", e);
+    }
   }
 
   function shuffle(arr) {
@@ -1676,6 +2024,7 @@
     $("generateBtn").innerHTML = `<span>⚡ Generate JLPT ${currentLevel} Question Set</span>`;
     $("statusBadge").textContent = `Ready (${currentLevel})`;
     $("scoreHeaderLabel").textContent = `JLPT ${currentLevel} EXAM RESULT`;
+    document.title = `JLPT ${currentLevel} Practice & Mock Exam Generator — Md Mominur Islam`;
 
     const rangeSel = $("lessonRange");
     if (currentLevel === "N5" && !N5_RANGES.has(rangeSel.value)) rangeSel.value = "L1-25";
@@ -2218,8 +2567,25 @@ Return ONLY a valid JSON array matching this schema:
         const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (!rawText) throw new Error("Empty response from Gemini");
 
-        const cleaned = rawText.replace(/^\`\`\`json\s*/i, "").replace(/\`\`\`\s*$/i, "").trim();
-        const parsed = JSON.parse(cleaned);
+        let parsed = null;
+        // 1. Try markdown code fence extraction
+        const matchFence = rawText.match(/\`\`\`(?:json)?\s*([\s\S]*?)\s*\`\`\`/i);
+        if (matchFence && matchFence[1]) {
+          try { parsed = JSON.parse(matchFence[1].trim()); } catch {}
+        }
+        // 2. Try array slicing
+        if (!parsed) {
+          const firstArr = rawText.indexOf("[");
+          const lastArr = rawText.lastIndexOf("]");
+          if (firstArr !== -1 && lastArr > firstArr) {
+            try { parsed = JSON.parse(rawText.substring(firstArr, lastArr + 1)); } catch {}
+          }
+        }
+        // 3. Direct cleaned fallback
+        if (!parsed) {
+          const cleaned = rawText.replace(/^\`\`\`json\s*/i, "").replace(/\`\`\`\s*$/i, "").trim();
+          parsed = JSON.parse(cleaned);
+        }
         if (!Array.isArray(parsed) || parsed.length === 0) throw new Error("Invalid JSON array");
 
         return parsed.map((q) => normalizeQuestion(q, level, lessonRange)).filter(Boolean);
@@ -2314,6 +2680,9 @@ Return ONLY a valid JSON array matching this schema:
   // Guaranteed Backfill to ensure the exact requested number of questions is ALWAYS delivered
   function ensureQuestionCount(questions, targetCount, level, lessonRange, sectionFilter) {
     if (!Array.isArray(questions)) questions = [];
+    const activeBank = (level === "N4" && typeof CORE_QUESTION_BANK_N4 !== "undefined")
+      ? CORE_QUESTION_BANK_N4
+      : CORE_QUESTION_BANK_N5;
     
     // Only accept questions that match the requested sectionFilter
     const filtered = questions.filter((q) => matchesSectionFilter(q.section, sectionFilter));
@@ -2324,9 +2693,9 @@ Return ONLY a valid JSON array matching this schema:
     const result = [...filtered];
     const existingPrompts = new Set(result.map((q) => q.prompt || ""));
 
-    // 1. Try matching section & lesson filter from CORE_QUESTION_BANK_N5
+    // 1. Try matching section & lesson filter from activeBank
     const matched = shuffle(
-      CORE_QUESTION_BANK_N5.filter(
+      activeBank.filter(
         (q) => !existingPrompts.has(q.prompt) &&
                matchesSectionFilter(q.section, sectionFilter) &&
                matchesLessonRange(q.lesson, lessonRange)
@@ -2342,7 +2711,7 @@ Return ONLY a valid JSON array matching this schema:
     // 2. Try matching section filter only (across all lesson scopes)
     if (result.length < targetCount) {
       const sectionOnly = shuffle(
-        CORE_QUESTION_BANK_N5.filter(
+        activeBank.filter(
           (q) => !existingPrompts.has(q.prompt) && matchesSectionFilter(q.section, sectionFilter)
         )
       );
@@ -2353,10 +2722,10 @@ Return ONLY a valid JSON array matching this schema:
       }
     }
 
-    // 3. If sectionFilter is 'all', backfill any remaining non-duplicate questions from CORE_QUESTION_BANK_N5
+    // 3. If sectionFilter is 'all', backfill any remaining non-duplicate questions from activeBank
     if (result.length < targetCount && sectionFilter === "all") {
       const remaining = shuffle(
-        CORE_QUESTION_BANK_N5.filter((q) => !existingPrompts.has(q.prompt))
+        activeBank.filter((q) => !existingPrompts.has(q.prompt))
       );
       for (const q of remaining) {
         if (result.length >= targetCount) break;
@@ -2427,16 +2796,25 @@ Return ONLY a valid JSON array matching this schema:
           generated = ensureQuestionCount(candidatePool, totalCount, level, lessonRange, "vocab");
           statusLabel = `🌐 ${level} (${lessonRange}) 文字・語彙 Online + Core (${generated.length} Qs)`;
         } else if (filter === "grammar") {
-          const coreGrammar = CORE_QUESTION_BANK_N5.filter((q) => matchesSectionFilter(q.section, "grammar"));
+          const activeCoreBank = (level === "N4" && typeof CORE_QUESTION_BANK_N4 !== "undefined")
+            ? CORE_QUESTION_BANK_N4
+            : CORE_QUESTION_BANK_N5;
+          const coreGrammar = activeCoreBank.filter((q) => matchesSectionFilter(q.section, "grammar"));
           const candidatePool = shuffle([...customPool, ...coreGrammar]);
           generated = ensureQuestionCount(candidatePool, totalCount, level, lessonRange, "grammar");
           statusLabel = `🌐 ${level} (${lessonRange}) 文法 Core Bank (${generated.length} Qs)`;
         } else if (filter === "reading") {
-          const coreReading = CORE_QUESTION_BANK_N5.filter((q) => matchesSectionFilter(q.section, "reading"));
+          const activeCoreBank = (level === "N4" && typeof CORE_QUESTION_BANK_N4 !== "undefined")
+            ? CORE_QUESTION_BANK_N4
+            : CORE_QUESTION_BANK_N5;
+          const coreReading = activeCoreBank.filter((q) => matchesSectionFilter(q.section, "reading"));
           const candidatePool = shuffle([...customPool, ...coreReading]);
           generated = ensureQuestionCount(candidatePool, totalCount, level, lessonRange, "reading");
           statusLabel = `🌐 ${level} (${lessonRange}) 読解 Core Bank (${generated.length} Qs)`;
         } else {
+          const activeCoreBank = (level === "N4" && typeof CORE_QUESTION_BANK_N4 !== "undefined")
+            ? CORE_QUESTION_BANK_N4
+            : CORE_QUESTION_BANK_N5;
           const vCount = Math.max(1, Math.round(totalCount * 0.4));
           const gCount = Math.max(1, Math.round(totalCount * 0.4));
           const rCount = Math.max(1, totalCount - vCount - gCount);
@@ -2465,7 +2843,7 @@ Return ONLY a valid JSON array matching this schema:
           const grammarPart = ensureQuestionCount(
             shuffle([
               ...customPool.filter((q) => matchesSectionFilter(q.section, "grammar")),
-              ...CORE_QUESTION_BANK_N5.filter((q) => matchesSectionFilter(q.section, "grammar"))
+              ...activeCoreBank.filter((q) => matchesSectionFilter(q.section, "grammar"))
             ]),
             gCount,
             level,
@@ -2476,7 +2854,7 @@ Return ONLY a valid JSON array matching this schema:
           const readingPart = ensureQuestionCount(
             shuffle([
               ...customPool.filter((q) => matchesSectionFilter(q.section, "reading")),
-              ...CORE_QUESTION_BANK_N5.filter((q) => matchesSectionFilter(q.section, "reading"))
+              ...activeCoreBank.filter((q) => matchesSectionFilter(q.section, "reading"))
             ]),
             rCount,
             level,
@@ -2606,7 +2984,9 @@ Return ONLY a valid JSON array matching this schema:
   }
 
   function getQuestionId(q) {
-    return `${q.prompt}::${q.options.join("|")}`;
+    const starOrder = q.starData && Array.isArray(q.starData.ordered) ? q.starData.ordered.join(",") : "";
+    const passageSnippet = (q.passage || "").replace(/\s+/g, "").slice(0, 30);
+    return `${q.section}::${passageSnippet}::${q.prompt || ""}::${starOrder}::${(q.options || []).join("|")}`;
   }
 
   function handleStarSlotClick(qIdx, slotIdx) {
@@ -2681,7 +3061,14 @@ Return ONLY a valid JSON array matching this schema:
 
     currentQuestions.forEach((q, idx) => {
       const chosen = userAnswers[idx];
-      const isCorrect = chosen === q.answer;
+      let isCorrect = false;
+      if (q.starData && q.starData.ordered) {
+        const targetChunk = q.starData.ordered[q.starData.starPos];
+        const chosenChunk = q.options && chosen !== undefined ? q.options[chosen] : undefined;
+        isCorrect = chosen === q.answer || (chosenChunk !== undefined && chosenChunk === targetChunk);
+      } else {
+        isCorrect = chosen === q.answer;
+      }
 
       if (reviewWrongOnly && isGraded && isCorrect) return;
       renderedCount++;
@@ -2897,7 +3284,14 @@ Return ONLY a valid JSON array matching this schema:
       if (!sectionStats[q.section]) sectionStats[q.section] = { correct: 0, total: 0 };
       sectionStats[q.section].total++;
 
-      const isRight = userAnswers[idx] === q.answer;
+      let isRight = false;
+      if (q.starData && q.starData.ordered) {
+        const targetChunk = q.starData.ordered[q.starData.starPos];
+        const chosenChunk = q.options && userAnswers[idx] !== undefined ? q.options[userAnswers[idx]] : undefined;
+        isRight = userAnswers[idx] === q.answer || (chosenChunk !== undefined && chosenChunk === targetChunk);
+      } else {
+        isRight = userAnswers[idx] === q.answer;
+      }
       const qId = q._mistakeId || getQuestionId(q);
 
       if (isRight) {
@@ -2933,7 +3327,23 @@ Return ONLY a valid JSON array matching this schema:
 
     const total = currentQuestions.length;
     const pct = Math.round((correctTotal / total) * 100);
-    const passed = pct >= 60;
+
+    // Official JLPT passing criteria: N5 overall is 44.4% (80/180), N4 overall is 50.0% (90/180)
+    const overallThreshold = currentLevel === "N4" ? 50 : 44;
+    
+    // Official JLPT Sectional Minimum (基準点): ~32% in every tested section
+    let allSectionsPassed = true;
+    const failedSections = [];
+    Object.entries(sectionStats).forEach(([secName, st]) => {
+      st.pct = st.total > 0 ? Math.round((st.correct / st.total) * 100) : 0;
+      st.passed = st.total > 0 ? st.pct >= 32 : true;
+      if (!st.passed) {
+        allSectionsPassed = false;
+        failedSections.push(`${secName.split(" ")[0]} (${st.pct}%)`);
+      }
+    });
+
+    const passed = pct >= overallThreshold && allSectionsPassed;
 
     lastScoreSummary = {
       level: currentLevel,
@@ -2949,10 +3359,14 @@ Return ONLY a valid JSON array matching this schema:
     $("scoreBig").textContent = `${correctTotal} / ${total} (${pct}%)`;
     const passTag = $("passTag");
     if (passed) {
-      passTag.textContent = `${currentLevel} 合格ライン (PASS ≥ 60%)`;
+      passTag.textContent = `🎉 ${currentLevel} 合格 (PASS ≥ ${overallThreshold}% + 基準点クリア)`;
       passTag.className = "pass-tag pass";
     } else {
-      passTag.textContent = `${currentLevel} もう少し (KEEP PRACTICING < 60%)`;
+      let failDetail = pct < overallThreshold ? `総合点不足 (<${overallThreshold}%)` : "";
+      if (!allSectionsPassed) {
+        failDetail += (failDetail ? " & " : "") + `基準点未達: ${failedSections.join(", ")}`;
+      }
+      passTag.textContent = `❌ ${currentLevel} 不合格 (${failDetail || "< " + overallThreshold + "%"})`;
       passTag.className = "pass-tag fail";
     }
 
@@ -3091,21 +3505,28 @@ Return ONLY a valid JSON array matching this schema:
   // =========================================================================
   // 12. TIMER & HTML SANITIZERS
   // =========================================================================
+  let timerEndTime = 0;
+  let timerIsRunning = false;
+
   function startTimer() {
     stopTimer();
     const mins = parseInt($("timerMode").value, 10);
     const pill = $("timerDisplay");
     if (!mins || isNaN(mins)) {
       pill.classList.remove("active", "warning");
+      timerIsRunning = false;
       return;
     }
     remainingSeconds = mins * 60;
+    timerEndTime = Date.now() + remainingSeconds * 1000;
+    timerIsRunning = true;
     pill.classList.add("active");
     pill.classList.remove("warning");
     updateTimerText();
 
     timerInterval = setInterval(() => {
-      remainingSeconds--;
+      const now = Date.now();
+      remainingSeconds = Math.max(0, Math.round((timerEndTime - now) / 1000));
       if (remainingSeconds <= 60) pill.classList.add("warning");
       if (remainingSeconds <= 0) {
         stopTimer();
@@ -3114,15 +3535,29 @@ Return ONLY a valid JSON array matching this schema:
         return;
       }
       updateTimerText();
-    }, 1000);
+    }, 500);
   }
 
   function stopTimer() {
+    timerIsRunning = false;
     if (timerInterval) {
       clearInterval(timerInterval);
       timerInterval = null;
     }
   }
+
+  // Accurate wall-clock time tracking across tab switches and mobile backgrounding
+  document.addEventListener("visibilitychange", () => {
+    if (!timerIsRunning || isGraded) return;
+    const now = Date.now();
+    remainingSeconds = Math.max(0, Math.round((timerEndTime - now) / 1000));
+    updateTimerText();
+    if (remainingSeconds <= 0) {
+      stopTimer();
+      gradeExam(true);
+      alert("⏰ Time is up! Your exam has been graded.");
+    }
+  });
 
   function updateTimerText() {
     const m = Math.floor(remainingSeconds / 60);
@@ -3425,7 +3860,20 @@ Return ONLY a valid JSON array matching this schema:
   // PC Keyboard Shortcuts
   document.addEventListener("keydown", (e) => {
     const tag = (e.target && e.target.tagName) || "";
-    if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+    if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA" || e.target?.isContentEditable) return;
+
+    // Check if settings drawer is open
+    const drawer = $("settingsDrawer");
+    if (drawer && drawer.classList.contains("open")) {
+      if (e.key === "Escape") drawer.classList.remove("open");
+      return;
+    }
+
+    if (e.key === "Escape") {
+      $("kanjiPopover").classList.remove("open");
+      return;
+    }
+
     if (currentQuestions.length === 0) return;
 
     if (["1", "2", "3", "4"].includes(e.key) && !isGraded && !e.ctrlKey && !e.metaKey && !e.altKey) {
@@ -3603,6 +4051,7 @@ Return ONLY a valid JSON array matching this schema:
   const savedName = localStorage.getItem(STORAGE.CANDIDATE_NAME);
   if (savedName) $("candidateNameInput").value = savedName;
 
+  migrateStorage();
   applyToggleStatesUI();
   setLevel(currentLevel);
 })();
