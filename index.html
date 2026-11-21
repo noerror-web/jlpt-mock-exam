@@ -821,6 +821,30 @@
       .options-grid { grid-template-columns: 1fr; }
       .shortcut-bar { display: none; }
     }
+  
+    .toast-msg {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #0f172a;
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.15);
+      z-index: 9999;
+      opacity: 0;
+      transform: translateY(-12px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      pointer-events: none;
+    }
+    .toast-msg.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
   </style>
 </head>
 <body>
@@ -974,7 +998,24 @@
             <button type="button" class="btn-secondary" id="downloadTemplateBtn">📋 JSON Template</button>
           </div>
         </div>
-      </div>
+              <div class="drawer-box">
+          <h3>✈️ Telegram Bot Results Auto-Push</h3>
+          <p>
+            Automatically push score slips and section breakdowns to your Telegram bot (<a href="https://t.me/bkttcmocktestbot" target="_blank" style="color:var(--primary);font-weight:600;text-decoration:none;">@bkttcmocktestbot</a>) upon submitting the exam.
+          </p>
+          <div class="btn-row" style="margin-bottom:8px;">
+            <input type="password" id="telegramTokenInput" placeholder="Telegram Bot Token" value="8863407575:AAFICc_QFXygIzV-3h_Ia4U7ZRmnaOdpy9Y" style="flex:1 1 200px;" />
+          </div>
+          <div class="btn-row" style="margin-bottom:8px;">
+            <input type="text" id="telegramChatIdInput" placeholder="Your Telegram Chat ID (e.g. 123456789 or @username)" style="flex:1 1 180px;" />
+            <button type="button" class="btn-secondary" id="saveTelegramBtn">Save & Test</button>
+          </div>
+          <div class="btn-row" style="align-items:center;">
+            <button type="button" class="btn-secondary active-filter" id="toggleTelegramAutoBtn">Auto-Push: ON</button>
+            <span id="telegramStatusMsg" style="font-size:0.77rem;color:var(--text-muted);">Tip: Send /start to @bkttcmocktestbot & get your ID from @userinfobot</span>
+          </div>
+        </div>
+</div>
     </div>
   </section>
 
@@ -1002,6 +1043,7 @@
       <button type="button" class="btn-secondary" id="showWrongBtn">Review Session Mistakes</button>
       <button type="button" class="btn-secondary" id="copySlipBtn">📋 Copy Score Slip</button>
       <button type="button" class="btn-secondary" id="downloadSlipBtn">💾 Download Score Slip (.txt)</button>
+      <button type="button" class="btn-secondary" id="pushTelegramBtn">✈️ Send to Telegram</button>
     </div>
   </section>
 
@@ -1419,6 +1461,9 @@
     STATS: "jlpt_lifetime_stats_v4",
     SENTENCES: "jlpt_sentence_cache_v4",
     CUSTOM_POOL: "jlpt_custom_pool_v4",
+    TELEGRAM_TOKEN: "jlpt_telegram_token_v4",
+    TELEGRAM_CHAT_ID: "jlpt_telegram_chat_id_v4",
+    TELEGRAM_AUTOPUSH: "jlpt_telegram_autopush_v4",
     kanjiList: (lvl) => `jlpt_${lvl}_kanji_list_v4`,
     kanjiDetails: (lvl) => `jlpt_${lvl}_kanji_details_v4`,
     vocabPool: (lvl) => `jlpt_${lvl}_vocab_pool_v4`
@@ -2736,6 +2781,7 @@ Return ONLY a valid JSON array matching this schema:
 
     $("scoreCard").classList.add("visible");
     renderQuestions();
+    pushResultToTelegram(lastScoreSummary, false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -3073,6 +3119,84 @@ Return ONLY a valid JSON array matching this schema:
 
   $("kpCloseBtn").addEventListener("click", () => $("kanjiPopover").classList.remove("open"));
 
+
+  let telegramAutoPush = localStorage.getItem(STORAGE.TELEGRAM_AUTOPUSH) !== "false";
+
+  function showToast(text, durationMs = 3500) {
+    const toast = $("appToast");
+    if (!toast) return;
+    toast.textContent = text;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), durationMs);
+  }
+
+  async function pushResultToTelegram(summary, isManual = false) {
+    if (!summary) return false;
+    const token = $("telegramTokenInput")?.value.trim() || localStorage.getItem(STORAGE.TELEGRAM_TOKEN) || "8863407575:AAFICc_QFXygIzV-3h_Ia4U7ZRmnaOdpy9Y";
+    const chatId = $("telegramChatIdInput")?.value.trim() || localStorage.getItem(STORAGE.TELEGRAM_CHAT_ID);
+
+    if (!isManual && !telegramAutoPush) return false;
+
+    if (!chatId) {
+      if (isManual) {
+        alert("Please enter your Telegram Chat ID in 'Tools & API' settings first.");
+        $("settingsDrawer").classList.add("open");
+      }
+      return false;
+    }
+
+    const candidate = ($("candidateNameInput")?.value.trim() || localStorage.getItem(STORAGE.CANDIDATE_NAME) || "Student");
+    const badge = summary.passed ? "✅ PASS (合格ライン ≥ 60%)" : "❌ KEEP PRACTICING (< 60%)";
+
+    let secText = "";
+    Object.entries(summary.sectionStats || {}).forEach(([secName, st]) => {
+      const sPct = Math.round((st.correct / st.total) * 100);
+      secText += `• ${secName}: ${st.correct}/${st.total} (${sPct}%)\n`;
+    });
+
+    const msg = [
+      `🎯 *JLPT ${summary.level} EXAM SUBMISSION*`,
+      `━━━━━━━━━━━━━━━━━━━━`,
+      `👤 *Candidate:* ${candidate}`,
+      `📅 *Date:* ${summary.dateStr}`,
+      `📚 *Scope:* ${summary.scope}`,
+      `📊 *Score:* *${summary.correctTotal} / ${summary.total} (${summary.pct}%)*`,
+      `🏁 *Result:* ${badge}`,
+      `━━━━━━━━━━━━━━━━━━━━`,
+      `📋 *Section Breakdown:*`,
+      secText.trim(),
+      `━━━━━━━━━━━━━━━━━━━━`,
+      `🤖 *Author:* Md Mominur Islam`
+    ].join("\n");
+
+    try {
+      const url = `https://api.telegram.org/bot${encodeURIComponent(token)}/sendMessage`;
+      const res = await fetchWithTimeout(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: msg,
+          parse_mode: "Markdown"
+        })
+      }, 8000);
+
+      const json = await res.json();
+      if (json.ok) {
+        showToast("🚀 Results sent to your Telegram bot!");
+        return true;
+      } else {
+        console.warn("Telegram API error:", json);
+        if (isManual) alert("Telegram Error: " + (json.description || "Could not deliver message."));
+        return false;
+      }
+    } catch (err) {
+      console.warn("Failed to push to Telegram:", err);
+      if (isManual) alert("Network error connecting to Telegram API: " + err.message);
+      return false;
+    }
+  }
+
   // PC Keyboard Shortcuts
   document.addEventListener("keydown", (e) => {
     const tag = (e.target && e.target.tagName) || "";
@@ -3128,6 +3252,72 @@ Return ONLY a valid JSON array matching this schema:
     renderQuestions();
   });
 
+  
+  const savedTelegramToken = localStorage.getItem(STORAGE.TELEGRAM_TOKEN);
+  if (savedTelegramToken) $("telegramTokenInput").value = savedTelegramToken;
+  const savedChatId = localStorage.getItem(STORAGE.TELEGRAM_CHAT_ID);
+  if (savedChatId) $("telegramChatIdInput").value = savedChatId;
+
+  $("toggleTelegramAutoBtn").textContent = telegramAutoPush ? "Auto-Push: ON" : "Auto-Push: OFF";
+  $("toggleTelegramAutoBtn").classList.toggle("active-filter", telegramAutoPush);
+
+  $("toggleTelegramAutoBtn").addEventListener("click", () => {
+    telegramAutoPush = !telegramAutoPush;
+    localStorage.setItem(STORAGE.TELEGRAM_AUTOPUSH, String(telegramAutoPush));
+    $("toggleTelegramAutoBtn").textContent = telegramAutoPush ? "Auto-Push: ON" : "Auto-Push: OFF";
+    $("toggleTelegramAutoBtn").classList.toggle("active-filter", telegramAutoPush);
+    showToast(telegramAutoPush ? "Telegram Auto-Push Enabled" : "Telegram Auto-Push Disabled");
+  });
+
+  $("saveTelegramBtn").addEventListener("click", async () => {
+    const token = $("telegramTokenInput").value.trim() || "8863407575:AAFICc_QFXygIzV-3h_Ia4U7ZRmnaOdpy9Y";
+    const chatId = $("telegramChatIdInput").value.trim();
+
+    localStorage.setItem(STORAGE.TELEGRAM_TOKEN, token);
+    if (chatId) localStorage.setItem(STORAGE.TELEGRAM_CHAT_ID, chatId);
+    else localStorage.removeItem(STORAGE.TELEGRAM_CHAT_ID);
+
+    if (!chatId) {
+      alert("Please enter a Telegram Chat ID (e.g. your numerical ID or channel username).");
+      return;
+    }
+
+    // Send a test message
+    try {
+      $("saveTelegramBtn").disabled = true;
+      $("saveTelegramBtn").textContent = "Testing...";
+      const res = await fetchWithTimeout(`https://api.telegram.org/bot${encodeURIComponent(token)}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: "🔔 *Telegram Bot Connected Successfully!*\nYour JLPT Mock Exam results will be auto-delivered here after submission.",
+          parse_mode: "Markdown"
+        })
+      }, 7000);
+      const json = await res.json();
+      if (json.ok) {
+        showToast("✅ Test message sent to Telegram!");
+        alert("Success! Check your Telegram for the confirmation message.");
+      } else {
+        alert("Telegram API Error: " + (json.description || "Failed to send message. Make sure you sent /start to @bkttcmocktestbot."));
+      }
+    } catch (err) {
+      alert("Network error testing Telegram: " + err.message);
+    } finally {
+      $("saveTelegramBtn").disabled = false;
+      $("saveTelegramBtn").textContent = "Save & Test";
+    }
+  });
+
+  $("pushTelegramBtn").addEventListener("click", () => {
+    if (!lastScoreSummary) {
+      alert("Grade an exam first before pushing results to Telegram.");
+      return;
+    }
+    pushResultToTelegram(lastScoreSummary, true);
+  });
+
   // Initialize saved state
   const savedKey = localStorage.getItem(STORAGE.GEMINI_KEY);
   if (savedKey) $("geminiKeyInput").value = savedKey;
@@ -3138,5 +3328,6 @@ Return ONLY a valid JSON array matching this schema:
   setLevel(currentLevel);
 })();
 </script>
+  <div id="appToast" class="toast-msg"></div>
 </body>
 </html>
