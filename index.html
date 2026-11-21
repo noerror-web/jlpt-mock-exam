@@ -3534,7 +3534,7 @@ Return ONLY a valid JSON array matching this schema:
         const cfRes = await fetchWithTimeout(`${cfUrl}/api/gemini`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ promptText, model: "gemini-2.5-flash" })
+          body: JSON.stringify({ promptText, model: "gemini-flash-lite-latest" })
         }, 26000);
         const cfData = await cfRes.json();
         if (cfData.ok && Array.isArray(cfData.data)) {
@@ -3547,7 +3547,7 @@ Return ONLY a valid JSON array matching this schema:
       }
     }
 
-    const models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+    const models = ["gemini-flash-lite-latest", "gemini-flash-latest", "gemini-3.8-flash", "gemma-4-26b-a4b-it"];
     let lastError = null;
 
     for (const model of models) {
