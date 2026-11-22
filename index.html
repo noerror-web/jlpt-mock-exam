@@ -3174,6 +3174,23 @@
     banner.style.display = "flex";
   }
 
+  function showSetupSummary(text) {
+    if (window.innerWidth <= 768 && $("setupSummaryBar")) {
+      $("examSetupPanel")?.classList.add("collapsed");
+      $("setupSummaryBar").style.display = "flex";
+      if (text && $("setupSummaryText")) {
+        $("setupSummaryText").textContent = text;
+      }
+    }
+  }
+
+  function hideSetupSummary() {
+    $("examSetupPanel")?.classList.remove("collapsed");
+    if ($("setupSummaryBar")) {
+      $("setupSummaryBar").style.display = "none";
+    }
+  }
+
   function resumeActiveExam() {
     stopTimer();
     const saved = loadJSON(STORAGE.ACTIVE_EXAM, null);
@@ -3216,6 +3233,7 @@
 
     $("statusBadge").textContent = "⚡ Resumed " + currentLevel + " Exam (" + currentQuestions.length + " Qs)";
     renderQuestions();
+    showSetupSummary("⚡ Resumed JLPT " + currentLevel + " • " + currentQuestions.length + " Qs");
     showToast("Exam successfully resumed!");
   }
 
@@ -3226,6 +3244,7 @@
     $("timerDisplay").classList.remove("active", "warning");
     localStorage.removeItem(STORAGE.ACTIVE_EXAM);
     $("resumeBanner").style.display = "none";
+    hideSetupSummary();
     showToast("In-progress exam discarded.");
   }
 
@@ -4510,6 +4529,7 @@ Return ONLY a valid JSON array matching this schema:
       updateStatsUI();
       renderQuestions();
       startTimer();
+      showSetupSummary(`📝 JLPT ${level} • ${lessonRange} • ${generated.length} Qs`);
     } catch (err) {
       console.error(err);
       alert("Generation error: " + err.message);
@@ -4730,6 +4750,7 @@ Return ONLY a valid JSON array matching this schema:
 
     $("statusBadge").textContent = "🔁 Spaced Mistake Review (" + currentQuestions.length + " Qs)";
     renderQuestions();
+    showSetupSummary("🎯 Spaced Mistake Review • " + currentQuestions.length + " Qs");
   }
 
   // =========================================================================
@@ -5480,6 +5501,7 @@ Return ONLY a valid JSON array matching this schema:
     const candidateName = $("candidateNameInput")?.value.trim() || localStorage.getItem(STORAGE.CANDIDATE_NAME) || "Student";
     if ($("scoreCandidateLabel")) $("scoreCandidateLabel").textContent = "👤 Candidate: " + candidateName;
 
+    hideSetupSummary();
     $("scoreCard").classList.add("visible");
     renderQuestions();
     pushResultToTelegram(lastScoreSummary, false);
