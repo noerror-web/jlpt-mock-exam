@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="author" content="Md Mominur Islam" />
   <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
   <meta name="theme-color" content="#1d4ed8">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -35,6 +38,7 @@
       --warn-bg: #fffbeb;
       --warn-text: #b45309;
       --warn-border: #fde68a;
+      --danger: var(--error);
       --radius: 14px;
       --radius-sm: 8px;
       --radius-full: 9999px;
@@ -1171,12 +1175,12 @@
       </div>
     </div>
     <div class="header-actions">
-      <div id="timerDisplay" class="timer-pill">⏱ <span id="timerText">25:00</span></div>
-      <button type="button" class="icon-btn active-toggle" id="toggleFuriganaBtn">ふりがな: ON</button>
-      <button type="button" class="icon-btn" id="toggleLangBtn" title="Explanation Language">বাংলা + EN</button>
-      <button type="button" class="icon-btn" id="toggleDarkBtn" title="Toggle AMOLED Dark Mode">🌙</button>
-      <button type="button" class="icon-btn" id="printPdfBtn" title="Print or Save Worksheet as PDF">🖨️ PDF</button>
-      <button type="button" class="icon-btn" id="toggleSettingsBtn">⚙️ Tools & API</button>
+      <div id="timerDisplay" class="timer-pill" aria-live="polite">⏱ <span id="timerText">25:00</span></div>
+      <button type="button" class="icon-btn active-toggle" id="toggleFuriganaBtn" aria-label="Toggle Furigana">ふりがな: ON</button>
+      <button type="button" class="icon-btn" id="toggleLangBtn" title="Explanation Language" aria-label="Toggle Explanation Language">বাংলা + EN</button>
+      <button type="button" class="icon-btn" id="toggleDarkBtn" title="Toggle AMOLED Dark Mode" aria-label="Toggle AMOLED Dark Mode">🌙</button>
+      <button type="button" class="icon-btn" id="printPdfBtn" title="Print or Save Worksheet as PDF" aria-label="Print or Save Worksheet as PDF">🖨️ PDF</button>
+      <button type="button" class="icon-btn" id="toggleSettingsBtn" aria-label="Tools and API Settings">⚙️ Tools & API</button>
     </div>
   </div>
 </header>
@@ -1211,7 +1215,7 @@
     <div class="controls-grid">
       <div class="field student-name-field" style="grid-column: 1 / -1; margin-bottom: 2px;">
         <label for="candidateNameInput" style="display:flex;align-items:center;justify-content:space-between;font-weight:600;">
-          <span>👤 Student Name (শিক্ষার্থীর নাম) <span style="color:var(--danger);font-weight:700;">*</span></span>
+          <span>👤 Student Name (শিক্ষার্থীর নাম) <span style="color:var(--error);font-weight:700;">*</span></span>
           <span style="font-size:0.75rem;font-weight:normal;color:var(--text-muted);">Auto-saved in browser</span>
         </label>
         <input 
@@ -1222,7 +1226,7 @@
           style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:0.96rem;font-weight:500;box-sizing:border-box;transition:border-color 0.2s, box-shadow 0.2s;" 
           required 
         />
-        <div id="candidateNameError" style="display:none;color:var(--danger);font-size:0.78rem;font-weight:600;margin-top:4px;">
+        <div id="candidateNameError" style="display:none;color:var(--error);font-size:0.78rem;font-weight:600;margin-top:4px;">
           ⚠️ Student name is mandatory to generate and grade the exam.
         </div>
       </div>
@@ -1346,20 +1350,23 @@
             <button type="button" class="btn-secondary" id="downloadTemplateBtn">📋 JSON Template</button>
           </div>
         </div>
-              <div class="drawer-box" id="telegramDrawerSection" style="display:none;" aria-hidden="true">
+              <div class="drawer-box" id="telegramDrawerSection">
           <h3>✈️ Telegram Bot Results Auto-Push</h3>
           <p>
             Automatically push score slips and section breakdowns to your Telegram bot (<a href="https://t.me/bkttcmocktestbot" target="_blank" style="color:var(--primary);font-weight:600;text-decoration:none;">@bkttcmocktestbot</a>) upon submitting the exam.
           </p>
+          <div id="telegramConsentNotice" style="background:var(--warn-bg);color:var(--warn-text);border:1px solid var(--warn-border);padding:8px 12px;border-radius:8px;font-size:0.8rem;margin-bottom:8px;">
+            ⚠️ <strong>Privacy Consent:</strong> Enabling auto-push will send your candidate name and exam score breakdown to the configured Telegram chat ID upon exam submission.
+          </div>
           <div class="btn-row" style="margin-bottom:8px;">
             <input type="password" id="telegramTokenInput" placeholder="Bot Token (or leave blank if using Cloudflare)" value="" style="flex:1 1 200px;" />
           </div>
           <div class="btn-row" style="margin-bottom:8px;">
-            <input type="text" id="telegramChatIdInput" placeholder="Your Telegram Chat ID" value="5479582136" style="flex:1 1 180px;" />
+            <input type="text" id="telegramChatIdInput" placeholder="Your Telegram Chat ID" value="" style="flex:1 1 180px;" />
             <button type="button" class="btn-secondary" id="saveTelegramBtn">Save & Test</button>
           </div>
           <div class="btn-row" style="align-items:center;">
-            <button type="button" class="btn-secondary active-filter" id="toggleTelegramAutoBtn">Auto-Push: ON</button>
+            <button type="button" class="btn-secondary" id="toggleTelegramAutoBtn">Auto-Push: OFF</button>
             <span id="telegramStatusMsg" style="font-size:0.77rem;color:var(--text-muted);">Tip: Send /start to @bkttcmocktestbot & get your ID from @userinfobot</span>
           </div>
         </div>
@@ -1369,7 +1376,13 @@
             Securely route Telegram alerts and Google Gemini AI via your free Cloudflare Worker. Keeps your bot tokens and API keys 100% private.
           </p>
           <div class="btn-row" style="margin-bottom:8px;">
-            <input type="text" id="cloudflareUrlInput" placeholder="Cloudflare Worker URL" value="https://jlpt-mock-exam-proxy.mominurislam.workers.dev" style="flex:1 1 200px;" />
+            <input type="text" id="cloudflareUrlInput" placeholder="Cloudflare Worker URL (e.g. https://your-worker.workers.dev)" value="" style="flex:1 1 200px;" />
+            <button type="button" class="btn-secondary" id="saveCloudflareBtn">Save & Test</button>
+          </div>
+          <div style="font-size:0.77rem;color:var(--text-muted);margin-top:6px;">
+            💡 <strong>Security Recommendation:</strong> For production and shared devices, use the Cloudflare Worker proxy above instead of storing your raw Gemini API key or Telegram Bot Token directly in browser storage.
+          </div>
+          <div class="btn-row"> placeholder="Cloudflare Worker URL" value="https://jlpt-mock-exam-proxy.mominurislam.workers.dev" style="flex:1 1 200px;" />
             <button type="button" class="btn-secondary" id="saveCloudflareBtn">Save & Test</button>
           </div>
           <div class="btn-row">
@@ -1417,6 +1430,9 @@
       <div id="passTag" class="pass-tag pass">PASS</div>
     </div>
     <div class="breakdown-grid" id="breakdownGrid"></div>
+    <div style="font-size:0.75rem;color:var(--text-muted);margin-top:6px;line-height:1.4;">
+      ℹ️ Note: This scoring is an approximation of the official scaled JLPT system (N5: ≥80/180; N4: ≥90/180; minimum ~32% per section). Listening section is not tested.
+    </div>
     <div class="btn-row">
       <button type="button" class="btn-secondary active-filter" id="showAllBtn">Show All Questions</button>
       <button type="button" class="btn-secondary" id="showWrongBtn">Review Session Mistakes</button>
@@ -1565,7 +1581,7 @@
       subtype: "問題2：表記 (Orthography)",
       lesson: "L1-12",
       prompt: "まいあさ　6じに　<u>おき</u>ます。",
-      options: ["起き", "行行", "歩き", "聞き"],
+      options: ["起き", "行き", "歩き", "聞き"],
       answer: 0,
       kana: "まいあさ 6じに おきます。",
       exp_en: "「おきます」 (to wake up) is written as 「起きます」 in kanji.",
@@ -1827,17 +1843,6 @@
       exp_bn: "নোটিশে বলা হয়েছে: পানীয় নিজের সাথে নিয়ে আসতে হবে (飲み物は 自分で 持ってきてください)।"
     }
   ,
-    {
-      section: "文字・語彙 (N5 Vocabulary & Kanji)",
-      subtype: "問題1：漢字読み",
-      lesson: "L1-12",
-      prompt: "つくえの　うえに　<u>本</u>が　あります。",
-      options: ["ほん", "き", "みず", "かね"],
-      answer: 0,
-      kana: "つくえの うえに ほんが あります。",
-      exp_en: "「本」 is read 「ほん」 (book).",
-      exp_bn: "「本」-এর উচ্চারণ 「ほん」 (বই)।"
-    },
     {
       section: "文字・語彙 (N5 Vocabulary & Kanji)",
       subtype: "問題1：漢字読み",
@@ -2758,6 +2763,8 @@
       flagged: Array.from(flaggedQuestions),
       starSlotsState,
       remainingSeconds,
+      timerEndTime,
+      timerIsRunning,
       timestamp: Date.now()
     };
     saveJSON(STORAGE.ACTIVE_EXAM, state);
@@ -2777,12 +2784,18 @@
       return;
     }
     const answered = Object.keys(saved.userAnswers || {}).length;
-    const mins = Math.max(1, Math.round((saved.remainingSeconds || 0) / 60));
-    $("resumeText").innerHTML = `⚠️ In-progress <strong>JLPT ${saved.level}</strong> exam found (${answered}/${saved.questions.length} answered, ~${mins}m remaining).`;
+    let remSec = saved.remainingSeconds || 0;
+    if (saved.timerEndTime && saved.timerIsRunning) {
+      remSec = Math.max(0, Math.round((saved.timerEndTime - Date.now()) / 1000));
+    }
+    const mins = Math.max(1, Math.round(remSec / 60));
+    const safeLevel = escapeHTML(saved.level || "N5");
+    $("resumeText").innerHTML = "⚠️ In-progress <strong>JLPT " + safeLevel + "</strong> exam found (" + answered + "/" + saved.questions.length + " answered, ~" + mins + "m remaining).";
     banner.style.display = "flex";
   }
 
   function resumeActiveExam() {
+    stopTimer();
     const saved = loadJSON(STORAGE.ACTIVE_EXAM, null);
     if (!saved) return;
     setLevel(saved.level || "N5");
@@ -2798,26 +2811,29 @@
     $("resumeBanner").style.display = "none";
     $("scoreCard").classList.remove("visible");
 
-    if (saved.remainingSeconds > 0) {
+    if (saved.timerEndTime && saved.timerIsRunning) {
+      const calcRemaining = Math.round((saved.timerEndTime - Date.now()) / 1000);
+      if (calcRemaining > 0) {
+        remainingSeconds = calcRemaining;
+        timerEndTime = saved.timerEndTime;
+        startTimerInterval();
+      } else {
+        remainingSeconds = 0;
+        updateTimerText();
+        renderQuestions();
+        gradeExam(true);
+        alert("⏰ Time is up! Your saved exam time has expired.");
+        return;
+      }
+    } else if (saved.remainingSeconds > 0 && saved.timerIsRunning) {
       remainingSeconds = saved.remainingSeconds;
       timerEndTime = Date.now() + remainingSeconds * 1000;
-      timerIsRunning = true;
-      $("timerDisplay").classList.add("active");
-      updateTimerText();
-      timerInterval = setInterval(() => {
-        const now = Date.now();
-        remainingSeconds = Math.max(0, Math.round((timerEndTime - now) / 1000));
-        if (remainingSeconds <= 60) $("timerDisplay").classList.add("warning");
-        if (remainingSeconds <= 0) {
-          stopTimer();
-          gradeExam(true);
-          alert("⏰ Time is up! Your exam has been graded.");
-          return;
-        }
-        updateTimerText();
-      }, 500);
+      startTimerInterval();
+    } else {
+      $("timerDisplay").classList.remove("active", "warning");
     }
-    $("statusBadge").textContent = `⚡ Resumed ${currentLevel} Exam (${currentQuestions.length} Qs)`;
+
+    $("statusBadge").textContent = "⚡ Resumed " + currentLevel + " Exam (" + currentQuestions.length + " Qs)";
     renderQuestions();
     showToast("Exam successfully resumed!");
   }
@@ -2854,7 +2870,10 @@
   let lastScoreSummary = null;
   let timerInterval = null;
   let remainingSeconds = 0;
-  let tatoebaCorsBlocked = false;
+  let tatoebaCooldownUntil = 0;
+  function isTatoebaBlocked() {
+    return Date.now() < tatoebaCooldownUntil;
+  }
 
   const $ = (id) => document.getElementById(id);
 
@@ -3248,12 +3267,12 @@
   // 5. ONLINE APIS: KANJIAPI + JLPT-VOCAB-API + TATOEBA SENTENCES
   // =========================================================================
   async function fetchTatoebaSentence(word) {
-    if (!word || tatoebaCorsBlocked) return null;
+    if (!word || isTatoebaBlocked()) return null;
     const cache = loadJSON(STORAGE.SENTENCES, {});
     if (cache[word] !== undefined) return cache[word];
 
     try {
-      const url = `https://api.tatoeba.org/unstable/sentences?lang=jpn&q=${encodeURIComponent(word)}&limit=5`;
+      const url = "https://api.tatoeba.org/unstable/sentences?lang=jpn&q=" + encodeURIComponent(word) + "&limit=5";
       const res = await fetchWithTimeout(url, {}, 2800);
       if (!res.ok) throw new Error("Tatoeba HTTP " + res.status);
       const data = await res.json();
@@ -3264,7 +3283,7 @@
       saveJSON(STORAGE.SENTENCES, cache);
       return entry;
     } catch {
-      tatoebaCorsBlocked = true;
+      tatoebaCooldownUntil = Date.now() + 5 * 60 * 1000;
       return null;
     }
   }
@@ -3341,7 +3360,7 @@
 
       const choices = shuffle([cleanR, ...distractorPool.slice(0, 3)]);
       let sent = null;
-      if (!tatoebaCorsBlocked && questions.length < 6) {
+      if (!isTatoebaBlocked() && questions.length < 6) {
         sent = await fetchTatoebaSentence(item.kanji);
         if (sent && n5KanjiSet && containsNonLevelKanji(sent.jp.replace(item.kanji, ""), n5KanjiSet)) {
           sent = null;
@@ -3432,7 +3451,7 @@
       }
 
       let sent = null;
-      if (!tatoebaCorsBlocked && questions.length < 6) {
+      if (!isTatoebaBlocked() && questions.length < 6) {
         sent = await fetchTatoebaSentence(target.word);
         if (sent && level === "N5" && n5KanjiSet && containsNonLevelKanji(sent.jp.replace(target.word, ""), n5KanjiSet)) {
           sent = null;
@@ -3519,6 +3538,11 @@
     return `\nIMPORTANT PERSONALIZATION — The student recently missed these topics:\n${summaries.join("\n")}\nInclude fresh variations testing at least 40% of these exact grammar points or vocabulary patterns (without copying the exact sentences verbatim).`;
   }
 
+  function getCfUrl() {
+    const val = $("cloudflareUrlInput")?.value.trim() || localStorage.getItem(STORAGE.CLOUDFLARE_URL) || "";
+    return val.replace(/\/+$/, "");
+  }
+
   async function generateGeminiSingleCall(apiKey, level, lessonRange, count, sectionFilter) {
     const scopeMap = {
       "L1-25": "JLPT N5 / Minna no Nihongo Lessons 1–25 (particles, 〜たい, 〜ない, 〜てform, 〜たあとで, basic adjectives)",
@@ -3556,13 +3580,13 @@ Return ONLY a valid JSON array matching this schema:
 ]`;
 
     // Check if Cloudflare Worker URL is configured
-    const cfUrl = ($("cloudflareUrlInput")?.value.trim() || localStorage.getItem(STORAGE.CLOUDFLARE_URL) || "https://jlpt-mock-exam-proxy.mominurislam.workers.dev").replace(/\/+$/, "");
+    const cfUrl = getCfUrl();
     if (cfUrl) {
       try {
-        const cfRes = await fetchWithTimeout(`${cfUrl}/api/gemini`, {
+        const cfRes = await fetchWithTimeout(cfUrl + "/api/gemini", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ promptText, model: "gemini-flash-lite-latest" })
+          body: JSON.stringify({ promptText, model: "gemini-flash-latest" })
         }, 26000);
         const cfData = await cfRes.json();
         if (cfData.ok && Array.isArray(cfData.data)) {
@@ -3575,22 +3599,25 @@ Return ONLY a valid JSON array matching this schema:
       }
     }
 
-    const models = ["gemini-flash-lite-latest", "gemini-flash-latest", "gemini-3.8-flash", "gemma-4-26b-a4b-it"];
+    const DEFAULT_GEMINI_MODELS = ["gemini-flash-latest", "gemini-flash-lite-latest"];
     let lastError = null;
 
-    for (const model of models) {
+    for (const model of DEFAULT_GEMINI_MODELS) {
       try {
         const res = await fetchWithTimeout(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
+          "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent",
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "x-goog-api-key": apiKey
+            },
             body: JSON.stringify({
               contents: [{ parts: [{ text: promptText }] }],
               generationConfig: { responseMimeType: "application/json", temperature: 0.85 }
             })
           },
-          24000
+          14000
         );
 
         if (!res.ok) {
@@ -3648,7 +3675,23 @@ Return ONLY a valid JSON array matching this schema:
       const list1 = r1.status === "fulfilled" && Array.isArray(r1.value) ? r1.value : [];
       const list2 = r2.status === "fulfilled" && Array.isArray(r2.value) ? r2.value : [];
       const combined = [...list1, ...list2];
-      if (combined.length > 0) return combined;
+      if (combined.length > 0) {
+        const seen = new Set();
+        let readingPassageKept = false;
+        const deduped = [];
+        for (const q of combined) {
+          if (!q) continue;
+          const id = getQuestionId(q);
+          if (seen.has(id)) continue;
+          if (q.passage) {
+            if (readingPassageKept) continue;
+            readingPassageKept = true;
+          }
+          seen.add(id);
+          deduped.push(q);
+        }
+        return deduped;
+      }
       throw (r1.reason || r2.reason || new Error("Gemini parallel requests failed"));
     }
     return generateGeminiSingleCall(apiKey, level, lessonRange, count, sectionFilter);
@@ -3661,13 +3704,23 @@ Return ONLY a valid JSON array matching this schema:
     let opts = Array.isArray(q.options) ? q.options.slice(0, 4).map(String) : [];
     if (opts.length < 2) return null;
 
-    let answer = typeof q.answer === "number" && q.answer >= 0 && q.answer < opts.length ? q.answer : 0;
+    // Reject duplicate options
+    if (new Set(opts).size !== opts.length) return null;
+
+    let rawAnswer = typeof q.answer === "string" ? Number(q.answer) : q.answer;
+    if (typeof rawAnswer !== "number" || isNaN(rawAnswer) || rawAnswer < 0 || rawAnswer >= opts.length) {
+      return null;
+    }
+    let answer = Math.floor(rawAnswer);
     let starData = null;
 
     if (q.starData && Array.isArray(q.starData.ordered) && q.starData.ordered.length === 4) {
       const ordered = q.starData.ordered.map(String);
-      const starPos = typeof q.starData.starPos === "number" && q.starData.starPos >= 0 && q.starData.starPos < 4
-        ? q.starData.starPos
+      if (new Set(ordered).size !== ordered.length) return null;
+
+      let rawStarPos = typeof q.starData.starPos === "string" ? Number(q.starData.starPos) : q.starData.starPos;
+      let starPos = typeof rawStarPos === "number" && !isNaN(rawStarPos) && rawStarPos >= 0 && rawStarPos < 4
+        ? Math.floor(rawStarPos)
         : 2;
       const targetChunk = ordered[starPos];
 
@@ -3688,9 +3741,13 @@ Return ONLY a valid JSON array matching this schema:
       };
     }
 
+    if (typeof answer !== "number" || isNaN(answer) || answer < 0 || answer >= opts.length) {
+      return null;
+    }
+
     return {
-      section: q.section || `文法 (${fallbackLevel} Grammar)`,
-      subtype: q.subtype || `JLPT ${fallbackLevel}`,
+      section: q.section || ("文法 (" + fallbackLevel + " Grammar)"),
+      subtype: q.subtype || ("JLPT " + fallbackLevel),
       lesson: q.lesson || fallbackLesson,
       passage: q.passage || "",
       prompt: q.prompt || "",
@@ -3725,19 +3782,28 @@ Return ONLY a valid JSON array matching this schema:
       ? CORE_QUESTION_BANK_N4
       : CORE_QUESTION_BANK_N5;
     
-    // Only accept questions that match the requested sectionFilter
-    const filtered = questions.filter((q) => matchesSectionFilter(q.section, sectionFilter));
-    if (filtered.length >= targetCount) {
-      return filtered.slice(0, targetCount);
+    // Dedupe incoming questions by getQuestionId(q) and filter by section
+    const seenIds = new Set();
+    const dedupedIncoming = [];
+    for (const q of questions) {
+      if (!q || !matchesSectionFilter(q.section, sectionFilter)) continue;
+      const id = getQuestionId(q);
+      if (!seenIds.has(id)) {
+        seenIds.add(id);
+        dedupedIncoming.push(q);
+      }
     }
 
-    const result = [...filtered];
-    const existingPrompts = new Set(result.map((q) => q.prompt || ""));
+    if (dedupedIncoming.length >= targetCount) {
+      return dedupedIncoming.slice(0, targetCount);
+    }
+
+    const result = [...dedupedIncoming];
 
     // 1. Try matching section & lesson filter from activeBank
     const matched = shuffle(
       activeBank.filter(
-        (q) => !existingPrompts.has(q.prompt) &&
+        (q) => !seenIds.has(getQuestionId(q)) &&
                matchesSectionFilter(q.section, sectionFilter) &&
                matchesLessonRange(q.lesson, lessonRange)
       )
@@ -3746,32 +3812,32 @@ Return ONLY a valid JSON array matching this schema:
     for (const q of matched) {
       if (result.length >= targetCount) break;
       result.push(q);
-      existingPrompts.add(q.prompt);
+      seenIds.add(getQuestionId(q));
     }
 
     // 2. Try matching section filter only (across all lesson scopes)
     if (result.length < targetCount) {
       const sectionOnly = shuffle(
         activeBank.filter(
-          (q) => !existingPrompts.has(q.prompt) && matchesSectionFilter(q.section, sectionFilter)
+          (q) => !seenIds.has(getQuestionId(q)) && matchesSectionFilter(q.section, sectionFilter)
         )
       );
       for (const q of sectionOnly) {
         if (result.length >= targetCount) break;
         result.push(q);
-        existingPrompts.add(q.prompt);
+        seenIds.add(getQuestionId(q));
       }
     }
 
     // 3. If sectionFilter is 'all', backfill any remaining non-duplicate questions from activeBank
     if (result.length < targetCount && sectionFilter === "all") {
       const remaining = shuffle(
-        activeBank.filter((q) => !existingPrompts.has(q.prompt))
+        activeBank.filter((q) => !seenIds.has(getQuestionId(q)))
       );
       for (const q of remaining) {
         if (result.length >= targetCount) break;
         result.push(q);
-        existingPrompts.add(q.prompt);
+        seenIds.add(getQuestionId(q));
       }
     }
 
@@ -3785,7 +3851,7 @@ Return ONLY a valid JSON array matching this schema:
     if (!candidateName) {
       if (candidateInput) {
         candidateInput.focus();
-        candidateInput.style.borderColor = "var(--danger)";
+        candidateInput.style.borderColor = "var(--error)";
         candidateInput.style.boxShadow = "0 0 0 3px rgba(220, 38, 38, 0.25)";
         const errEl = $("candidateNameError");
         if (errEl) errEl.style.display = "block";
@@ -3796,14 +3862,30 @@ Return ONLY a valid JSON array matching this schema:
       return;
     }
 
-    const level = currentLevel;
     const mode = $("sourceMode").value;
+    const apiKey = $("geminiKeyInput").value.trim() || localStorage.getItem(STORAGE.GEMINI_KEY) || "";
+    const cfUrl = getCfUrl();
+
+    if (mode === "gemini" && !apiKey && !cfUrl) {
+      alert("Please enter your Gemini API key or Cloudflare Proxy URL in 'Tools & API' first, or switch to 'Online Live APIs + Sentences (No Key)'.");
+      $("settingsDrawer").classList.add("open");
+      return;
+    }
+
+    if (!isGraded && currentQuestions.length > 0 && Object.keys(userAnswers).length > 0) {
+      const proceed = confirm("You have an in-progress exam with answers. Generating a new exam will discard your progress. Continue?");
+      if (!proceed) return;
+    }
+
+    localStorage.removeItem(STORAGE.ACTIVE_EXAM);
+
+    const level = currentLevel;
     const lessonRange = $("lessonRange").value;
     const filter = $("sectionFilter").value;
     const totalCount = parseInt($("questionCount").value, 10);
 
     $("generateBtn").disabled = true;
-    $("generateBtn").innerHTML = `<span>⏳ Generating ${level} (${lessonRange})...</span>`;
+    $("generateBtn").innerHTML = "<span>⏳ Generating " + level + " (" + lessonRange + ")...</span>";
     $("scoreCard").classList.remove("visible");
     isGraded = false;
     reviewWrongOnly = false;
@@ -3817,10 +3899,9 @@ Return ONLY a valid JSON array matching this schema:
     try {
       let generated = [];
       let statusLabel = "";
-      const apiKey = $("geminiKeyInput").value.trim() || localStorage.getItem(STORAGE.GEMINI_KEY) || "";
 
       if (mode === "gemini") {
-        const cfUrl = ($("cloudflareUrlInput")?.value.trim() || localStorage.getItem(STORAGE.CLOUDFLARE_URL) || "").replace(/\/+$/, "");
+        const cfUrl = getCfUrl();
         if (!apiKey && !cfUrl) {
           alert("Please enter your Gemini API key or Cloudflare Proxy URL in 'Tools & API' first, or switch to 'Online Live APIs + Sentences (No Key)'.");
           $("settingsDrawer").classList.add("open");
@@ -4067,7 +4148,7 @@ Return ONLY a valid JSON array matching this schema:
     if (!candidateName) {
       if (candidateInput) {
         candidateInput.focus();
-        candidateInput.style.borderColor = "var(--danger)";
+        candidateInput.style.borderColor = "var(--error)";
         candidateInput.style.boxShadow = "0 0 0 3px rgba(220, 38, 38, 0.25)";
         const errEl = $("candidateNameError");
         if (errEl) errEl.style.display = "block";
@@ -4077,6 +4158,13 @@ Return ONLY a valid JSON array matching this schema:
       alert("Please enter your Student Name before starting the practice drill.");
       return;
     }
+
+    if (!isGraded && currentQuestions.length > 0 && Object.keys(userAnswers).length > 0) {
+      const proceed = confirm("You have an in-progress exam with answers. Starting the mistake drill will discard your progress. Continue?");
+      if (!proceed) return;
+    }
+
+    localStorage.removeItem(STORAGE.ACTIVE_EXAM);
 
     const mistakes = loadJSON(STORAGE.MISTAKES, []);
     if (mistakes.length === 0) return;
@@ -4099,7 +4187,7 @@ Return ONLY a valid JSON array matching this schema:
       _streak: m.streak || 0
     }));
 
-    $("statusBadge").textContent = `🔁 Spaced Mistake Review (${currentQuestions.length} Qs)`;
+    $("statusBadge").textContent = "🔁 Spaced Mistake Review (" + currentQuestions.length + " Qs)";
     renderQuestions();
   }
 
@@ -4237,6 +4325,31 @@ Return ONLY a valid JSON array matching this schema:
   }
 
   // =========================================================================
+  function selectQuestionAnswer(idx, optIdx) {
+    if (isGraded) return;
+    focusedQIdx = idx;
+    userAnswers[idx] = optIdx;
+
+    if (viewMode === "single") {
+      renderQuestions();
+    } else {
+      const card = $("q-card-" + idx);
+      if (card) {
+        document.querySelectorAll(".q-card").forEach((el) => el.classList.remove("focused-card"));
+        card.classList.add("focused-card");
+        const btns = card.querySelectorAll(".opt-btn");
+        btns.forEach((b, bIdx) => {
+          const isSel = bIdx === optIdx;
+          b.classList.toggle("selected", isSel);
+          b.setAttribute("aria-pressed", isSel ? "true" : "false");
+        });
+      }
+      updateNavigatorUI();
+    }
+    saveActiveExam();
+    maybeAutoScrollNext(idx);
+  }
+
   // 9. RENDERING QUESTIONS (With Audio Buttons & Spoiler-Safe Kanji Lookup)
   // =========================================================================
   function renderQuestions() {
@@ -4401,16 +4514,14 @@ Return ONLY a valid JSON array matching this schema:
           else if (chosen === optIdx && chosen !== q.answer) btn.classList.add("wrong-opt");
         }
 
-        btn.innerHTML = `<span class="opt-index">${optIdx + 1}</span><span>${escapeHTML(optText)}</span>`;
+        btn.setAttribute("aria-pressed", chosen === optIdx ? "true" : "false");
+        btn.innerHTML = "<span class=\"opt-index\">" + (optIdx + 1) + "</span><span>" + escapeHTML(optText) + "</span>";
         btn.addEventListener("click", () => {
           if (isGraded) return;
-          focusedQIdx = idx;
           if (q.starData) {
             handleStarOptionClick(idx, optIdx);
           } else {
-            userAnswers[idx] = optIdx;
-            renderQuestions();
-            maybeAutoScrollNext(idx);
+            selectQuestionAnswer(idx, optIdx);
           }
         });
         optGrid.appendChild(btn);
@@ -4544,13 +4655,18 @@ Return ONLY a valid JSON array matching this schema:
     stopTimer();
 
     let correctTotal = 0;
-    const sectionStats = {};
+    const sectionStats = {
+      vocab: { correct: 0, total: 0 },
+      grammar: { correct: 0, total: 0 },
+      reading: { correct: 0, total: 0 }
+    };
     const mistakeBank = loadJSON(STORAGE.MISTAKES, []);
     const mistakeMap = new Map(mistakeBank.map((m) => [m.id, m]));
 
     currentQuestions.forEach((q, idx) => {
-      if (!sectionStats[q.section]) sectionStats[q.section] = { correct: 0, total: 0 };
-      sectionStats[q.section].total++;
+      const secKey = classifySectionKey(q.section);
+      if (!sectionStats[secKey]) sectionStats[secKey] = { correct: 0, total: 0 };
+      sectionStats[secKey].total++;
 
       let isRight = false;
       if (q.starData && q.starData.ordered) {
@@ -4564,7 +4680,7 @@ Return ONLY a valid JSON array matching this schema:
 
       if (isRight) {
         correctTotal++;
-        sectionStats[q.section].correct++;
+        sectionStats[secKey].correct++;
         if (mistakeMap.has(qId)) {
           const entry = mistakeMap.get(qId);
           entry.streak = (entry.streak || 0) + 1;
@@ -4596,22 +4712,30 @@ Return ONLY a valid JSON array matching this schema:
     const total = currentQuestions.length;
     const pct = Math.round((correctTotal / total) * 100);
 
-    // Official JLPT passing criteria: N5 overall is 44.4% (80/180), N4 overall is 50.0% (90/180)
-    const overallThreshold = currentLevel === "N4" ? 50 : 44;
+    // Official JLPT passing criteria: N5 overall raw ratio >= 80/180 (~44.4%), N4 overall >= 90/180 (50.0%)
+    const overallFraction = currentLevel === "N4" ? (90 / 180) : (80 / 180);
+    const overallPassed = total > 0 && (correctTotal / total) >= overallFraction;
     
-    // Official JLPT Sectional Minimum (基準点): ~32% in every tested section
+    // Official JLPT Sectional Minimum (基準点): 19/60 (~31.67%) in every tested section
     let allSectionsPassed = true;
     const failedSections = [];
-    Object.entries(sectionStats).forEach(([secName, st]) => {
-      st.pct = st.total > 0 ? Math.round((st.correct / st.total) * 100) : 0;
-      st.passed = st.total > 0 ? st.pct >= 32 : true;
+    const secLabels = {
+      vocab: "文字・語彙 (Vocab)",
+      grammar: "文法 (Grammar)",
+      reading: "読解 (Reading)"
+    };
+
+    Object.entries(sectionStats).forEach(([secKey, st]) => {
+      if (!st || st.total === 0) return;
+      st.pct = Math.round((st.correct / st.total) * 100);
+      st.passed = (st.correct / st.total) >= (19 / 60);
       if (!st.passed) {
         allSectionsPassed = false;
-        failedSections.push(`${secName.split(" ")[0]} (${st.pct}%)`);
+        failedSections.push((secLabels[secKey] || secKey) + " (" + st.pct + "%)");
       }
     });
 
-    const passed = pct >= overallThreshold && allSectionsPassed;
+    const passed = overallPassed && allSectionsPassed;
 
     lastScoreSummary = {
       level: currentLevel,
@@ -4624,28 +4748,30 @@ Return ONLY a valid JSON array matching this schema:
       dateStr: new Date().toLocaleString()
     };
 
-    $("scoreBig").textContent = `${correctTotal} / ${total} (${pct}%)`;
+    $("scoreBig").textContent = correctTotal + " / " + total + " (" + pct + "%)";
     const passTag = $("passTag");
+    const thresholdDesc = currentLevel === "N4" ? "≥90/180 (50%)" : "≥80/180 (44%)";
     if (passed) {
-      passTag.textContent = `🎉 ${currentLevel} 合格 (PASS ≥ ${overallThreshold}% + 基準点クリア)`;
+      passTag.textContent = "🎉 " + currentLevel + " 合格 (PASS " + thresholdDesc + " + 基準点クリア)";
       passTag.className = "pass-tag pass";
       launchConfetti();
     } else {
-      let failDetail = pct < overallThreshold ? `総合点不足 (<${overallThreshold}%)` : "";
+      let failDetail = !overallPassed ? ("総合点不足 (<" + thresholdDesc + ")") : "";
       if (!allSectionsPassed) {
-        failDetail += (failDetail ? " & " : "") + `基準点未達: ${failedSections.join(", ")}`;
+        failDetail += (failDetail ? " & " : "") + ("基準点未達: " + failedSections.join(", "));
       }
-      passTag.textContent = `❌ ${currentLevel} 不合格 (${failDetail || "< " + overallThreshold + "%"})`;
+      passTag.textContent = "❌ " + currentLevel + " 不合格 (" + (failDetail || "< " + thresholdDesc) + ")";
       passTag.className = "pass-tag fail";
     }
 
     const breakdownGrid = $("breakdownGrid");
     breakdownGrid.innerHTML = "";
-    Object.entries(sectionStats).forEach(([secName, st]) => {
+    Object.entries(sectionStats).forEach(([secKey, st]) => {
+      if (!st || st.total === 0) return;
       const sPct = Math.round((st.correct / st.total) * 100);
       const div = document.createElement("div");
       div.className = "breakdown-item";
-      div.innerHTML = `<strong>${escapeHTML(secName.split(" ")[0])}</strong><br>${st.correct} / ${st.total} (${sPct}%)`;
+      div.innerHTML = "<strong>" + escapeHTML(secLabels[secKey] || secKey) + "</strong><br>" + st.correct + " / " + st.total + " (" + sPct + "%)";
       breakdownGrid.appendChild(div);
     });
 
@@ -4662,24 +4788,27 @@ Return ONLY a valid JSON array matching this schema:
     if (!lastScoreSummary) return "";
     const candidate = ($("candidateNameInput").value.trim() || localStorage.getItem(STORAGE.CANDIDATE_NAME) || "Student");
     const s = lastScoreSummary;
+    const passThresholdStr = s.level === "N4" ? "≥ 90/180" : "≥ 80/180";
+    const secLabels = { vocab: "文字・語彙 (Vocab)", grammar: "文法 (Grammar)", reading: "読解 (Reading)" };
     const lines = [
       "==========================================",
-      `   JLPT ${s.level} MOCK EXAMINATION SCORE SLIP`,
+      "   JLPT " + s.level + " MOCK EXAMINATION SCORE SLIP",
       "==========================================",
-      `Candidate : ${candidate}`,
-      `Date      : ${s.dateStr}`,
-      `Scope     : ${s.scope}`,
-      `Score     : ${s.correctTotal} / ${s.total} (${s.pct}%)`,
-      `Result    : ${s.passed ? "PASS (合格ライン ≥ 60%)" : "KEEP PRACTICING (< 60%)"}`,
+      "Candidate : " + candidate,
+      "Date      : " + s.dateStr,
+      "Scope     : " + s.scope,
+      "Score     : " + s.correctTotal + " / " + s.total + " (" + s.pct + "%)",
+      "Result    : " + (s.passed ? ("PASS (合格ライン " + passThresholdStr + ")") : ("KEEP PRACTICING (< " + passThresholdStr + ")")),
       "------------------------------------------",
       "Section Breakdown:"
     ];
-    Object.entries(s.sectionStats).forEach(([secName, st]) => {
+    Object.entries(s.sectionStats).forEach(([secKey, st]) => {
+      if (!st || st.total === 0) return;
       const sPct = Math.round((st.correct / st.total) * 100);
-      lines.push(` • ${secName}: ${st.correct}/${st.total} (${sPct}%)`);
+      lines.push(" • " + (secLabels[secKey] || secKey) + ": " + st.correct + "/" + st.total + " (" + sPct + "%)");
     });
     lines.push("------------------------------------------");
-    lines.push("Generated by JLPT N5/N4 Exam Generator");
+    lines.push("Note: Approximation of scaled scoring. Listening not tested.");
     lines.push("Author: Md Mominur Islam");
     lines.push("==========================================");
     return lines.join("\n");
@@ -4733,6 +4862,8 @@ Return ONLY a valid JSON array matching this schema:
 
   function handleJsonImport(file) {
     if (!file) return;
+    stopTimer();
+    $("timerDisplay").classList.remove("active", "warning");
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
@@ -4779,6 +4910,7 @@ Return ONLY a valid JSON array matching this schema:
   // =========================================================================
   let timerEndTime = 0;
   let timerIsRunning = false;
+  let lastAutoSaveTime = Date.now();
 
   function startTimer() {
     stopTimer();
@@ -4787,19 +4919,34 @@ Return ONLY a valid JSON array matching this schema:
     if (!mins || isNaN(mins)) {
       pill.classList.remove("active", "warning");
       timerIsRunning = false;
+      timerEndTime = 0;
       return;
     }
     remainingSeconds = mins * 60;
     timerEndTime = Date.now() + remainingSeconds * 1000;
+    startTimerInterval();
+  }
+
+  function startTimerInterval() {
     timerIsRunning = true;
+    lastAutoSaveTime = Date.now();
+    const pill = $("timerDisplay");
     pill.classList.add("active");
-    pill.classList.remove("warning");
+    pill.classList.toggle("warning", remainingSeconds <= 60);
     updateTimerText();
 
+    if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(() => {
       const now = Date.now();
       remainingSeconds = Math.max(0, Math.round((timerEndTime - now) / 1000));
       if (remainingSeconds <= 60) pill.classList.add("warning");
+      
+      // Persist exam state every ~5 s while timer runs
+      if (now - lastAutoSaveTime >= 5000) {
+        lastAutoSaveTime = now;
+        saveActiveExam();
+      }
+
       if (remainingSeconds <= 0) {
         stopTimer();
         gradeExam(true);
@@ -4940,7 +5087,7 @@ Return ONLY a valid JSON array matching this schema:
     });
     localStorage.removeItem(STORAGE.SENTENCES);
     localStorage.removeItem(STORAGE.CUSTOM_POOL);
-    tatoebaCorsBlocked = false;
+    tatoebaCooldownUntil = 0;
     updateStatsUI();
     alert("API caches and custom imported pool cleared.");
   });
@@ -5014,8 +5161,7 @@ Return ONLY a valid JSON array matching this schema:
   $("kpCloseBtn").addEventListener("click", () => $("kanjiPopover").classList.remove("open"));
 
 
-  const DEFAULT_TELEGRAM_CHAT_ID = "5479582136";
-  let telegramAutoPush = localStorage.getItem(STORAGE.TELEGRAM_AUTOPUSH) !== "false";
+  let telegramAutoPush = localStorage.getItem(STORAGE.TELEGRAM_AUTOPUSH) === "true";
 
   function showToast(text, durationMs = 3500) {
     const toast = $("appToast");
@@ -5027,25 +5173,24 @@ Return ONLY a valid JSON array matching this schema:
 
   async function pushResultToTelegram(summary, isManual = false) {
     if (!summary) return false;
-    const chatId = $("telegramChatIdInput")?.value.trim() || localStorage.getItem(STORAGE.TELEGRAM_CHAT_ID) || DEFAULT_TELEGRAM_CHAT_ID;
+    const chatId = $("telegramChatIdInput")?.value.trim() || localStorage.getItem(STORAGE.TELEGRAM_CHAT_ID) || "";
 
-    // Always push reports to configured user 5479582136
-    if (!isManual && telegramAutoPush === false) return false;
+    if (!isManual && !telegramAutoPush) return false;
 
     if (!chatId) {
       if (isManual) {
-        alert("Telegram Chat ID is not configured.");
+        alert("Telegram Chat ID is not configured. Please enter your Chat ID in 'Tools & API'.");
       }
       return false;
     }
 
     const candidate = ($("candidateNameInput")?.value.trim() || localStorage.getItem(STORAGE.CANDIDATE_NAME) || "Student");
-    const cfUrl = ($("cloudflareUrlInput")?.value.trim() || localStorage.getItem(STORAGE.CLOUDFLARE_URL) || "").replace(/\/+$/, "");
+    const cfUrl = getCfUrl();
 
     // 1. Prioritize Cloudflare Proxy (Keeps Bot Token 100% Private)
     if (cfUrl) {
       try {
-        const cfRes = await fetchWithTimeout(`${cfUrl}/api/telegram`, {
+        const cfRes = await fetchWithTimeout(cfUrl + "/api/telegram", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -5078,37 +5223,40 @@ Return ONLY a valid JSON array matching this schema:
     }
 
     if (directToken) {
-      const badge = summary.passed ? "✅ PASS (合格ライン ≥ 60%)" : "❌ KEEP PRACTICING (< 60%)";
+      const thresholdDesc = summary.level === "N4" ? "≥ 90/180" : "≥ 80/180";
+      const badge = summary.passed ? ("✅ PASS (合格ライン " + thresholdDesc + ")") : ("❌ KEEP PRACTICING (&lt; " + thresholdDesc + ")");
+      const secLabels = { vocab: "文字・語彙 (Vocab)", grammar: "文法 (Grammar)", reading: "読解 (Reading)" };
       let secText = "";
-      Object.entries(summary.sectionStats || {}).forEach(([secName, st]) => {
+      Object.entries(summary.sectionStats || {}).forEach(([secKey, st]) => {
+        if (!st || !st.total) return;
         const sPct = Math.round((st.correct / st.total) * 100);
-        secText += `• ${secName}: ${st.correct}/${st.total} (${sPct}%)\n`;
+        secText += "• " + escapeHTML(secLabels[secKey] || secKey) + ": " + st.correct + "/" + st.total + " (" + sPct + "%)\n";
       });
 
       const msg = [
-        `🎯 *JLPT ${summary.level} EXAM SUBMISSION*`,
-        `━━━━━━━━━━━━━━━━━━━━`,
-        `👤 *Candidate:* ${candidate}`,
-        `📅 *Date:* ${summary.dateStr}`,
-        `📚 *Scope:* ${summary.scope}`,
-        `📊 *Score:* *${summary.correctTotal} / ${summary.total} (${summary.pct}%)*`,
-        `🏁 *Result:* ${badge}`,
-        `━━━━━━━━━━━━━━━━━━━━`,
-        `📋 *Section Breakdown:*`,
+        "🎯 <b>JLPT " + escapeHTML(summary.level) + " EXAM SUBMISSION</b>",
+        "━━━━━━━━━━━━━━━━━━━━",
+        "👤 <b>Candidate:</b> " + escapeHTML(candidate),
+        "📅 <b>Date:</b> " + escapeHTML(summary.dateStr),
+        "📚 <b>Scope:</b> " + escapeHTML(summary.scope),
+        "📊 <b>Score:</b> <b>" + summary.correctTotal + " / " + summary.total + " (" + summary.pct + "%)</b>",
+        "🏁 <b>Result:</b> " + badge,
+        "━━━━━━━━━━━━━━━━━━━━",
+        "📋 <b>Section Breakdown:</b>",
         secText.trim(),
-        `━━━━━━━━━━━━━━━━━━━━`,
-        `🤖 *Author:* Md Mominur Islam`
+        "━━━━━━━━━━━━━━━━━━━━",
+        "🤖 <i>Author: Md Mominur Islam</i>"
       ].join("\n");
 
       try {
-        const url = `https://api.telegram.org/bot${encodeURIComponent(directToken)}/sendMessage`;
+        const url = "https://api.telegram.org/bot" + encodeURIComponent(directToken) + "/sendMessage";
         const res = await fetchWithTimeout(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             chat_id: chatId,
             text: msg,
-            parse_mode: "Markdown"
+            parse_mode: "HTML"
           })
         }, 8000);
 
@@ -5156,9 +5304,7 @@ Return ONLY a valid JSON array matching this schema:
       if (!q || optIdx >= q.options.length) return;
       if (q.starData) handleStarOptionClick(focusedQIdx, optIdx);
       else {
-        userAnswers[focusedQIdx] = optIdx;
-        renderQuestions();
-        maybeAutoScrollNext(focusedQIdx);
+        selectQuestionAnswer(focusedQIdx, optIdx);
       }
     } else if (e.key === "ArrowRight" && !e.ctrlKey && !e.metaKey && !e.altKey) {
       e.preventDefault();
@@ -5181,8 +5327,6 @@ Return ONLY a valid JSON array matching this schema:
     } else if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !isGraded) {
       e.preventDefault();
       gradeExam(false);
-    } else if (e.key === "Escape") {
-      $("kanjiPopover").classList.remove("open");
     }
   });
 
@@ -5241,7 +5385,7 @@ Return ONLY a valid JSON array matching this schema:
   
   const savedTelegramToken = localStorage.getItem(STORAGE.TELEGRAM_TOKEN);
   if (savedTelegramToken && $("telegramTokenInput")) $("telegramTokenInput").value = savedTelegramToken;
-  const savedChatId = localStorage.getItem(STORAGE.TELEGRAM_CHAT_ID) || DEFAULT_TELEGRAM_CHAT_ID;
+  const savedChatId = localStorage.getItem(STORAGE.TELEGRAM_CHAT_ID) || "";
   if ($("telegramChatIdInput")) $("telegramChatIdInput").value = savedChatId;
 
   if ($("toggleTelegramAutoBtn")) {
@@ -5298,8 +5442,8 @@ Return ONLY a valid JSON array matching this schema:
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             chat_id: chatId,
-            text: "🔔 *Telegram Bot Connected Successfully!*\nYour JLPT Mock Exam results will be auto-delivered here after submission.",
-            parse_mode: "Markdown"
+            text: "🔔 <b>Telegram Bot Connected Successfully!</b>\nYour JLPT Mock Exam results will be auto-delivered here after submission.",
+            parse_mode: "HTML"
           })
         }, 7000);
       }
@@ -5328,8 +5472,8 @@ Return ONLY a valid JSON array matching this schema:
   });
 
   
-  const savedCfUrl = localStorage.getItem(STORAGE.CLOUDFLARE_URL) || "https://jlpt-mock-exam-proxy.mominurislam.workers.dev";
-  if (savedCfUrl) $("cloudflareUrlInput").value = savedCfUrl;
+  const savedCfUrl = localStorage.getItem(STORAGE.CLOUDFLARE_URL) || "";
+  if (savedCfUrl && $("cloudflareUrlInput")) $("cloudflareUrlInput").value = savedCfUrl;
 
   $("saveCloudflareBtn").addEventListener("click", async () => {
     const cfUrl = $("cloudflareUrlInput").value.trim().replace(/\/+$/, "");
@@ -5387,16 +5531,48 @@ Return ONLY a valid JSON array matching this schema:
   // Register Service Worker for Offline PWA Capabilities
   if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./sw.js", { scope: "./" }).then(
-        (reg) => console.log("SW registered with scope:", reg.scope),
-        (err) => console.log("SW registration error:", err)
-      );
+      navigator.serviceWorker.register("./sw.js", { scope: "./" }).then((reg) => {
+        function promptUserToRefresh() {
+          const toast = $("appToast");
+          if (toast) {
+            toast.innerHTML = '✨ <span>Update available!</span> <button type="button" id="swReloadBtn" style="background:#fff;color:#1d4ed8;border:none;border-radius:4px;padding:3px 8px;font-weight:700;margin-left:8px;cursor:pointer;">Reload</button>';
+            toast.classList.add("show");
+            $("swReloadBtn")?.addEventListener("click", () => {
+              if (reg.waiting) {
+                reg.waiting.postMessage({ type: "SKIP_WAITING" });
+              }
+            });
+          }
+        }
+
+        if (reg.waiting) {
+          promptUserToRefresh();
+        }
+
+        reg.addEventListener("updatefound", () => {
+          const newWorker = reg.installing;
+          if (!newWorker) return;
+          newWorker.addEventListener("statechange", () => {
+            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+              promptUserToRefresh();
+            }
+          });
+        });
+      }).catch((err) => console.log("SW registration error:", err));
+
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
+      });
     });
   }
 
 })();
 </script>
-  <div id="appToast" class="toast-msg"></div>
+  <div id="appToast" class="toast-msg" role="status" aria-live="polite"></div>
 
 </body>
 </html>
