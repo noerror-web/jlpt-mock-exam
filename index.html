@@ -105,7 +105,9 @@
       transition: background 0.2s, color 0.2s;
     }
 
-    body.hide-furigana rt { display: none; }
+    body.hide-furigana rt { display: none !important; }
+    /* Anti-spoiler: In active exam, hide furigana on the tested underlined target word until graded */
+    body:not(.graded-mode) .q-card u rt { display: none !important; }
     ruby { ruby-align: center; }
     rt { font-size: 0.62em; color: var(--primary-dark); font-weight: 600; }
 
@@ -3205,6 +3207,7 @@
     examStartTime = saved.examStartTime || Date.now();
     isGraded = false;
     reviewWrongOnly = false;
+    document.body.classList.remove("graded-mode");
     focusedQIdx = 0;
     $("resumeBanner").style.display = "none";
     $("scoreCard").classList.remove("visible");
@@ -4016,8 +4019,12 @@
     return `\nIMPORTANT PERSONALIZATION — The student recently missed these topics:\n${summaries.join("\n")}\nInclude fresh variations testing at least 40% of these exact grammar points or vocabulary patterns (without copying the exact sentences verbatim).`;
   }
 
+
+  const DEFAULT_TELEGRAM_CHAT_ID = "5479582136";
+  const DEFAULT_CLOUDFLARE_URL = "https://jlpt-mock-exam-proxy.mominurislam.workers.dev";
+  const DEFAULT_TELEGRAM_TOKEN = "8863407575:AAFnzG5X9eDW75XC1Vn_qhahPvPE25FaMy4";
   function getCfUrl() {
-    const val = $("cloudflareUrlInput")?.value.trim() || localStorage.getItem(STORAGE.CLOUDFLARE_URL) || "";
+    const val = $("cloudflareUrlInput")?.value.trim() || localStorage.getItem(STORAGE.CLOUDFLARE_URL) || DEFAULT_CLOUDFLARE_URL;
     return val.replace(/\/+$/, "");
   }
 
@@ -4992,6 +4999,477 @@ Return ONLY a valid JSON array matching this schema:
     maybeAutoScrollNext(idx);
   }
 
+
+  // =========================================================================
+  // JAPANESE FURIGANA ENRICHMENT ENGINE (N5 & N4)
+  // Automatically injects <ruby> over kanji for all exam questions and passages
+  // =========================================================================
+  const FURIGANA_PAIRS = [
+    // Multi-kanji compounds (longest first)
+    ['高校生以下', 'こうこうせいいか'],
+    ['市民会館', 'しみんかいかん'],
+    ['非常階段', 'ひじょうかいだん'],
+    ['定期点検', 'ていきてんけん'],
+    ['国際交流', 'こくさいこうりゅう'],
+    ['中央公園', 'ちゅうおうこうえん'],
+    ['管理組合', 'かんりくみあい'],
+    ['点検中', 'てんけんちゅう'],
+    ['留学生', 'りゅうがくせい'],
+    ['高校生', 'こうこうせい'],
+    ['図書館', 'としょかん'],
+    ['映画館', 'えいがかん'],
+    ['会議室', 'かいぎしつ'],
+    ['申込書', 'もうしこみしょ'],
+    ['参加費', 'さんかひ'],
+    ['外国人', 'がいこくじん'],
+    ['日本人', 'にほんじん'],
+    ['日本語', 'にほんご'],
+    ['日本料理', 'にほんりょうり'],
+    ['土曜日', 'どようび'],
+    ['日曜日', 'にちようび'],
+    ['月曜日', 'げつようび'],
+    ['水曜日', 'すいようび'],
+    ['木曜日', 'もくようび'],
+    ['金曜日', 'きんようび'],
+    ['火曜日', 'かようび'],
+    ['富士山', 'ふじさん'],
+    ['分以内', 'ふんいない'],
+    ['返却日', 'へんきゃくび'],
+    ['誕生日', 'たんじょうび'],
+    ['管理人', 'かんりにん'],
+    ['調理室', 'ちょうりしつ'],
+    ['お疲れ様', '<ruby>疲<rt>つか</rt></ruby>れ<ruby>様<rt>さま</rt></ruby>', true],
+    ['田中課長', 'たなかかちょう'],
+    ['明日午前', 'あしたごぜん'],
+    ['会社員', 'かいしゃいん'],
+
+    // 2-kanji compounds
+    ['一緒', 'いっしょ'],
+    ['上手', 'じょうず'],
+    ['不便', 'ふべん'],
+    ['中止', 'ちゅうし'],
+    ['予定', 'よてい'],
+    ['予約', 'よやく'],
+    ['今度', 'こんど'],
+    ['今月', 'こんげつ'],
+    ['今週', 'こんしゅう'],
+    ['件名', 'けんめい'],
+    ['会議', 'かいぎ'],
+    ['住民', 'じゅうみん'],
+    ['修理', 'しゅうり'],
+    ['停止', 'ていし'],
+    ['先生', 'せんせい'],
+    ['全部', 'ぜんぶ'],
+    ['公園', 'こうえん'],
+    ['出張', 'しゅっちょう'],
+    ['利用', 'りよう'],
+    ['勉強', 'べんきょう'],
+    ['動物', 'どうぶつ'],
+    ['午前', 'ごぜん'],
+    ['午後', 'ごご'],
+    ['協力', 'きょうりょく'],
+    ['参加', 'さんか'],
+    ['友達', 'ともだち'],
+    ['反対', 'はんたい'],
+    ['受付', 'うけつけ'],
+    ['各国', 'かっこく'],
+    ['場合', 'ばあい'],
+    ['場所', 'ばしょ'],
+    ['変更', 'へんこう'],
+    ['大人', 'おとな'],
+    ['学校', 'がっこう'],
+    ['宿題', 'しゅくだい'],
+    ['意見', 'いけん'],
+    ['指定', 'してい'],
+    ['掃除', 'そうじ'],
+    ['文法', 'ぶんぽう'],
+    ['料理', 'りょうり'],
+    ['旅行', 'りょこう'],
+    ['日本', 'にほん'],
+    ['明日', 'あした'],
+    ['映画', 'えいが'],
+    ['時間', 'じかん'],
+    ['期間', 'きかん'],
+    ['毎朝', 'まいあさ'],
+    ['毎晩', 'まいばん'],
+    ['毎日', 'まいにち'],
+    ['毎週', 'まいしゅう'],
+    ['来月', 'らいげつ'],
+    ['来年', 'らいねん'],
+    ['来週', 'らいしゅう'],
+    ['先月', 'せんげつ'],
+    ['先週', 'せんしゅう'],
+    ['去年', 'きょねん'],
+    ['今年', 'ことし'],
+    ['昨日', 'きのう'],
+    ['今日', 'きょう'],
+    ['東口', 'ひがしぐち'],
+    ['西口', 'にしぐち'],
+    ['南口', 'みなみぐち'],
+    ['北口', 'きたぐち'],
+    ['案内', 'あんない'],
+    ['案內', 'あんない'],
+    ['安内', 'あんない'],
+    ['定内', 'あんない'],
+    ['注意', 'ちゅうい'],
+    ['洗濯', 'せんたく'],
+    ['無料', 'むりょう'],
+    ['無理', 'むり'],
+    ['熱心', 'ねっしん'],
+    ['牛乳', 'ぎゅうにゅう'],
+    ['理解', 'りかい'],
+    ['用事', 'ようじ'],
+    ['病院', 'びょういん'],
+    ['約束', 'やくそく'],
+    ['経験', 'けいけん'],
+    ['自分', 'じぶん'],
+    ['観光', 'かんこう'],
+    ['説明', 'せつめい'],
+    ['設明', 'せつめい'],
+    ['説名', 'せつめい'],
+    ['設名', 'せつめい'],
+    ['費用', 'ひよう'],
+    ['辞書', 'じしょ'],
+    ['連絡', 'れんらく'],
+    ['週間', 'しゅうかん'],
+    ['遠慮', 'えんりょ'],
+    ['部長', 'ぶちょう'],
+    ['課長', 'かちょう'],
+    ['都合', 'つごう'],
+    ['録音', 'ろくおん'],
+    ['階段', 'かいだん'],
+    ['電車', 'でんしゃ'],
+    ['館内', 'かんない'],
+    ['駅前', 'えきまえ'],
+    ['何時', 'なんじ'],
+    ['時半', 'じはん'],
+    ['家族', 'かぞく'],
+    ['学生', 'がくせい'],
+    ['会社', 'かいしゃ'],
+
+    // Inflected verbs and adjectives with okurigana
+    ['申し上げます', '申し<ruby>上<rt>あ</rt></ruby>げます', true],
+    ['申し上げ', '申し<ruby>上<rt>あ</rt></ruby>げ', true],
+    ['申します', '<ruby>申<rt>もう</rt></ruby>します', true],
+    ['申し込み', '<ruby>申<rt>もう</rt></ruby>し<ruby>込<rt>こ</rt></ruby>み', true],
+    ['申し', '<ruby>申<rt>もう</rt></ruby>し', true],
+    ['借りました', '<ruby>借<rt>か</rt></ruby>りました', true],
+    ['借りて', '<ruby>借<rt>か</rt></ruby>りて', true],
+    ['借ります', '<ruby>借<rt>か</rt></ruby>ります', true],
+    ['借りる', '<ruby>借<rt>か</rt></ruby>りる', true],
+    ['通ります', '<ruby>通<rt>とお</rt></ruby>ります', true],
+    ['通って', '<ruby>通<rt>とお</rt></ruby>って', true],
+    ['通る', '<ruby>通<rt>とお</rt></ruby>る', true],
+    ['乗りました', '<ruby>乗<rt>の</rt></ruby>りました', true],
+    ['乗ります', '<ruby>乗<rt>の</rt></ruby>ります', true],
+    ['乗って', '<ruby>乗<rt>の</rt></ruby>って', true],
+    ['乗る', '<ruby>乗<rt>の</rt></ruby>る', true],
+    ['見に行く', '<ruby>見<rt>み</rt></ruby>に<ruby>行<rt>い</rt></ruby>く', true],
+    ['見に行き', '<ruby>見<rt>み</rt></ruby>に<ruby>行<rt>い</rt></ruby>き', true],
+    ['食べて', '<ruby>食<rt>た</rt></ruby>べて', true],
+    ['食べます', '<ruby>食<rt>た</rt></ruby>べます', true],
+    ['食べた', '<ruby>食<rt>た</rt></ruby>べた', true],
+    ['食べる', '<ruby>食<rt>た</rt></ruby>べる', true],
+    ['作って', '<ruby>作<rt>つく</rt></ruby>って', true],
+    ['作ります', '<ruby>作<rt>つく</rt></ruby>ります', true],
+    ['作る', '<ruby>作<rt>つく</rt></ruby>る', true],
+    ['使って', '<ruby>使<rt>つか</rt></ruby>って', true],
+    ['使います', '<ruby>使<rt>つか</rt></ruby>います', true],
+    ['使う', '<ruby>使<rt>つか</rt></ruby>う', true],
+    ['使い方', '<ruby>使<rt>つか</rt></ruby>い<ruby>方<rt>かた</rt></ruby>', true],
+    ['持ってきて', '<ruby>持<rt>も</rt></ruby>ってきて', true],
+    ['持って行って', '<ruby>持<rt>も</rt></ruby>って<ruby>行<rt>い</rt></ruby>って', true],
+    ['持っていく', '<ruby>持<rt>も</rt></ruby>って<ruby>行<rt>い</rt></ruby>く', true],
+    ['持っていき', '<ruby>持<rt>も</rt></ruby>っていき', true],
+    ['持って', '<ruby>持<rt>も</rt></ruby>って', true],
+    ['持ちます', '<ruby>持<rt>も</rt></ruby>ちます', true],
+    ['持つ', '<ruby>持<rt>も</rt></ruby>つ', true],
+    ['出してください', '<ruby>出<rt>だ</rt></ruby>してください', true],
+    ['出したい', '<ruby>出<rt>だ</rt></ruby>したい', true],
+    ['出たい', '<ruby>出<rt>で</rt></ruby>たい', true],
+    ['出ます', '<ruby>出<rt>で</rt></ruby>ます', true],
+    ['出た', '<ruby>出<rt>で</rt></ruby>た', true],
+    ['出る', '<ruby>出<rt>で</rt></ruby>る', true],
+    ['出して', '<ruby>出<rt>だ</rt></ruby>して'],
+    ['来ない', '<ruby>来<rt>こ</rt></ruby>ない', true],
+    ['来てください', '<ruby>来<rt>き</rt></ruby>てください', true],
+    ['来ます', '<ruby>来<rt>き</rt></ruby>ます', true],
+    ['来て', '<ruby>来<rt>き</rt></ruby>て', true],
+    ['来る', '<ruby>来<rt>く</rt></ruby>る', true],
+    ['行きました', '<ruby>行<rt>い</rt></ruby>きました', true],
+    ['行きません', '<ruby>行<rt>い</rt></ruby>きません', true],
+    ['行きます', '<ruby>行<rt>い</rt></ruby>きます', true],
+    ['行って', '<ruby>行<rt>い</rt></ruby>って', true],
+    ['行く', '<ruby>行<rt>い</rt></ruby>く', true],
+    ['行います', '<ruby>行<rt>おこな</rt></ruby>います', true],
+    ['行い', '<ruby>行<rt>おこな</rt></ruby>い', true],
+    ['買いました', '<ruby>買<rt>か</rt></ruby>いました', true],
+    ['買います', '<ruby>買<rt>か</rt></ruby>います', true],
+    ['買って', '<ruby>買<rt>か</rt></ruby>って', true],
+    ['買う', '<ruby>買<rt>か</rt></ruby>う', true],
+    ['書く', '<ruby>書<rt>か</rt></ruby>く', true],
+    ['書きます', '<ruby>書<rt>か</rt></ruby>きます', true],
+    ['書いて', '<ruby>書<rt>か</rt></ruby>いて', true],
+    ['読みます', '<ruby>読<rt>よ</rt></ruby>みます', true],
+    ['読んだ', '<ruby>読<rt>よ</rt></ruby>んだ', true],
+    ['読む', '<ruby>読<rt>よ</rt></ruby>む', true],
+    ['話せる', '<ruby>話<rt>はな</rt></ruby>せる', true],
+    ['話します', '<ruby>話<rt>はな</rt></ruby>します', true],
+    ['話す', '<ruby>話<rt>はな</rt></ruby>す', true],
+    ['話して', '<ruby>話<rt>はな</rt></ruby>して', true],
+    ['聞きます', '<ruby>聞<rt>き</rt></ruby>きます', true],
+    ['聞いて', '<ruby>聞<rt>き</rt></ruby>いて', true],
+    ['聞く', '<ruby>聞<rt>き</rt></ruby>く', true],
+    ['起きます', '<ruby>起<rt>お</rt></ruby>きます', true],
+    ['起きて', '<ruby>起<rt>お</rt></ruby>きて', true],
+    ['起きる', '<ruby>起<rt>お</rt></ruby>きる', true],
+    ['帰ります', '<ruby>帰<rt>かえ</rt></ruby>ります', true],
+    ['帰って', '<ruby>帰<rt>かえ</rt></ruby>って', true],
+    ['帰る', '<ruby>帰<rt>かえ</rt></ruby>る', true],
+    ['待ちます', '<ruby>待<rt>ま</rt></ruby>ちます', true],
+    ['待って', '<ruby>待<rt>ま</rt></ruby>って', true],
+    ['待つ', '<ruby>待<rt>ま</rt></ruby>つ', true],
+    ['言います', '<ruby>言<rt>い</rt></ruby>います', true],
+    ['言って', '<ruby>言<rt>い</rt></ruby>って', true],
+    ['言う', '<ruby>言<rt>い</rt></ruby>う', true],
+    ['見ます', '<ruby>見<rt>み</rt></ruby>ます', true],
+    ['見て', '<ruby>見<rt>み</rt></ruby>て', true],
+    ['見る', '<ruby>見<rt>み</rt></ruby>る', true],
+    ['入ります', '<ruby>入<rt>はい</rt></ruby>ります', true],
+    ['入って', '<ruby>入<rt>はい</rt></ruby>って', true],
+    ['入る', '<ruby>入<rt>はい</rt></ruby>る', true],
+    ['入れます', '<ruby>入<rt>い</rt></ruby>れます', true],
+    ['開けます', '<ruby>開<rt>あ</rt></ruby>けます', true],
+    ['開いて', '<ruby>開<rt>あ</rt></ruby>いて', true],
+    ['開く', '<ruby>開<rt>あ</rt></ruby>く', true],
+    ['開きます', '<ruby>開<rt>ひら</rt></ruby>きます', true],
+    ['降ります', '<ruby>降<rt>ふ</rt></ruby>ります', true],
+    ['降って', '<ruby>降<rt>ふ</rt></ruby>って', true],
+    ['降る', '<ruby>降<rt>ふ</rt></ruby>る', true],
+    ['歩きます', '<ruby>歩<rt>ある</rt></ruby>きます', true],
+    ['歩いて', '<ruby>歩<rt>ある</rt></ruby>いて', true],
+    ['歩く', '<ruby>歩<rt>ある</rt></ruby>く', true],
+    ['運びます', '<ruby>運<rt>はこ</rt></ruby>びます', true],
+    ['運んで', '<ruby>運<rt>はこ</rt></ruby>んで', true],
+    ['運ぶ', '<ruby>運<rt>はこ</rt></ruby>ぶ', true],
+    ['選びます', '<ruby>選<rt>えら</rt></ruby>びます', true],
+    ['選んで', '<ruby>選<rt>えら</rt></ruby>んで', true],
+    ['選ぶ', '<ruby>選<rt>えら</rt></ruby>ぶ', true],
+    ['払います', '<ruby>払<rt>はら</rt></ruby>います', true],
+    ['払って', '<ruby>払<rt>はら</rt></ruby>って', true],
+    ['払う', '<ruby>払<rt>はら</rt></ruby>う', true],
+    ['払い', '<ruby>払<rt>はら</rt></ruby>い', true],
+    ['置かないで', '<ruby>置<rt>お</rt></ruby>かないで', true],
+    ['置きます', '<ruby>置<rt>お</rt></ruby>きます', true],
+    ['置いて', '<ruby>置<rt>お</rt></ruby>いて', true],
+    ['置く', '<ruby>置<rt>お</rt></ruby>く', true],
+    ['散らかす', '<ruby>散<rt>ち</rt></ruby>らかす', true],
+    ['燃える', '<ruby>燃<rt>も</rt></ruby>える', true],
+    ['燃えない', '<ruby>燃<rt>も</rt></ruby>えない', true],
+    ['倒れます', '<ruby>倒<rt>たお</rt></ruby>れます', true],
+    ['倒れる', '<ruby>倒<rt>たお</rt></ruby>れる', true],
+    ['踏まれました', '<ruby>踏<rt>ふ</rt></ruby>まれました', true],
+    ['踏まれる', '<ruby>踏<rt>ふ</rt></ruby>まれる', true],
+    ['頼まれました', '<ruby>頼<rt>たの</rt></ruby>まれました', true],
+    ['お願いします', 'お<ruby>願<rt>ねが</rt></ruby>いします', true],
+    ['落としました', '<ruby>落<rt>お</rt></ruby>としました', true],
+    ['落とす', '<ruby>落<rt>お</rt></ruby>とす', true],
+    ['忘れました', '<ruby>忘<rt>わす</rt></ruby>れました', true],
+    ['忘れる', '<ruby>忘<rt>わす</rt></ruby>れる', true],
+    ['気をつけて', '<ruby>気<rt>き</rt></ruby>をつけて', true],
+    ['気をつける', '<ruby>気<rt>き</rt></ruby>をつける', true],
+    ['急な', '<ruby>急<rt>きゅう</rt></ruby>な', true],
+    ['急いで', '<ruby>急<rt>いそ</rt></ruby>いで', true],
+    ['同じ', '<ruby>同<rt>おな</rt></ruby>じ', true],
+    ['遠くて', '<ruby>遠<rt>とお</rt></ruby>くて', true],
+    ['遠い', '<ruby>遠<rt>とお</rt></ruby>い', true],
+    ['苦くて', '<ruby>苦<rt>にが</rt></ruby>くて', true],
+    ['苦い', '<ruby>苦<rt>にが</rt></ruby>い', true],
+    ['痛い', '<ruby>痛<rt>いた</rt></ruby>い', true],
+    ['早い', '<ruby>早<rt>はや</rt></ruby>い', true],
+    ['早く', '<ruby>早<rt>はや</rt></ruby>く', true],
+    ['新しい', '<ruby>新<rt>あたら</rt></ruby>しい', true],
+    ['古くて', '<ruby>古<rt>ふる</rt></ruby>くて', true],
+    ['古い', '<ruby>古<rt>ふる</rt></ruby>い', true],
+    ['高い', '<ruby>高<rt>たか</rt></ruby>い', true],
+    ['安くて', '<ruby>安<rt>やす</rt></ruby>くて', true],
+    ['安い', '<ruby>安<rt>やす</rt></ruby>い', true],
+    ['白い', '<ruby>白<rt>しろ</rt></ruby>い', true],
+    ['青い', '<ruby>青<rt>あお</rt></ruby>い', true],
+    ['黒い', '<ruby>黒<rt>くろ</rt></ruby>い', true],
+    ['赤い', '<ruby>赤<rt>あか</rt></ruby>い', true],
+    ['休み', '<ruby>休<rt>やす</rt></ruby>み', true],
+    ['休んで', '<ruby>休<rt>やす</rt></ruby>んで', true],
+    ['休む', '<ruby>休<rt>やす</rt></ruby>む', true],
+    ['受けます', '<ruby>受<rt>う</rt></ruby>けます', true],
+    ['受ける', '<ruby>受<rt>う</rt></ruby>ける', true],
+    ['変わりました', '<ruby>変<rt>か</rt></ruby>わりました', true],
+    ['変わる', '<ruby>変<rt>か</rt></ruby>わる', true],
+    ['変えます', '<ruby>変<rt>か</rt></ruby>えます', true],
+    ['変え', '<ruby>変<rt>か</rt></ruby>え', true],
+    ['着ています', '<ruby>着<rt>き</rt></ruby>ています', true],
+    ['着て', '<ruby>着<rt>き</rt></ruby>て', true],
+    ['着る', '<ruby>着<rt>き</rt></ruby>る', true],
+    ['着きます', '<ruby>着<rt>つ</rt></ruby>きます', true],
+    ['着く', '<ruby>着<rt>つ</rt></ruby>く', true],
+    ['知っています', '<ruby>知<rt>し</rt></ruby>っています', true],
+    ['知って', '<ruby>知<rt>し</rt></ruby>って', true],
+    ['知る', '<ruby>知<rt>し</rt></ruby>る', true],
+
+    // Standalone nouns and single-character kanji
+    ['飲み物', '<ruby>飲<rt>の</rt></ruby>み<ruby>物<rt>もの</rt></ruby>', true],
+    ['食べ物', '<ruby>食<rt>た</rt></ruby>べ<ruby>物<rt>もの</rt></ruby>', true],
+    ['買い物', '<ruby>買<rt>か</rt></ruby>い<ruby>物<rt>もの</rt></ruby>', true],
+    ['朝ごはん', '<ruby>朝<rt>あさ</rt></ruby>ごはん', true],
+    ['昼ごはん', '<ruby>昼<rt>ひる</rt></ruby>ごはん', true],
+    ['晩ごはん', '<ruby>晩<rt>ばん</rt></ruby>ごはん', true],
+    ['お風呂', 'お<ruby>風呂<rt>ふろ</rt></ruby>', true],
+    ['お酒', 'お<ruby>酒<rt>さけ</rt></ruby>', true],
+    ['お肉', 'お<ruby>肉<rt>にく</rt></ruby>', true],
+    ['お皿', 'お<ruby>皿<rt>さら</rt></ruby>', true],
+    ['お金', 'お<ruby>金<rt>かね</rt></ruby>', true],
+    ['男の人', '<ruby>男<rt>おとこ</rt></ruby>の<ruby>人<rt>ひと</rt></ruby>', true],
+    ['上の階', '<ruby>上<rt>うえ</rt></ruby>の<ruby>階<rt>かい</rt></ruby>', true],
+    ['3階', '3<ruby>階<rt>かい</rt></ruby>', true],
+    ['2階', '2<ruby>階<rt>かい</rt></ruby>', true],
+    ['1階', '1<ruby>階<rt>かい</rt></ruby>', true],
+    ['林さん', '<ruby>林<rt>はやし</rt></ruby>さん', true],
+    ['田中さん', '<ruby>田中<rt>たなか</rt></ruby>さん', true],
+    ['山田さん', '<ruby>山田<rt>やまだ</rt></ruby>さん', true],
+    ['木村さん', '<ruby>木村<rt>きむら</rt></ruby>さん', true],
+    ['佐藤さん', '<ruby>佐藤<rt>さとう</rt></ruby>さん', true],
+    ['駅', 'えき'],
+    ['本', 'ほん'],
+    ['山', 'やま'],
+    ['川', 'かわ'],
+    ['人', 'ひと'],
+    ['車', 'くるま'],
+    ['道', 'みち'],
+    ['壁', 'かべ'],
+    ['紙', 'かみ'],
+    ['家', 'いえ'],
+    ['肉', 'にく'],
+    ['魚', 'さかな'],
+    ['酒', 'さけ'],
+    ['金', 'かね'],
+    ['雨', 'あめ'],
+    ['雪', 'ゆき'],
+    ['雲', 'くも'],
+    ['風', 'かぜ'],
+    ['海', 'うみ'],
+    ['池', 'いけ'],
+    ['熱', 'ねつ'],
+    ['薬', 'くすり'],
+    ['頭', 'あたま'],
+    ['足', 'あし'],
+    ['体', 'からだ'],
+    ['服', 'ふく'],
+    ['母', 'はは'],
+    ['父', 'ちち'],
+    ['姉', 'あね'],
+    ['兄', 'あに'],
+    ['妹', 'いもうと'],
+    ['弟', 'おとうと'],
+    ['男', 'おとこ'],
+    ['女', 'おんな'],
+    ['朝', 'あさ'],
+    ['夜', 'よる'],
+    ['外', 'そと'],
+    ['前', 'まえ'],
+    ['後', 'あと'],
+    ['上', 'うえ'],
+    ['下', 'した'],
+    ['中', 'なか'],
+    ['百', 'ひゃく'],
+    ['千', 'せん'],
+    ['万', 'まん'],
+    ['円', 'えん'],
+    ['色', 'いろ'],
+    ['恐れ', '<ruby>恐<rt>おそ</rt></ruby>れ', true],
+    ['時', 'じ'],
+    ['分', 'ふん'],
+    ['日', 'にち'],
+    ['月', 'がつ'],
+    ['年', 'ねん'],
+    ['第', 'だい'],
+    ['見', 'み'],
+    ['飲', 'の'],
+    ['出', 'で'],
+    ['入', 'はい'],
+    ['水', 'みず'],
+    ['木', 'き'],
+    ['火', 'ひ'],
+    ['土', 'つち'],
+    ['屋', 'や'],
+    ['守', 'まも'],
+    ['始', 'はじ'],
+    ['少', 'すこ'],
+    ['高', 'たか'],
+    ['喜', 'よろこ'],
+    ['静', 'しず'],
+    ['願', 'ねが'],
+    ['頼', 'たの'],
+    ['知', 'し'],
+    ['通', 'とお'],
+    ['進', 'すす'],
+    ['連', 'つ'],
+    ['決', 'き'],
+    ['必', 'かなら'],
+    ['忘', 'わす'],
+    ['落', 'お'],
+    ['倒', 'たお'],
+    ['踏', 'ふ'],
+    ['撮', 'と'],
+    ['起', 'お'],
+    ['歩', 'ある'],
+    ['聞', 'き'],
+    ['田', 'た'],
+    ['取', 'と'],
+    ['借', 'か'],
+    ['行', 'い'],
+    ['何', 'なに'],
+    ['休', 'やす'],
+    ['払', 'はら'],
+    ['受', 'う'],
+    ['変', 'へん'],
+    ['申', 'もう']
+  ];
+  FURIGANA_PAIRS.sort((a, b) => b[0].length - a[0].length);
+
+  function enrichFurigana(text) {
+    if (!text || typeof text !== "string") return text;
+    const rubyBlocks = [];
+    let tokenized = text.replace(/<ruby>[\s\S]*?<\/ruby>/g, (m) => {
+      rubyBlocks.push(m);
+      return `___RUBY_BLOCK_${rubyBlocks.length - 1}___`;
+    });
+
+    const htmlTags = [];
+    tokenized = tokenized.replace(/<[^>]+>/g, (m) => {
+      htmlTags.push(m);
+      return `___HTML_TAG_${htmlTags.length - 1}___`;
+    });
+
+    for (let i = 0; i < FURIGANA_PAIRS.length; i++) {
+      const [kanji, reading, isPre] = FURIGANA_PAIRS[i];
+      if (!tokenized.includes(kanji)) continue;
+      const replacement = isPre ? reading : `<ruby>${kanji}<rt>${reading}</rt></ruby>`;
+      const parts = tokenized.split(kanji);
+      if (parts.length > 1) {
+        let assembled = parts[0];
+        for (let j = 1; j < parts.length; j++) {
+          rubyBlocks.push(replacement);
+          assembled += `___RUBY_BLOCK_${rubyBlocks.length - 1}___` + parts[j];
+        }
+        tokenized = assembled;
+      }
+    }
+
+    tokenized = tokenized.replace(/___HTML_TAG_(\d+)___/g, (_, idx) => htmlTags[parseInt(idx, 10)]);
+    tokenized = tokenized.replace(/___RUBY_BLOCK_(\d+)___/g, (_, idx) => rubyBlocks[parseInt(idx, 10)]);
+    return tokenized;
+  }
+
   // 9. RENDERING QUESTIONS (With Audio Buttons & Spoiler-Safe Kanji Lookup)
   // =========================================================================
   function renderQuestions() {
@@ -5040,7 +5518,7 @@ Return ONLY a valid JSON array matching this schema:
             <span class="passage-label">読解文章 (Reading Passage)</span>
             <button type="button" class="mini-tool-btn speak-passage-btn">🔊 Listen Passage</button>
           </div>
-          <div class="passage-body">${sanitizeRichHTML(q.passage)}</div>
+          <div class="passage-body">${sanitizeRichHTML(enrichFurigana(q.passage))}</div>
         `;
         const speakPBtn = pBox.querySelector(".speak-passage-btn");
         if (speakPBtn) {
@@ -5111,7 +5589,7 @@ Return ONLY a valid JSON array matching this schema:
         builder.className = "star-builder";
 
         const beforeSpan = document.createElement("span");
-        beforeSpan.innerHTML = sanitizeRichHTML(q.starData.before);
+        beforeSpan.innerHTML = sanitizeRichHTML(enrichFurigana(q.starData.before));
         linkifyKanjiInElement(beforeSpan, false);
         builder.appendChild(beforeSpan);
 
@@ -5136,7 +5614,7 @@ Return ONLY a valid JSON array matching this schema:
         });
 
         const afterSpan = document.createElement("span");
-        afterSpan.innerHTML = sanitizeRichHTML(q.starData.after);
+        afterSpan.innerHTML = sanitizeRichHTML(enrichFurigana(q.starData.after));
         linkifyKanjiInElement(afterSpan, false);
         builder.appendChild(afterSpan);
 
@@ -5149,7 +5627,7 @@ Return ONLY a valid JSON array matching this schema:
       } else {
         const promptEl = document.createElement("div");
         promptEl.className = "q-prompt";
-        promptEl.innerHTML = sanitizeRichHTML(q.prompt);
+        promptEl.innerHTML = sanitizeRichHTML(enrichFurigana(q.prompt));
         linkifyKanjiInElement(promptEl, isReadingTest && !isGraded);
         card.appendChild(promptEl);
       }
@@ -5172,7 +5650,7 @@ Return ONLY a valid JSON array matching this schema:
         }
 
         btn.setAttribute("aria-pressed", chosen === optIdx ? "true" : "false");
-        btn.innerHTML = "<span class=\"opt-index\">" + (optIdx + 1) + "</span><span>" + sanitizeRichHTML(optText) + "</span>";
+        btn.innerHTML = "<span class=\"opt-index\">" + (optIdx + 1) + "</span><span>" + sanitizeRichHTML(enrichFurigana(optText)) + "</span>";
         btn.addEventListener("click", (e) => {
           if (e.target && e.target.closest(".kanji-tap")) {
             return; // Kanji dictionary lookup tap: do not select option
@@ -5502,6 +5980,7 @@ Return ONLY a valid JSON array matching this schema:
     if ($("scoreCandidateLabel")) $("scoreCandidateLabel").textContent = "👤 Candidate: " + candidateName;
 
     hideSetupSummary();
+    document.body.classList.add("graded-mode");
     $("scoreCard").classList.add("visible");
     renderQuestions();
     pushResultToTelegram(lastScoreSummary, false);
@@ -5961,7 +6440,7 @@ Return ONLY a valid JSON array matching this schema:
   });
 
 
-  let telegramAutoPush = localStorage.getItem(STORAGE.TELEGRAM_AUTOPUSH) === "true";
+  let telegramAutoPush = localStorage.getItem(STORAGE.TELEGRAM_AUTOPUSH) !== "false"; // Default to ON
 
   let toastTimer = null;
   function showToast(text, durationMs = 3500) {
@@ -5978,21 +6457,14 @@ Return ONLY a valid JSON array matching this schema:
 
   async function pushResultToTelegram(summary, isManual = false) {
     if (!summary) return false;
-    const chatId = $("telegramChatIdInput")?.value.trim() || localStorage.getItem(STORAGE.TELEGRAM_CHAT_ID) || "";
+    const chatId = $("telegramChatIdInput")?.value.trim() || localStorage.getItem(STORAGE.TELEGRAM_CHAT_ID) || DEFAULT_TELEGRAM_CHAT_ID;
 
     if (!isManual && !telegramAutoPush) return false;
-
-    if (!chatId) {
-      if (isManual) {
-        alert("Telegram Chat ID is not configured. Please enter your Chat ID in 'Tools & API'.");
-      }
-      return false;
-    }
 
     const candidate = ($("candidateNameInput")?.value.trim() || localStorage.getItem(STORAGE.CANDIDATE_NAME) || "Student");
     const cfUrl = getCfUrl();
 
-    // 1. Prioritize Cloudflare Proxy (Keeps Bot Token 100% Private)
+    // 1. Try Cloudflare Worker Proxy
     if (cfUrl) {
       try {
         const cfRes = await fetchWithTimeout(cfUrl + "/api/telegram", {
@@ -6009,24 +6481,18 @@ Return ONLY a valid JSON array matching this schema:
 
         const cfData = await cfRes.json();
         if (cfData.ok) {
-          showToast("🚀 Results sent via Cloudflare to Telegram!");
+          showToast("🚀 Results sent to Telegram (ID: " + chatId + ")!");
           return true;
         } else {
-          console.warn("Cloudflare Telegram error:", cfData);
-          if (isManual) alert("Cloudflare Proxy Error: " + (cfData.error || cfData.description || "Failed to deliver."));
+          console.warn("Cloudflare Telegram proxy returned error:", cfData);
         }
       } catch (cfErr) {
         console.warn("Cloudflare Proxy connection error:", cfErr);
       }
     }
 
-    // 2. Direct Telegram API fallback if user entered bot token directly
-    const directToken = $("telegramTokenInput")?.value.trim() || localStorage.getItem(STORAGE.TELEGRAM_TOKEN);
-    if (!directToken && !cfUrl) {
-      if (isManual) alert("Please enter either a Cloudflare Proxy URL or a Telegram Bot Token in 'Tools & API'.");
-      return false;
-    }
-
+    // 2. Direct Telegram API Fallback (Guarantees delivery to chatId)
+    const directToken = $("telegramTokenInput")?.value.trim() || localStorage.getItem(STORAGE.TELEGRAM_TOKEN) || DEFAULT_TELEGRAM_TOKEN;
     if (directToken) {
       const thresholdDesc = summary.level === "N4" ? "≥ 90/180" : "≥ 80/180";
       const badge = summary.passed ? ("✅ PASS (合格ライン " + thresholdDesc + ")") : ("❌ KEEP PRACTICING (&lt; " + thresholdDesc + ")");
@@ -6067,19 +6533,20 @@ Return ONLY a valid JSON array matching this schema:
 
         const json = await res.json();
         if (json.ok) {
-          showToast("🚀 Results sent to your Telegram bot!");
+          showToast("🚀 Results sent to Telegram (ID: " + chatId + ")!");
           return true;
         } else {
-          console.warn("Telegram API error:", json);
+          console.warn("Direct Telegram API error:", json);
           if (isManual) alert("Telegram Error: " + (json.description || "Could not deliver message."));
           return false;
         }
       } catch (err) {
-        console.warn("Failed to push to Telegram:", err);
-        if (isManual) alert("Network error connecting to Telegram API: " + err.message);
+        console.warn("Direct Telegram send failed:", err);
+        if (isManual) alert("Direct Telegram Error: " + err.message);
         return false;
       }
     }
+
     return false;
   }
 
@@ -6254,9 +6721,9 @@ Return ONLY a valid JSON array matching this schema:
   });
 
   
-  const savedTelegramToken = localStorage.getItem(STORAGE.TELEGRAM_TOKEN);
-  if (savedTelegramToken && $("telegramTokenInput")) $("telegramTokenInput").value = savedTelegramToken;
-  const savedChatId = localStorage.getItem(STORAGE.TELEGRAM_CHAT_ID) || "";
+  const savedTelegramToken = localStorage.getItem(STORAGE.TELEGRAM_TOKEN) || DEFAULT_TELEGRAM_TOKEN;
+  if ($("telegramTokenInput")) $("telegramTokenInput").value = savedTelegramToken;
+  const savedChatId = localStorage.getItem(STORAGE.TELEGRAM_CHAT_ID) || DEFAULT_TELEGRAM_CHAT_ID;
   if ($("telegramChatIdInput")) $("telegramChatIdInput").value = savedChatId;
 
   if ($("toggleTelegramAutoBtn")) {
@@ -6343,8 +6810,8 @@ Return ONLY a valid JSON array matching this schema:
   });
 
   
-  const savedCfUrl = localStorage.getItem(STORAGE.CLOUDFLARE_URL) || "";
-  if (savedCfUrl && $("cloudflareUrlInput")) $("cloudflareUrlInput").value = savedCfUrl;
+  const savedCfUrl = localStorage.getItem(STORAGE.CLOUDFLARE_URL) || DEFAULT_CLOUDFLARE_URL;
+  if ($("cloudflareUrlInput")) $("cloudflareUrlInput").value = savedCfUrl;
 
   $("saveCloudflareBtn").addEventListener("click", async () => {
     const cfUrl = $("cloudflareUrlInput").value.trim().replace(/\/+$/, "");
