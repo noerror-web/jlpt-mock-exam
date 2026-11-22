@@ -837,7 +837,7 @@
         padding-bottom: 0;
         font-size: 11pt;
       }
-      header, .panel, .nav-strip, .score-card, .submit-bar, .star-hint, .streak-tag, .mini-tool-btn, .kanji-popover, .shortcut-bar, .app-footer { display: none !important; }
+      header, .panel, .nav-strip, .score-card, .submit-bar, .star-hint, .streak-tag, .mini-tool-btn, .kanji-popover, .shortcut-bar, .app-footer, .view-switch-row, .resume-banner, .single-bottom-bar, .toast-msg, #confettiCanvas, .omr-modal { display: none !important; }
       main { max-width: 100%; margin: 0; padding: 0; }
       .print-header {
         display: block;
@@ -1157,6 +1157,212 @@
       font-size: calc(1.08rem * var(--font-scale, 1));
     }
 
+  
+    /* Header Full Width Desktop Fix */
+    .header-inner {
+      width: 100%;
+    }
+
+    /* Candidate Name Input Dark Mode Contrast */
+    #candidateNameInput {
+      background: var(--card);
+      color: var(--text);
+      border: 1.5px solid var(--border);
+    }
+
+    /* Japanese Typography Furigana Spacing */
+    .q-prompt, .passage-body, .star-builder {
+      line-height: 2.1;
+    }
+
+    /* Desktop Split-Screen Reading Comprehension Layout */
+    @media (min-width: 900px) {
+      .reading-split-container {
+        display: grid;
+        grid-template-columns: 1.05fr 1fr;
+        gap: 20px;
+        align-items: start;
+        margin-bottom: 20px;
+      }
+      .reading-passage-sticky {
+        position: sticky;
+        top: 60px;
+        max-height: calc(100vh - 80px);
+        overflow-y: auto;
+      }
+    }
+
+    /* Results Dashboard Animated Section Bars & Benchmark */
+    .sec-bar-container {
+      position: relative;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      height: 14px;
+      border-radius: 7px;
+      overflow: visible;
+      margin-top: 8px;
+    }
+    .sec-bar-fill {
+      height: 100%;
+      border-radius: 6px;
+      background: var(--primary);
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .sec-bar-fill.pass {
+      background: #10b981;
+    }
+    .sec-bar-fill.fail {
+      background: var(--error);
+    }
+    .sec-benchmark-line {
+      position: absolute;
+      left: 31.67%;
+      top: -4px;
+      bottom: -4px;
+      width: 2.5px;
+      background: #f59e0b;
+      z-index: 2;
+      border-radius: 2px;
+    }
+    .sec-benchmark-label {
+      position: absolute;
+      left: 31.67%;
+      bottom: -18px;
+      transform: translateX(-50%);
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #f59e0b;
+      white-space: nowrap;
+    }
+    .time-taken-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .weak-topic-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      border-radius: 12px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--error);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      cursor: pointer;
+      margin: 3px 4px 3px 0;
+      transition: all 0.2s;
+    }
+    .weak-topic-chip:hover {
+      background: var(--error);
+      color: #fff;
+    }
+
+    /* OMR Quick-Jump Popover */
+    .omr-modal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .omr-backdrop {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(2px);
+    }
+    .omr-card {
+      position: relative;
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      max-width: 460px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      z-index: 2;
+    }
+    .omr-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    .omr-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+    .omr-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      vertical-align: middle;
+      margin-right: 4px;
+    }
+    .dot-answered { background: var(--primary); }
+    .dot-unanswered { background: var(--surface-subtle); border: 1px solid var(--border); }
+    .dot-flagged { background: #f59e0b; }
+    .dot-current { background: var(--accent); }
+    .omr-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+      gap: 8px;
+    }
+    .omr-pill {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 42px;
+      border-radius: 8px;
+      border: 1.5px solid var(--border);
+      background: var(--surface-subtle);
+      color: var(--text);
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.15s;
+    }
+    .omr-pill:hover {
+      transform: translateY(-1px);
+      border-color: var(--primary);
+    }
+    .omr-pill.answered {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .omr-pill.current {
+      box-shadow: 0 0 0 3px var(--accent);
+    }
+    .omr-pill.flagged::after {
+      content: "🚩";
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      font-size: 0.68rem;
+    }
+
   </style>
 </head>
 <body>
@@ -1321,6 +1527,23 @@
     <!-- Collapsible Tools, JSON Import/Export & Gemini API Drawer -->
     <div class="settings-drawer" id="settingsDrawer">
       <div class="drawer-grid">
+        <div class="drawer-box" id="accessibilityDrawerSection">
+          <h3>👁️ Display & Accessibility</h3>
+          <p>Customize exam display preferences, typography sizing, furigana readings, and visual theme.</p>
+          <div class="btn-row" style="margin-bottom:10px;gap:8px;flex-wrap:wrap;">
+            <button type="button" class="btn-secondary" id="drawerFuriganaBtn">ふりがな: ON</button>
+            <button type="button" class="btn-secondary" id="drawerDarkModeBtn">🌙 Theme</button>
+            <button type="button" class="btn-secondary" id="drawerLangBtn">🌐 Lang: Both</button>
+            <button type="button" class="btn-secondary" id="drawerPrintBtn">🖨️ Print / PDF</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+            <span style="font-size:0.82rem;font-weight:600;color:var(--text-muted);">Font Scaling:</span>
+            <button type="button" class="btn-secondary font-scale-btn" id="fontScaleDownBtn" style="padding:4px 10px;font-size:0.8rem;">A-</button>
+            <button type="button" class="btn-secondary font-scale-btn active" id="fontScaleResetBtn" style="padding:4px 10px;font-size:0.8rem;">100%</button>
+            <button type="button" class="btn-secondary font-scale-btn" id="fontScaleUpBtn" style="padding:4px 10px;font-size:0.8rem;">A+</button>
+          </div>
+        </div>
+
         <div class="drawer-box">
           <h3>✨ Gemini AI Key & Cache Management</h3>
           <p>
@@ -1382,9 +1605,7 @@
           <div style="font-size:0.77rem;color:var(--text-muted);margin-top:6px;">
             💡 <strong>Security Recommendation:</strong> For production and shared devices, use the Cloudflare Worker proxy above instead of storing your raw Gemini API key or Telegram Bot Token directly in browser storage.
           </div>
-          <div class="btn-row"> placeholder="Cloudflare Worker URL" value="https://jlpt-mock-exam-proxy.mominurislam.workers.dev" style="flex:1 1 200px;" />
-            <button type="button" class="btn-secondary" id="saveCloudflareBtn">Save & Test</button>
-          </div>
+          
           <div class="btn-row">
             <span id="cloudflareStatusMsg" style="font-size:0.77rem;color:var(--text-muted);">See <code>cloudflare-worker/</code> in repo for 2-min deploy guide.</span>
           </div>
@@ -2115,14 +2336,14 @@
       starData: {
         before: "この",
         after: "いいですか。",
-        ordered: ["カメラを", "使っても", "ここで", "ちょっと"],
-        starPos: 1
+        ordered: ["カメラを", "ここで", "ちょっと", "使っても"],
+        starPos: 2
       },
-      options: ["使っても", "カメラを", "ここで", "ちょっと"],
+      options: ["ちょっと", "カメラを", "ここで", "使っても"],
       answer: 0,
-      kana: "この カメラを 【★ 使っても】 ここで ちょっと いいですか。",
-      exp_en: "Order: この カメラを 【★ 使っても】 ここで ちょっと いいですか。 Star is position 2 (使っても).",
-      exp_bn: "সঠিক ক্রম: この カメラを 【★ 使っても】 ここで ちょっと いいですか। তারকার স্থানে '使っても'।"
+      kana: "この カメラを ここで 【★ ちょっと】 使っても いいですか。",
+      exp_en: "Order: この カメラを (1) ここで (2) 【★ ちょっと】 (3) 使っても (4) いいですか。 'Can I use this camera here for a moment?' Star is position 3 (ちょっと).",
+      exp_bn: "সঠিক ক্রম: この カメラを ここで 【★ ちょっと】 使っても いいですか। তারকার ঘরে (৩য় অবস্থানে) 'ちょっと' বসবে।"
     },
     {
       section: "文法 (N5 Grammar)",
@@ -2640,15 +2861,15 @@
       prompt: "",
       starData: {
         before: "時間が",
-        after: "説明できません。",
-        ordered: ["ないので、", "くわしく", "することが", "全部を"],
-        starPos: 1
+        after: "できません。",
+        ordered: ["ないので、", "全部を", "くわしく", "説明することが"],
+        starPos: 2
       },
-      options: ["くわしく", "ないので、", "全部を", "することが"],
+      options: ["くわしく", "ないので、", "全部を", "説明することが"],
       answer: 0,
-      kana: "時間が ないので、 【★ くわしく】 全部を することが 説明できません。",
-      exp_en: "Order: 時間が ないので、 【★ くわしく】 全部を することが 説明できません。 Star is position 2 (くわしく).",
-      exp_bn: "সঠিক বাক্যক্রম: 時間が ないので、 【★ くわしく】 全部を することが 説明できません। তারকার ঘরে 'くわしく'।"
+      kana: "時間が ないので、 全部を 【★ くわしく】 説明することが できません。",
+      exp_en: "Order: 時間が ないので、 (1) 全部を (2) 【★ くわしく】 (3) 説明することが (4) できません。 'Because there is no time, I cannot explain everything in detail.' Star is position 3 (くわしく).",
+      exp_bn: "সঠিক বাক্যক্রম: 時間が ないので、 全部を 【★ くわしく】 説明することが できません। তারকার ঘরে (৩য় অবস্থানে) 'くわしく' বসবে।"
     },
     {
       section: "文法 (N4 Grammar)",
@@ -2657,15 +2878,15 @@
       prompt: "",
       starData: {
         before: "日本語が",
-        after: "頑張ります。",
-        ordered: ["もっと", "上手に", "ように、", "話せる"],
+        after: "練習して います。",
+        ordered: ["もっと", "上手に", "話せる", "ように、"],
         starPos: 2
       },
-      options: ["ように、", "もっと", "上手に", "話せる"],
+      options: ["話せる", "もっと", "上手に", "ように、"],
       answer: 0,
-      kana: "日本語が もっと 上手に 【★ ように、】 話せる 頑張ります。",
-      exp_en: "Order: 日本語が もっと (1) 上手に (2) 話せる (3) 【★ ように、】 (4) 頑張ります。 Star is position 4 (ように、).",
-      exp_bn: "সঠিক ক্রম: 日本語が もっと 上手に 話せる 【★ ように、】 頑張ります। তারকার ঘরে 'ように、'।"
+      kana: "日本語が もっと 上手に 【★ 話せる】 ように、 練習して います。",
+      exp_en: "Order: 日本語が もっと (1) 上手に (2) 【★ 話せる】 (3) ように、 (4) 練習して います。 'I practice every day so that I can speak Japanese more skillfully.' Star is position 3 (話せる).",
+      exp_bn: "সঠিক ক্রম: 日本語が もっと 上手に 【★ 話せる】 ように、 練習して います। তারকার ঘরে (৩য় অবস্থানে) '話せる' বসবে।"
     },
     {
       section: "読解 (N4 Reading Comprehension)",
@@ -2699,7 +2920,7 @@
       answer: 0,
       kana: "0円（無料）",
       exp_en: "The notice says: 『高校生以下は無料』 (High school students and below are free of charge).",
-      exp_bn: "নোটিশে বলা হয়েছে: হাই স্কুলের ছাত্র বা তার কম বয়সীদের জন্য সম্পূর্ণ বিনামূল্যে (무료)।"
+      exp_bn: "নোটিশে বলা হয়েছে: হাই স্কুলের ছাত্র বা তার কম বয়সীদের জন্য সম্পূর্ণ বিনামূল্যে (無料)।"
     },
     {
       section: "読解 (N4 Reading Comprehension)",
@@ -2788,9 +3009,15 @@
     if (saved.timerEndTime && saved.timerIsRunning) {
       remSec = Math.max(0, Math.round((saved.timerEndTime - Date.now()) / 1000));
     }
-    const mins = Math.max(1, Math.round(remSec / 60));
     const safeLevel = escapeHTML(saved.level || "N5");
-    $("resumeText").innerHTML = "⚠️ In-progress <strong>JLPT " + safeLevel + "</strong> exam found (" + answered + "/" + saved.questions.length + " answered, ~" + mins + "m remaining).";
+    if (remSec <= 0) {
+      $("resumeText").innerHTML = "⏱️ Time expired for in-progress <strong>JLPT " + safeLevel + "</strong> exam (" + answered + "/" + saved.questions.length + " answered).";
+      if ($("btnResumeExam")) $("btnResumeExam").textContent = "Submit & Grade Exam";
+    } else {
+      const mins = Math.max(1, Math.round(remSec / 60));
+      $("resumeText").innerHTML = "⚠️ In-progress <strong>JLPT " + safeLevel + "</strong> exam found (" + answered + "/" + saved.questions.length + " answered, ~" + mins + "m remaining).";
+      if ($("btnResumeExam")) $("btnResumeExam").textContent = "Resume Exam";
+    }
     banner.style.display = "flex";
   }
 
@@ -2805,6 +3032,7 @@
     userAnswers = saved.userAnswers || {};
     flaggedQuestions = new Set(saved.flagged || []);
     starSlotsState = saved.starSlotsState || {};
+    examStartTime = saved.examStartTime || Date.now();
     isGraded = false;
     reviewWrongOnly = false;
     focusedQIdx = 0;
@@ -2854,6 +3082,9 @@
   let weakFocus = localStorage.getItem(STORAGE.WEAK_FOCUS) !== "false";
   let autoScroll = localStorage.getItem(STORAGE.AUTO_SCROLL) === "true";
   let examIntegrity = localStorage.getItem(STORAGE.EXAM_INTEGRITY) === "true";
+  let examStartTime = Date.now();
+  let fontScale = localStorage.getItem("jlpt_font_scale_v4") || "1.0";
+  let inFlashcardMode = false;
 
   let currentQuestions = [];
   let userAnswers = {};
@@ -2865,8 +3096,7 @@
   let viewMode = localStorage.getItem("jlpt_view_mode_v4") || "list"; // "list" | "single"
   let flashcardIndex = 0;
   let flashcardList = [];
-  let fontScale = parseFloat(localStorage.getItem("jlpt_font_scale_v4") || "1");
-  let reviewWrongOnly = false;
+    let reviewWrongOnly = false;
   let lastScoreSummary = null;
   let timerInterval = null;
   let remainingSeconds = 0;
@@ -3057,7 +3287,17 @@
       if (!stats.sections[key]) stats.sections[key] = { c: 0, t: 0 };
       stats.totalSolved++;
       stats.sections[key].t++;
-      if (answersMap[idx] === q.answer) {
+      let isCorrect = false;
+      if (q.starData && q.starData.ordered) {
+        const slots = starSlotsState[idx] || [];
+        const hasDups = slots.some((s, si) => s !== null && slots.indexOf(s) !== si);
+        const targetChunk = q.starData.ordered[q.starData.starPos];
+        const chosenChunk = q.options && answersMap[idx] !== undefined ? q.options[answersMap[idx]] : undefined;
+        isCorrect = !hasDups && (answersMap[idx] === q.answer || (chosenChunk !== undefined && chosenChunk === targetChunk));
+      } else {
+        isCorrect = answersMap[idx] === q.answer;
+      }
+      if (isCorrect) {
         stats.totalCorrect++;
         stats.sections[key].c++;
       }
@@ -3153,15 +3393,29 @@
   // =========================================================================
   // 4. BROWSER JAPANESE AUDIO (TTS) & TAP-ANY-KANJI DICTIONARY
   // =========================================================================
-  function speakJapanese(htmlOrText) {
-    if (!("speechSynthesis" in window)) {
-      alert("Japanese Text-to-Speech is not supported in this browser.");
-      return;
-    }
-    if (window.speechSynthesis.speaking) {
+  let currentAudioBtn = null;
+  function stopJapaneseSpeech() {
+    if ("speechSynthesis" in window) {
       window.speechSynthesis.cancel();
+    }
+    if (currentAudioBtn) {
+      currentAudioBtn.textContent = currentAudioBtn.dataset.origText || "🔊";
+      currentAudioBtn.classList.remove("speaking");
+      currentAudioBtn = null;
+    }
+  }
+
+  function speakJapanese(htmlOrText, btn = null) {
+    if (!("speechSynthesis" in window)) {
+      showToast("Japanese Text-to-Speech is not supported in this browser.");
       return;
     }
+    if (window.speechSynthesis.speaking && currentAudioBtn === btn && btn !== null) {
+      stopJapaneseSpeech();
+      return;
+    }
+    stopJapaneseSpeech();
+
     const temp = document.createElement("div");
     temp.innerHTML = htmlOrText;
     temp.querySelectorAll("rt").forEach((el) => el.remove());
@@ -3178,6 +3432,16 @@
     const voices = window.speechSynthesis.getVoices();
     const jaVoice = voices.find((v) => v.lang && v.lang.toLowerCase().startsWith("ja"));
     if (jaVoice) utter.voice = jaVoice;
+
+    if (btn) {
+      currentAudioBtn = btn;
+      if (!btn.dataset.origText) btn.dataset.origText = btn.textContent;
+      btn.textContent = "⏹️";
+      btn.classList.add("speaking");
+    }
+
+    utter.onend = stopJapaneseSpeech;
+    utter.onerror = stopJapaneseSpeech;
     window.speechSynthesis.speak(utter);
   }
 
@@ -3548,6 +3812,7 @@
       "L1-25": "JLPT N5 / Minna no Nihongo Lessons 1–25 (particles, 〜たい, 〜ない, 〜てform, 〜たあとで, basic adjectives)",
       "L1-12": "JLPT N5 Early / Minna no Nihongo Lessons 1–12 (desu/masu, basic particles は/が/を/に/で/へ, い/な adjectives, comparisons)",
       "L13-25": "JLPT N5 Late / Minna no Nihongo Lessons 13–25 (〜たい, 〜てform requests/permissions, 〜ないform, dictionary form, 〜たform, plain style, 〜たら/〜ても)",
+      "L26-50": "JLPT N4 / Minna no Nihongo Lessons 26–50 (all N4 grammar: 〜んです, potential, 〜ながら, conditionals 〜ば/〜たら/〜と, passive, causative, keigo)",
       "L26-35": "JLPT N4 Early / Minna no Nihongo Lessons 26–35 (〜んです, potential verbs, 〜ながら, 〜てしまう, 〜てある, 〜ておく, volitional form, conditionals 〜ば/〜たら/〜と)",
       "L36-40": "JLPT N4 Mid / Minna no Nihongo Lessons 36–40 (〜ようにする/なる, passive verbs, nominalizer の, 〜てくれて/もらって/あげて, embedded questions)",
       "L41-50": "JLPT N4 Late / Minna no Nihongo Lessons 41–50 (〜やすい/にくい, 〜すぎる, 〜てみる, 〜かもしれない, hearsay 〜そうだ, causative & causative-passive, keigo basics)"
@@ -3684,7 +3949,7 @@ Return ONLY a valid JSON array matching this schema:
           const id = getQuestionId(q);
           if (seen.has(id)) continue;
           if (q.passage) {
-            if (readingPassageKept) continue;
+            if (readingPassageKept && sectionFilter !== "reading") continue;
             readingPassageKept = true;
           }
           seen.add(id);
@@ -3785,12 +4050,12 @@ Return ONLY a valid JSON array matching this schema:
     // Dedupe incoming questions by getQuestionId(q) and filter by section
     const seenIds = new Set();
     const dedupedIncoming = [];
-    for (const q of questions) {
-      if (!q || !matchesSectionFilter(q.section, sectionFilter)) continue;
-      const id = getQuestionId(q);
+    for (const rawQ of questions) {
+      if (!rawQ || !matchesSectionFilter(rawQ.section, sectionFilter)) continue;
+      const id = getQuestionId(rawQ);
       if (!seenIds.has(id)) {
         seenIds.add(id);
-        dedupedIncoming.push(q);
+        dedupedIncoming.push(shuffleQuestionOptions(rawQ));
       }
     }
 
@@ -3811,7 +4076,7 @@ Return ONLY a valid JSON array matching this schema:
 
     for (const q of matched) {
       if (result.length >= targetCount) break;
-      result.push(q);
+      result.push(shuffleQuestionOptions(q));
       seenIds.add(getQuestionId(q));
     }
 
@@ -3824,7 +4089,7 @@ Return ONLY a valid JSON array matching this schema:
       );
       for (const q of sectionOnly) {
         if (result.length >= targetCount) break;
-        result.push(q);
+        result.push(shuffleQuestionOptions(q));
         seenIds.add(getQuestionId(q));
       }
     }
@@ -3836,12 +4101,38 @@ Return ONLY a valid JSON array matching this schema:
       );
       for (const q of remaining) {
         if (result.length >= targetCount) break;
-        result.push(q);
+        result.push(shuffleQuestionOptions(q));
         seenIds.add(getQuestionId(q));
       }
     }
 
+    if (result.length < targetCount && sectionFilter !== "all") {
+      const secLabel = sectionFilter === "all" ? "the question bank" : `the "${sectionFilter}" section`;
+      showToast(`ℹ️ Loaded all ${result.length} available questions for ${secLabel}.`);
+    }
     return result.slice(0, targetCount);
+  }
+
+    function renderSkeletonCards(count = 3) {
+    const container = $("examContainer");
+    if (!container) return;
+    let sHtml = "";
+    for (let i = 0; i < count; i++) {
+      sHtml += `
+        <div class="skeleton-card">
+          <div class="skeleton-line" style="width: 28%; height: 16px; margin-bottom: 12px;"></div>
+          <div class="skeleton-line" style="width: 82%; height: 18px; margin-bottom: 10px;"></div>
+          <div class="skeleton-line" style="width: 65%; height: 14px; margin-bottom: 16px;"></div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div class="skeleton-line" style="height: 38px;"></div>
+            <div class="skeleton-line" style="height: 38px;"></div>
+            <div class="skeleton-line" style="height: 38px;"></div>
+            <div class="skeleton-line" style="height: 38px;"></div>
+          </div>
+        </div>
+      `;
+    }
+    container.innerHTML = sHtml;
   }
 
   async function generateExam() {
@@ -3887,6 +4178,7 @@ Return ONLY a valid JSON array matching this schema:
     $("generateBtn").disabled = true;
     $("generateBtn").innerHTML = "<span>⏳ Generating " + level + " (" + lessonRange + ")...</span>";
     $("scoreCard").classList.remove("visible");
+    renderSkeletonCards(3);
     isGraded = false;
     reviewWrongOnly = false;
     lastScoreSummary = null;
@@ -4030,10 +4322,17 @@ Return ONLY a valid JSON array matching this schema:
 
   function startFlashcardMode() {
     const mistakes = loadJSON(STORAGE.MISTAKES, []);
-    if (mistakes.length === 0) return;
+    if (mistakes.length === 0) {
+      showToast("No mistakes saved in bank yet!");
+      return;
+    }
+    if (!isGraded && currentQuestions.length > 0 && Object.keys(userAnswers).length > 0) {
+      const proceed = confirm("An exam is currently in progress. Entering Flashcard mode will pause your exam. Proceed?");
+      if (!proceed) return;
+    }
     flashcardDeck = shuffle(mistakes);
     currentFcIndex = 0;
-    isGraded = false;
+    inFlashcardMode = true;
     stopTimer();
     $("timerDisplay").classList.remove("active");
     $("scoreCard").classList.remove("visible");
@@ -4044,6 +4343,32 @@ Return ONLY a valid JSON array matching this schema:
     renderFlashcard();
   }
 
+  function exitFlashcardsMode() {
+    inFlashcardMode = false;
+    if (currentQuestions.length > 0) {
+      $("viewSwitchRow").style.display = "";
+      syncViewModeUI();
+      renderQuestions();
+      updateNavigator();
+      if (!isGraded) $("submitBar").classList.add("visible");
+      $("statusBadge").textContent = isGraded ? "Graded" : `In Progress (${currentLevel})`;
+      if (timerIsRunning && remainingSeconds > 0) {
+        startTimerInterval();
+        $("timerDisplay").classList.add("active");
+      }
+    } else {
+      const container = $("examContainer");
+      container.innerHTML = `
+        <div class="empty-state">
+          <h2 id="emptyTitle">Click "Generate JLPT ${currentLevel} Question Set" to Start</h2>
+          <p>Includes live online questions, Japanese TTS audio (🔊), tap-any-kanji dictionary, question flagging, spaced mistake drills, and bilingual (বাংলা + EN) explanations.</p>
+        </div>
+      `;
+      $("statusBadge").textContent = `Ready (${currentLevel})`;
+    }
+    updateStatsUI();
+  }
+
   function renderFlashcard() {
     const container = $("examContainer");
     if (flashcardDeck.length === 0 || currentFcIndex >= flashcardDeck.length) {
@@ -4051,9 +4376,10 @@ Return ONLY a valid JSON array matching this schema:
         <div class="empty-state">
           <h2>🎉 Flashcard Session Complete!</h2>
           <p>Great job reviewing your mistake bank.</p>
-          <button type="button" class="btn-generate" onclick="location.reload()" style="max-width:240px;margin:16px auto 0;">Return to Exam</button>
+          <button type="button" class="btn-generate" id="fcCompleteReturnBtn" style="max-width:240px;margin:16px auto 0;">Return to Exam</button>
         </div>
       `;
+      $("fcCompleteReturnBtn")?.addEventListener("click", exitFlashcardsMode);
       $("statusBadge").textContent = "Flashcards Done";
       updateStatsUI();
       return;
@@ -4062,7 +4388,20 @@ Return ONLY a valid JSON array matching this schema:
     const item = flashcardDeck[currentFcIndex];
     const q = item.question;
     const streak = item.streak || 0;
-    const ansText = (q.options && q.options[q.answer]) || "";
+
+    let ansHtml = "";
+    if (q.starData && Array.isArray(q.starData.ordered)) {
+      const orderedSentence = (q.starData.before ? sanitizeRichHTML(q.starData.before) + " " : "") +
+        q.starData.ordered.map((chunk, sIdx) => sIdx === q.starData.starPos
+          ? `<span style="color:var(--primary);font-weight:800;text-decoration:underline;">★ ${sanitizeRichHTML(chunk)}</span>`
+          : sanitizeRichHTML(chunk)
+        ).join(" ") +
+        (q.starData.after ? " " + sanitizeRichHTML(q.starData.after) : "");
+      ansHtml = `<div style="font-size:1.15rem;font-weight:700;line-height:1.6;color:var(--text);margin:6px 0;">${orderedSentence}</div>`;
+    } else {
+      const rawAns = (q.options && q.options[q.answer]) || "";
+      ansHtml = `<div style="font-size:1.5rem;font-weight:800;color:var(--primary);margin:6px 0;">${sanitizeRichHTML(rawAns)}</div>`;
+    }
 
     $("statusBadge").textContent = `🃏 Flashcard ${currentFcIndex + 1} of ${flashcardDeck.length} (Mastery: ${streak}/2)`;
 
@@ -4083,10 +4422,10 @@ Return ONLY a valid JSON array matching this schema:
             </div>
             <div class="flashcard-face flashcard-back">
               <div class="flashcard-tag">正解 (Correct Answer)</div>
-              <div style="font-size:1.5rem;font-weight:800;color:var(--primary);margin:6px 0;">${escapeHTML(ansText)}</div>
-              ${q.kana ? `<div style="font-size:0.96rem;color:var(--text-muted);margin-bottom:8px;">ひらがな: ${escapeHTML(q.kana)}</div>` : ""}
-              ${q.exp_bn ? `<div class="exp-bn" style="font-size:0.86rem;margin-top:6px;">🇧🇩 ${escapeHTML(q.exp_bn)}</div>` : ""}
-              ${q.exp_en ? `<div class="exp-en" style="font-size:0.86rem;margin-top:4px;">🇬🇧 ${escapeHTML(q.exp_en)}</div>` : ""}
+              ${ansHtml}
+              ${q.kana ? `<div style="font-size:0.96rem;color:var(--text-muted);margin-bottom:8px;">ひらがな: ${sanitizeRichHTML(q.kana)}</div>` : ""}
+              ${q.exp_bn ? `<div class="exp-bn" style="font-size:0.86rem;margin-top:6px;">🇧🇩 ${sanitizeRichHTML(q.exp_bn)}</div>` : ""}
+              ${q.exp_en ? `<div class="exp-en" style="font-size:0.86rem;margin-top:4px;">🇬🇧 ${sanitizeRichHTML(q.exp_en)}</div>` : ""}
             </div>
           </div>
         </div>
@@ -4135,10 +4474,7 @@ Return ONLY a valid JSON array matching this schema:
       renderFlashcard();
     });
 
-    $("fcExitBtn").addEventListener("click", () => {
-      updateStatsUI();
-      location.reload();
-    });
+    $("fcExitBtn").addEventListener("click", exitFlashcardsMode);
   }
 
   function startMistakeDrill() {
@@ -4234,15 +4570,59 @@ Return ONLY a valid JSON array matching this schema:
     });
   }
 
+  function syncViewModeUI() {
+    if (viewMode === "single") {
+      $("btnViewSingle")?.classList.add("active");
+      $("btnViewList")?.classList.remove("active");
+      if (!isGraded && currentQuestions.length > 0) {
+        $("singleBottomBar")?.classList.add("visible");
+        updateSingleBottomBar();
+      } else {
+        $("singleBottomBar")?.classList.remove("visible");
+      }
+    } else {
+      $("btnViewList")?.classList.add("active");
+      $("btnViewSingle")?.classList.remove("active");
+      $("singleBottomBar")?.classList.remove("visible");
+    }
+  }
+
+  function updateSingleBottomBar() {
+    const curEl = $("singleBottomCur");
+    const totalEl = $("singleBottomTotal");
+    const fillEl = $("singleProgressFill");
+    const textEl = $("singleProgressText");
+    const prevBtn = $("singlePrevBtn");
+    const nextBtn = $("singleNextBtn");
+
+    if (curEl) curEl.textContent = focusedQIdx + 1;
+    if (totalEl) totalEl.textContent = currentQuestions.length;
+    if (textEl) textEl.textContent = `${focusedQIdx + 1} / ${currentQuestions.length}`;
+    if (fillEl && currentQuestions.length > 0) {
+      const pct = Math.round(((focusedQIdx + 1) / currentQuestions.length) * 100);
+      fillEl.style.width = `${pct}%`;
+    }
+    if (prevBtn) prevBtn.disabled = focusedQIdx === 0;
+    if (nextBtn) nextBtn.disabled = focusedQIdx >= currentQuestions.length - 1;
+  }
+
   function focusQuestion(idx, shouldScroll = true) {
     if (idx < 0 || idx >= currentQuestions.length) return;
     focusedQIdx = idx;
-    document.querySelectorAll(".q-card").forEach((el) => el.classList.remove("focused-card"));
-    const card = document.getElementById(`q-card-${idx}`);
-    if (card) {
-      card.classList.add("focused-card");
+    if (viewMode === "single" && !isGraded) {
+      renderQuestions();
+      updateSingleBottomBar();
       if (shouldScroll) {
-        card.scrollIntoView({ behavior: "smooth", block: "start" });
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    } else {
+      document.querySelectorAll(".q-card").forEach((el) => el.classList.remove("focused-card"));
+      const card = document.getElementById(`q-card-${idx}`);
+      if (card) {
+        card.classList.add("focused-card");
+        if (shouldScroll) {
+          card.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
       }
     }
     updateNavigatorUI();
@@ -4265,7 +4645,41 @@ Return ONLY a valid JSON array matching this schema:
   function getQuestionId(q) {
     const starOrder = q.starData && Array.isArray(q.starData.ordered) ? q.starData.ordered.join(",") : "";
     const passageSnippet = (q.passage || "").replace(/\s+/g, "").slice(0, 30);
-    return `${q.section}::${passageSnippet}::${q.prompt || ""}::${starOrder}::${(q.options || []).join("|")}`;
+    const sortedOptions = (q.options || []).slice().sort().join("|");
+    return `${q.section}::${passageSnippet}::${q.prompt || ""}::${starOrder}::${sortedOptions}`;
+  }
+
+  function shuffleQuestionOptions(q) {
+    if (!q || !Array.isArray(q.options) || q.options.length <= 1) return q;
+    let correctText = "";
+    let starData = q.starData;
+    if (starData && Array.isArray(starData.ordered)) {
+      const starPos = starData.starPos !== undefined ? starData.starPos : 2;
+      correctText = starData.correctChunk || starData.ordered[starPos];
+      starData = { ...starData, starPos, correctChunk: correctText };
+    } else {
+      correctText = q.options[q.answer !== undefined ? q.answer : 0];
+    }
+
+    const indices = q.options.map((_, i) => i);
+    const shuffledIndices = shuffle(indices);
+    const shuffledOptions = shuffledIndices.map((i) => q.options[i]);
+
+    let newAnswer = -1;
+    if (correctText !== undefined) {
+      newAnswer = shuffledOptions.indexOf(correctText);
+    }
+    if (newAnswer === -1) {
+      newAnswer = shuffledIndices.indexOf(q.answer !== undefined ? q.answer : 0);
+    }
+    if (newAnswer === -1) newAnswer = 0;
+
+    return {
+      ...q,
+      options: shuffledOptions,
+      answer: newAnswer,
+      starData: starData ? { ...starData } : undefined
+    };
   }
 
   function handleStarSlotClick(qIdx, slotIdx) {
@@ -4363,7 +4777,11 @@ Return ONLY a valid JSON array matching this schema:
     let lastPassage = "";
     let renderedCount = 0;
 
+    const isCurrentSingle = viewMode === "single" && !isGraded;
+
     currentQuestions.forEach((q, idx) => {
+      if (isCurrentSingle && idx !== focusedQIdx) return;
+
       const chosen = userAnswers[idx];
       let isCorrect = false;
       if (q.starData && q.starData.ordered) {
@@ -4385,7 +4803,7 @@ Return ONLY a valid JSON array matching this schema:
         container.appendChild(secEl);
       }
 
-      if (q.passage && q.passage !== lastPassage) {
+      if (q.passage && (q.passage !== lastPassage || isCurrentSingle)) {
         lastPassage = q.passage;
         const pBox = document.createElement("div");
         pBox.className = "passage-box";
@@ -4396,13 +4814,13 @@ Return ONLY a valid JSON array matching this schema:
           </div>
           <div class="passage-body">${sanitizeRichHTML(q.passage)}</div>
         `;
-        pBox.querySelector(".speak-passage-btn").addEventListener("click", () => speakJapanese(q.passage));
+        const speakPBtn = pBox.querySelector(".speak-passage-btn");
+        if (speakPBtn) {
+          speakPBtn.addEventListener("click", () => speakJapanese(q.passage, speakPBtn));
+        }
         linkifyKanjiInElement(pBox.querySelector(".passage-body"), false);
         container.appendChild(pBox);
       }
-
-      const isCurrentSingle = viewMode === "single" && !isGraded;
-      if (isCurrentSingle && idx !== focusedQIdx) return;
 
       const card = document.createElement("article");
       card.className = "q-card";
@@ -4436,14 +4854,25 @@ Return ONLY a valid JSON array matching this schema:
         </div>
       `;
 
-      const speakText = q.starData
-        ? `${q.starData.before}、${q.starData.ordered.join(" ")}、${q.starData.after}`
-        : (isGraded && q.kana ? q.kana : q.prompt);
-      meta.querySelector(".speak-q-btn").addEventListener("click", () => speakJapanese(speakText));
+      const isReadingTest = String(q.subtype || "").includes("読み") || String(q.subtype || "").toLowerCase().includes("reading");
+      let speakText = "";
+      if (q.starData) {
+        speakText = isGraded
+          ? `${q.starData.before || ""} ${q.starData.ordered.join(" ")} ${q.starData.after || ""}`
+          : `${q.starData.before || ""} ＿＿ ＿＿ ★ ＿＿ ${q.starData.after || ""}`;
+      } else if (isGraded) {
+        speakText = q.kana ? q.kana : q.prompt;
+      } else if (isReadingTest) {
+        speakText = (q.prompt || "").replace(/<u>[\s\S]*?<\/u>/g, "［＿＿］");
+      } else {
+        speakText = q.prompt;
+      }
+      const qSpeakBtn = meta.querySelector(".speak-q-btn");
+      if (qSpeakBtn) {
+        qSpeakBtn.addEventListener("click", () => speakJapanese(speakText, qSpeakBtn));
+      }
       meta.querySelector(".flag-q-btn").addEventListener("click", () => toggleFlag(idx));
       card.appendChild(meta);
-
-      const isReadingTest = String(q.subtype || "").includes("読み") || String(q.subtype || "").toLowerCase().includes("reading");
 
       if (q.starData) {
         if (!starSlotsState[idx]) starSlotsState[idx] = [null, null, null, null];
@@ -4515,7 +4944,7 @@ Return ONLY a valid JSON array matching this schema:
         }
 
         btn.setAttribute("aria-pressed", chosen === optIdx ? "true" : "false");
-        btn.innerHTML = "<span class=\"opt-index\">" + (optIdx + 1) + "</span><span>" + escapeHTML(optText) + "</span>";
+        btn.innerHTML = "<span class=\"opt-index\">" + (optIdx + 1) + "</span><span>" + sanitizeRichHTML(optText) + "</span>";
         btn.addEventListener("click", () => {
           if (isGraded) return;
           if (q.starData) {
@@ -4769,11 +5198,62 @@ Return ONLY a valid JSON array matching this schema:
     Object.entries(sectionStats).forEach(([secKey, st]) => {
       if (!st || st.total === 0) return;
       const sPct = Math.round((st.correct / st.total) * 100);
+      const isSecPassed = (st.correct / st.total) >= (19 / 60);
       const div = document.createElement("div");
       div.className = "breakdown-item";
-      div.innerHTML = "<strong>" + escapeHTML(secLabels[secKey] || secKey) + "</strong><br>" + st.correct + " / " + st.total + " (" + sPct + "%)";
+      div.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <strong>${escapeHTML(secLabels[secKey] || secKey)}</strong>
+          <span style="font-weight:700;color:${isSecPassed ? "#10b981" : "var(--error)"};">${st.correct} / ${st.total} (${sPct}%)</span>
+        </div>
+        <div class="sec-bar-container" title="Section score: ${sPct}% (Benchmark: 32%)">
+          <div class="sec-bar-fill ${isSecPassed ? "pass" : "fail"}" style="width: ${Math.min(100, sPct)}%;"></div>
+          <div class="sec-benchmark-line" title="32% 基準点 (Sectional Benchmark)"></div>
+          <span class="sec-benchmark-label">32% 基準点</span>
+        </div>
+      `;
       breakdownGrid.appendChild(div);
     });
+
+    // Time Taken Calculation & Badge
+    const elapsedSec = Math.max(1, Math.round((Date.now() - (examStartTime || Date.now())) / 1000));
+    const timeTakenStr = `${Math.floor(elapsedSec / 60)}m ${elapsedSec % 60}s`;
+    let timeBadge = document.getElementById("scoreTimeTakenBadge");
+    if (!timeBadge) {
+      timeBadge = document.createElement("div");
+      timeBadge.id = "scoreTimeTakenBadge";
+      timeBadge.className = "time-taken-badge";
+      $("scoreHeaderLabel")?.insertAdjacentElement("afterend", timeBadge);
+    }
+    if (timeBadge) timeBadge.textContent = `⏱️ Time Taken: ${timeTakenStr}`;
+
+    // Weak Topics Chips (< 60% accuracy)
+    const weakItems = [];
+    Object.entries(sectionStats).forEach(([secKey, st]) => {
+      if (st && st.total > 0 && (st.correct / st.total) < 0.6) {
+        weakItems.push(secLabels[secKey] || secKey);
+      }
+    });
+    let weakBox = document.getElementById("weakTopicsContainer");
+    if (!weakBox) {
+      weakBox = document.createElement("div");
+      weakBox.id = "weakTopicsContainer";
+      weakBox.style.marginTop = "10px";
+      breakdownGrid.insertAdjacentElement("afterend", weakBox);
+    }
+    if (weakItems.length > 0) {
+      weakBox.innerHTML = `<span style="font-size:0.8rem;font-weight:700;color:var(--text-muted);margin-right:6px;">🔍 Focus Areas:</span>` +
+        weakItems.map((w) => `<span class="weak-topic-chip" title="Click to filter session mistakes">⚠️ ${escapeHTML(w)}</span>`).join("");
+      weakBox.querySelectorAll(".weak-topic-chip").forEach((chip) => {
+        chip.addEventListener("click", () => {
+          reviewWrongOnly = true;
+          renderQuestions();
+          showToast("Showing session mistakes for review.");
+        });
+      });
+    } else {
+      weakBox.innerHTML = "";
+    }
 
     const candidateName = $("candidateNameInput")?.value.trim() || localStorage.getItem(STORAGE.CANDIDATE_NAME) || "Student";
     if ($("scoreCandidateLabel")) $("scoreCandidateLabel").textContent = "👤 Candidate: " + candidateName;
@@ -4817,6 +5297,51 @@ Return ONLY a valid JSON array matching this schema:
   // =========================================================================
   // 11. PRINT / PDF WORKSHEET (With Exam Integrity Mode) & JSON I/O
   // =========================================================================
+    function openOmrModal() {
+    const modal = $("omrJumpModal");
+    const grid = $("omrGrid");
+    if (!modal || !grid) return;
+    grid.innerHTML = "";
+
+    currentQuestions.forEach((q, idx) => {
+      const isAnswered = userAnswers[idx] !== undefined;
+      const isFlagged = flaggedQuestions.has(idx);
+      const isCurrent = idx === focusedQIdx;
+
+      const pill = document.createElement("button");
+      pill.type = "button";
+      pill.className = "omr-pill";
+      if (isAnswered) pill.classList.add("answered");
+      if (isFlagged) pill.classList.add("flagged");
+      if (isCurrent) pill.classList.add("current");
+      pill.textContent = idx + 1;
+      pill.title = `Question ${idx + 1}${isFlagged ? " (Flagged)" : ""}${isAnswered ? " (Answered)" : " (Unanswered)"}`;
+
+      pill.addEventListener("click", () => {
+        closeOmrModal();
+        focusQuestion(idx, true);
+      });
+
+      grid.appendChild(pill);
+    });
+
+    modal.style.display = "flex";
+  }
+
+  function closeOmrModal() {
+    const modal = $("omrJumpModal");
+    if (modal) modal.style.display = "none";
+  }
+
+  function setFontScale(scale) {
+    fontScale = String(scale);
+    localStorage.setItem("jlpt_font_scale_v4", fontScale);
+    document.documentElement.style.setProperty("--font-scale", fontScale);
+    $("fontScaleDownBtn")?.classList.toggle("active", fontScale === "0.9");
+    $("fontScaleResetBtn")?.classList.toggle("active", fontScale === "1.0");
+    $("fontScaleUpBtn")?.classList.toggle("active", fontScale === "1.15");
+  }
+
   function buildPrintWorksheet() {
     const candidate = $("candidateNameInput").value.trim() || localStorage.getItem(STORAGE.CANDIDATE_NAME) || "";
     $("printTitle").textContent = `JLPT ${currentLevel} Practice Examination (Written Sections)`;
@@ -4838,7 +5363,7 @@ Return ONLY a valid JSON array matching this schema:
     currentQuestions.forEach((q, i) => {
       html += `
         <div class="print-ans-item">
-          <strong>問題 ${i + 1}:</strong> Answer <strong>${q.answer + 1} (${escapeHTML(q.options[q.answer] || "")})</strong>
+          <strong>問題 ${i + 1}:</strong> Answer <strong>${q.answer + 1} (${sanitizeRichHTML(q.options[q.answer] || "")})</strong>
           ${q.kana ? ` — <em>${escapeHTML(q.kana)}</em>` : ""}
           ${q.exp_bn ? `<br>🇧🇩 ${escapeHTML(q.exp_bn)}` : ""}
           ${q.exp_en ? `<br>🇬🇧 ${escapeHTML(q.exp_en)}` : ""}
@@ -5053,11 +5578,26 @@ Return ONLY a valid JSON array matching this schema:
 
   $("printPdfBtn").addEventListener("click", () => {
     if (currentQuestions.length === 0) {
-      alert("Generate a question set first before printing or saving as PDF.");
+      showToast("Generate a question set first before printing or saving as PDF.");
       return;
+    }
+    const priorViewMode = viewMode;
+    if (viewMode === "single" && !isGraded) {
+      viewMode = "list";
+      renderQuestions();
     }
     buildPrintWorksheet();
     window.print();
+    if (priorViewMode === "single" && !isGraded) {
+      const restoreSingle = () => {
+        viewMode = "single";
+        renderQuestions();
+        updateNavigatorUI();
+        window.removeEventListener("afterprint", restoreSingle);
+      };
+      window.addEventListener("afterprint", restoreSingle);
+      setTimeout(restoreSingle, 1500);
+    }
   });
 
   $("toggleSettingsBtn").addEventListener("click", () => {
@@ -5163,12 +5703,17 @@ Return ONLY a valid JSON array matching this schema:
 
   let telegramAutoPush = localStorage.getItem(STORAGE.TELEGRAM_AUTOPUSH) === "true";
 
+  let toastTimer = null;
   function showToast(text, durationMs = 3500) {
     const toast = $("appToast");
     if (!toast) return;
+    if (toastTimer) clearTimeout(toastTimer);
     toast.textContent = text;
     toast.classList.add("show");
-    setTimeout(() => toast.classList.remove("show"), durationMs);
+    toastTimer = setTimeout(() => {
+      toast.classList.remove("show");
+      toastTimer = null;
+    }, durationMs);
   }
 
   async function pushResultToTelegram(summary, isManual = false) {
@@ -5362,9 +5907,20 @@ Return ONLY a valid JSON array matching this schema:
     }
   });
 
-  $("singleJumpBtn")?.addEventListener("click", () => {
-    $("navStrip")?.scrollIntoView({ behavior: "smooth", block: "center" });
-  });
+  $("singleJumpBtn")?.addEventListener("click", openOmrModal);
+  $("omrCloseBtn")?.addEventListener("click", closeOmrModal);
+  $("omrBackdrop")?.addEventListener("click", closeOmrModal);
+
+  $("flashcardsBtn")?.addEventListener("click", startFlashcardMode);
+
+  $("drawerFuriganaBtn")?.addEventListener("click", () => $("toggleFuriganaBtn")?.click());
+  $("drawerDarkModeBtn")?.addEventListener("click", () => $("toggleThemeBtn")?.click());
+  $("drawerLangBtn")?.addEventListener("click", () => $("langToggleBtn")?.click());
+  $("drawerPrintBtn")?.addEventListener("click", () => $("printPdfBtn")?.click());
+
+  $("fontScaleDownBtn")?.addEventListener("click", () => setFontScale("0.9"));
+  $("fontScaleResetBtn")?.addEventListener("click", () => setFontScale("1.0"));
+  $("fontScaleUpBtn")?.addEventListener("click", () => setFontScale("1.15"));
 
   // Resume In-Progress Exam Actions
   $("btnResumeExam")?.addEventListener("click", resumeActiveExam);
@@ -5433,7 +5989,7 @@ Return ONLY a valid JSON array matching this schema:
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             chatId,
-            text: "🔔 *Telegram Bot Connected Successfully!*\nYour JLPT Mock Exam results will be auto-delivered here after submission."
+            text: "🔔 <b>Telegram Bot Connected Successfully!</b>\nYour JLPT Mock Exam results will be auto-delivered here after submission."
           })
         }, 7000);
       } else {
@@ -5573,6 +6129,25 @@ Return ONLY a valid JSON array matching this schema:
 })();
 </script>
   <div id="appToast" class="toast-msg" role="status" aria-live="polite"></div>
+
+
+  <!-- OMR Quick-Jump Popover Modal -->
+  <div class="omr-modal" id="omrJumpModal" style="display:none;" aria-label="Question Navigator Popover">
+    <div class="omr-backdrop" id="omrBackdrop"></div>
+    <div class="omr-card">
+      <div class="omr-header">
+        <h3 style="margin:0;font-size:1.05rem;">📋 Question Sheet / OMR Overview</h3>
+        <button type="button" class="mini-tool-btn" id="omrCloseBtn" style="font-size:1rem;padding:2px 8px;">✕</button>
+      </div>
+      <div class="omr-legend">
+        <span><span class="omr-dot dot-answered"></span> Answered</span>
+        <span><span class="omr-dot dot-unanswered"></span> Unanswered</span>
+        <span><span class="omr-dot dot-flagged"></span> Flagged (🚩)</span>
+        <span><span class="omr-dot dot-current"></span> Current</span>
+      </div>
+      <div class="omr-grid" id="omrGrid"></div>
+    </div>
+  </div>
 
 </body>
 </html>
