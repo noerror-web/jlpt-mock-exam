@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="author" content="Md Mominur Islam" />
   <link rel="manifest" href="./manifest.json">
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
@@ -89,6 +89,11 @@
 
     button, input, select, textarea {
       font-family: inherit;
+    }
+
+    /* iOS Safari Auto-Zoom Prevention */
+    input, select, textarea {
+      font-size: 16px !important;
     }
 
     body {
@@ -209,7 +214,7 @@
     .icon-btn.active-toggle { background: #fff; color: #1e3a8a; border-color: #fff; }
 
     /* Main Container */
-    main { max-width: 940px; margin: 16px auto; padding: 0 14px; }
+    main { max-width: 940px; margin: 16px auto; padding: 0 14px calc(80px + env(safe-area-inset-bottom, 0px)); }
 
     /* Control Panel */
     .panel {
@@ -837,7 +842,7 @@
         padding-bottom: 0;
         font-size: 11pt;
       }
-      header, .panel, .nav-strip, .score-card, .submit-bar, .star-hint, .streak-tag, .mini-tool-btn, .kanji-popover, .shortcut-bar, .app-footer, .view-switch-row, .resume-banner, .single-bottom-bar, .toast-msg, #confettiCanvas, .omr-modal { display: none !important; }
+      header, .panel, .nav-strip, .score-card, .submit-bar, .star-hint, .streak-tag, .mini-tool-btn, .kanji-popover, .shortcut-bar, .app-footer, .view-switch-row, .resume-banner, .single-bottom-bar, .toast-msg, #confettiCanvas, .omr-modal, .setup-summary-bar, .kanji-backdrop, .settings-drawer { display: none !important; }
       main { max-width: 100%; margin: 0; padding: 0; }
       .print-header {
         display: block;
@@ -1363,6 +1368,138 @@
       font-size: 0.68rem;
     }
 
+  
+    /* Setup Summary Bar (Auto-collapsed on Exam Start) */
+    .setup-summary-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+      animation: fadeIn 0.2s ease-out;
+    }
+    .setup-summary-text {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+    .panel.collapsed {
+      display: none !important;
+    }
+
+    /* Password Input with Eye Visibility Toggle */
+    .input-with-eye {
+      display: flex;
+      align-items: center;
+      position: relative;
+      flex: 1 1 180px;
+    }
+    .input-with-eye input {
+      width: 100%;
+      padding-right: 40px !important;
+    }
+    .eye-toggle-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: transparent;
+      border: none;
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 6px;
+      min-width: 36px;
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: manipulation;
+    }
+
+    /* Kanji Popover Bottom Sheet & Backdrop (Mobile) */
+    .kanji-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: 89;
+      display: none;
+      backdrop-filter: blur(2px);
+    }
+    .kanji-backdrop.open { display: block; }
+
+    @media (max-width: 768px) {
+      .kanji-popover {
+        bottom: 0;
+        right: 0;
+        left: 0;
+        width: 100%;
+        max-height: 52dvh;
+        overflow-y: auto;
+        border-radius: 18px 18px 0 0;
+        border-bottom: none;
+        box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.4);
+        padding: 16px 18px calc(18px + env(safe-area-inset-bottom, 0px));
+        z-index: 100;
+      }
+      .omr-card {
+        max-height: 85dvh;
+        width: 95%;
+        padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+      }
+    }
+
+    /* Minimum 44px Tap Targets for Touch Optimization */
+    .opt-btn {
+      min-height: 48px;
+      touch-action: manipulation;
+    }
+    .slot-pill {
+      min-height: 44px;
+      touch-action: manipulation;
+    }
+    .omr-pill {
+      min-height: 44px;
+      min-width: 44px;
+      touch-action: manipulation;
+    }
+    .single-nav-btn {
+      min-height: 44px;
+      touch-action: manipulation;
+    }
+    .mini-tool-btn {
+      min-height: 40px;
+      min-width: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: manipulation;
+    }
+    .lvl-btn {
+      min-height: 38px;
+      touch-action: manipulation;
+    }
+    .icon-btn {
+      min-height: 38px;
+      touch-action: manipulation;
+    }
+    .btn-secondary {
+      min-height: 40px;
+      touch-action: manipulation;
+    }
+
+    /* Hide PC Shortcuts on touch / mobile devices */
+    @media (hover: none), (max-width: 768px) {
+      .shortcut-bar {
+        display: none !important;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -1411,7 +1548,13 @@
     </div>
   </div>
 
-  <section class="panel">
+    <!-- Compact Setup Summary Bar (Shown when exam is active on mobile) -->
+  <div class="setup-summary-bar" id="setupSummaryBar" style="display:none;">
+    <span class="setup-summary-text" id="setupSummaryText">📝 JLPT N5 • All N5 • 15 Qs</span>
+    <button type="button" class="btn-secondary" id="btnEditSetup" style="padding:4px 12px;font-size:0.8rem;min-height:36px;">⚙️ Change Setup</button>
+  </div>
+
+  <section class="panel" id="examSetupPanel">
     <!-- Lifetime Streak & Accuracy Strip -->
     <div class="lifetime-strip" id="lifetimeStrip">
       <span id="streakSummary">🔥 Streak: <strong>0d</strong> &bull; Solved: <strong>0</strong> &bull; Accuracy: <strong>0%</strong></span>
@@ -1421,16 +1564,15 @@
     <div class="controls-grid">
       <div class="field student-name-field" style="grid-column: 1 / -1; margin-bottom: 2px;">
         <label for="candidateNameInput" style="display:flex;align-items:center;justify-content:space-between;font-weight:600;">
-          <span>👤 Student Name (শিক্ষার্থীর নাম) <span style="color:var(--error);font-weight:700;">*</span></span>
-          <span style="font-size:0.75rem;font-weight:normal;color:var(--text-muted);">Auto-saved in browser</span>
+          <span>👤 Student Name (শিক্ষার্থীর নাম)</span>
+          <span style="font-size:0.75rem;font-weight:normal;color:var(--text-muted);" id="nameRequirementLabel">Optional &bull; Auto-saved</span>
         </label>
         <input 
           type="text" 
           id="candidateNameInput" 
-          placeholder="Enter student name (e.g. Mominur Islam / মোমিনুর ইসলাম)" 
+          placeholder="Enter student name (or leave blank for Guest / Student)" 
           autocomplete="name" 
-          style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:0.96rem;font-weight:500;box-sizing:border-box;transition:border-color 0.2s, box-shadow 0.2s;" 
-          required 
+          style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--text);font-size:16px;font-weight:500;box-sizing:border-box;transition:border-color 0.2s, box-shadow 0.2s;" 
         />
         <div id="candidateNameError" style="display:none;color:var(--error);font-size:0.78rem;font-weight:600;margin-top:4px;">
           ⚠️ Student name is mandatory to generate and grade the exam.
@@ -1447,14 +1589,18 @@
 
       <div class="field">
         <label for="lessonRange">Minna no Nihongo Scope</label>
-        <select id="lessonRange">
-          <option value="L1-25" selected>All N5 (Lessons 1–25)</option>
-          <option value="L1-12">N5 Early (Lessons 1–12)</option>
-          <option value="L13-25">N5 Late (Lessons 13–25)</option>
-          <option value="L26-50">All N4 (Lessons 26–50)</option>
-          <option value="L26-35">N4 Early (Lessons 26–35)</option>
-          <option value="L36-40">N4 Mid (Lessons 36–40)</option>
-          <option value="L41-50">N4 Late (Lessons 41–50)</option>
+        <select id="lessonRange" aria-label="Minna no Nihongo Lesson Scope">
+          <optgroup label="JLPT N5 Scope (Minna no Nihongo 1–25)" id="scopeGroupN5">
+            <option value="L1-25" selected>All N5 (Lessons 1–25)</option>
+            <option value="L1-12">N5 Early (Lessons 1–12)</option>
+            <option value="L13-25">N5 Late (Lessons 13–25)</option>
+          </optgroup>
+          <optgroup label="JLPT N4 Scope (Minna no Nihongo 26–50)" id="scopeGroupN4">
+            <option value="L26-50">All N4 (Lessons 26–50)</option>
+            <option value="L26-35">N4 Early (Lessons 26–35)</option>
+            <option value="L36-40">N4 Mid (Lessons 36–40)</option>
+            <option value="L41-50">N4 Late (Lessons 41–50)</option>
+          </optgroup>
         </select>
       </div>
 
@@ -1550,7 +1696,10 @@
             Online APIs fetch live N5/N4 Kanji & Vocabulary with zero key. Add a free Google AI Studio key for full Grammar, <code>★</code> Star-Ordering, Paraphrase, Usage & Reading passages with <strong>English + বাংলা</strong> explanations.
           </p>
           <div class="btn-row" style="margin-bottom:8px;">
-            <input type="password" id="geminiKeyInput" placeholder="Paste Gemini API Key (AIza... or AQ...)" style="flex:1 1 180px;" />
+            <div class="input-with-eye">
+              <input type="password" id="geminiKeyInput" placeholder="Paste Gemini API Key (AIza... or AQ...)" autocomplete="off" spellcheck="false" />
+              <button type="button" class="eye-toggle-btn" id="toggleGeminiKeyVis" aria-label="Toggle Key Visibility" title="Show / Hide Key">👁️</button>
+            </div>
             <button type="button" class="btn-secondary" id="saveKeyBtn">Save API Key</button>
           </div>
           <div class="btn-row">
@@ -1582,7 +1731,10 @@
             ⚠️ <strong>Privacy Consent:</strong> Enabling auto-push will send your candidate name and exam score breakdown to the configured Telegram chat ID upon exam submission.
           </div>
           <div class="btn-row" style="margin-bottom:8px;">
-            <input type="password" id="telegramTokenInput" placeholder="Bot Token (or leave blank if using Cloudflare)" value="" style="flex:1 1 200px;" />
+            <div class="input-with-eye">
+              <input type="password" id="telegramTokenInput" placeholder="Bot Token (or leave blank if using Cloudflare)" autocomplete="off" spellcheck="false" value="" />
+              <button type="button" class="eye-toggle-btn" id="toggleTelegramTokenVis" aria-label="Toggle Token Visibility" title="Show / Hide Token">👁️</button>
+            </div>
           </div>
           <div class="btn-row" style="margin-bottom:8px;">
             <input type="text" id="telegramChatIdInput" placeholder="Your Telegram Chat ID" value="" style="flex:1 1 180px;" />
@@ -1666,7 +1818,7 @@
   <!-- Exam Container -->
   <div id="examContainer">
     <div class="empty-state">
-      <h2 id="emptyTitle">Click "Generate JLPT N5 Question Set" to Start</h2>
+      <h2 id="emptyTitle">Tap or click "Generate JLPT N5 Question Set" to Start</h2>
       <p>Includes live online questions, Japanese TTS audio (🔊), tap-any-kanji dictionary, question flagging, spaced mistake drills, and bilingual (বাংলা + EN) explanations.</p>
     </div>
   </div>
@@ -1695,6 +1847,7 @@
 </main>
 
 <!-- Floating Kanji Inline Dictionary Popover -->
+<div class="kanji-backdrop" id="kanjiBackdrop"></div>
 <aside class="kanji-popover" id="kanjiPopover" aria-live="polite">
   <div class="kp-top">
     <div class="kp-char" id="kpChar">駅</div>
@@ -3067,6 +3220,10 @@
   }
 
   function discardActiveExam() {
+    stopTimer();
+    remainingSeconds = 0;
+    timerEndTime = 0;
+    $("timerDisplay").classList.remove("active", "warning");
     localStorage.removeItem(STORAGE.ACTIVE_EXAM);
     $("resumeBanner").style.display = "none";
     showToast("In-progress exam discarded.");
@@ -3319,12 +3476,22 @@
     $("scoreHeaderLabel").textContent = `JLPT ${currentLevel} EXAM RESULT`;
     document.title = `JLPT ${currentLevel} Practice & Mock Exam Generator — Md Mominur Islam`;
 
+    const groupN5 = $("scopeGroupN5");
+    const groupN4 = $("scopeGroupN4");
     const rangeSel = $("lessonRange");
-    if (currentLevel === "N5" && !N5_RANGES.has(rangeSel.value)) rangeSel.value = "L1-25";
-    else if (currentLevel === "N4" && !N4_RANGES.has(rangeSel.value)) rangeSel.value = "L26-50";
+
+    if (currentLevel === "N5") {
+      if (groupN5) groupN5.disabled = false;
+      if (groupN4) groupN4.disabled = true;
+      if (!N5_RANGES.has(rangeSel.value)) rangeSel.value = "L1-25";
+    } else {
+      if (groupN5) groupN5.disabled = true;
+      if (groupN4) groupN4.disabled = false;
+      if (!N4_RANGES.has(rangeSel.value)) rangeSel.value = "L26-50";
+    }
 
     const emptyTitle = $("emptyTitle");
-    if (emptyTitle) emptyTitle.textContent = `Click "Generate JLPT ${currentLevel} Question Set" to Start`;
+    if (emptyTitle) emptyTitle.textContent = `Tap or click "Generate JLPT ${currentLevel} Question Set" to Start`;
     updateStatsUI();
   }
 
@@ -3394,9 +3561,26 @@
   // 4. BROWSER JAPANESE AUDIO (TTS) & TAP-ANY-KANJI DICTIONARY
   // =========================================================================
   let currentAudioBtn = null;
+  let cachedJaVoice = null;
+
+  function updateJaVoice() {
+    if (!("speechSynthesis" in window)) return;
+    try {
+      const voices = window.speechSynthesis.getVoices() || [];
+      cachedJaVoice = voices.find((v) => v.lang && v.lang.toLowerCase().startsWith("ja")) || null;
+    } catch {}
+  }
+
+  if ("speechSynthesis" in window) {
+    updateJaVoice();
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = updateJaVoice;
+    }
+  }
+
   function stopJapaneseSpeech() {
     if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
+      try { window.speechSynthesis.cancel(); } catch {}
     }
     if (currentAudioBtn) {
       currentAudioBtn.textContent = currentAudioBtn.dataset.origText || "🔊";
@@ -3426,23 +3610,33 @@
       .trim();
 
     if (!cleanText) return;
-    const utter = new SpeechSynthesisUtterance(cleanText);
-    utter.lang = "ja-JP";
-    utter.rate = 0.92;
-    const voices = window.speechSynthesis.getVoices();
-    const jaVoice = voices.find((v) => v.lang && v.lang.toLowerCase().startsWith("ja"));
-    if (jaVoice) utter.voice = jaVoice;
+    try {
+      const utter = new SpeechSynthesisUtterance(cleanText);
+      utter.lang = "ja-JP";
+      utter.rate = 0.92;
 
-    if (btn) {
-      currentAudioBtn = btn;
-      if (!btn.dataset.origText) btn.dataset.origText = btn.textContent;
-      btn.textContent = "⏹️";
-      btn.classList.add("speaking");
+      if (!cachedJaVoice) updateJaVoice();
+      if (cachedJaVoice) utter.voice = cachedJaVoice;
+
+      if (btn) {
+        currentAudioBtn = btn;
+        if (!btn.dataset.origText) btn.dataset.origText = btn.textContent;
+        btn.textContent = "⏹️";
+        btn.classList.add("speaking");
+      }
+
+      utter.onend = stopJapaneseSpeech;
+      utter.onerror = (err) => {
+        stopJapaneseSpeech();
+        if (err && err.error !== "canceled" && err.error !== "interrupted") {
+          showToast("⚠️ Audio playback error. Check volume.");
+        }
+      };
+      window.speechSynthesis.speak(utter);
+    } catch (e) {
+      stopJapaneseSpeech();
+      showToast("⚠️ Could not initialize Japanese speech.");
     }
-
-    utter.onend = stopJapaneseSpeech;
-    utter.onerror = stopJapaneseSpeech;
-    window.speechSynthesis.speak(utter);
   }
 
   function linkifyKanjiInElement(rootEl, hideTargetKanjiInfo = false) {
@@ -3484,6 +3678,7 @@
     const pop = $("kanjiPopover");
     $("kpChar").textContent = ch;
     pop.classList.add("open");
+    $("kanjiBackdrop")?.classList.add("open");
 
     if (isLocked && !isGraded) {
       $("kpBody").innerHTML = `<em>🔒 Dictionary spoiler lock:</em> Reading & meaning for the underlined target kanji <strong>${escapeHTML(ch)}</strong> will unlock after you grade this question.`;
@@ -4137,20 +4332,27 @@ Return ONLY a valid JSON array matching this schema:
 
   async function generateExam() {
     const candidateInput = $("candidateNameInput");
-    const candidateName = candidateInput?.value.trim() || localStorage.getItem(STORAGE.CANDIDATE_NAME) || "";
+    let candidateName = candidateInput?.value.trim() || localStorage.getItem(STORAGE.CANDIDATE_NAME) || "";
 
-    if (!candidateName) {
+    if (!candidateName && telegramAutoPush) {
       if (candidateInput) {
         candidateInput.focus();
         candidateInput.style.borderColor = "var(--error)";
         candidateInput.style.boxShadow = "0 0 0 3px rgba(220, 38, 38, 0.25)";
         const errEl = $("candidateNameError");
-        if (errEl) errEl.style.display = "block";
+        if (errEl) {
+          errEl.textContent = "⚠️ Student Name is required when Telegram Auto-Push is enabled.";
+          errEl.style.display = "block";
+        }
         candidateInput.scrollIntoView({ behavior: "smooth", block: "center" });
       }
-      showToast("⚠️ Student Name is required!");
-      alert("Please enter your Student Name before generating the exam. Your name will be saved in your browser cache.");
+      showToast("⚠️ Student Name required for Telegram Auto-Push!");
       return;
+    }
+    if (!candidateName) {
+      candidateName = "Student";
+    } else {
+      localStorage.setItem(STORAGE.CANDIDATE_NAME, candidateName);
     }
 
     const mode = $("sourceMode").value;
@@ -4479,21 +4681,24 @@ Return ONLY a valid JSON array matching this schema:
 
   function startMistakeDrill() {
     const candidateInput = $("candidateNameInput");
-    const candidateName = candidateInput?.value.trim() || localStorage.getItem(STORAGE.CANDIDATE_NAME) || "";
+    let candidateName = candidateInput?.value.trim() || localStorage.getItem(STORAGE.CANDIDATE_NAME) || "";
 
-    if (!candidateName) {
+    if (!candidateName && telegramAutoPush) {
       if (candidateInput) {
         candidateInput.focus();
         candidateInput.style.borderColor = "var(--error)";
         candidateInput.style.boxShadow = "0 0 0 3px rgba(220, 38, 38, 0.25)";
         const errEl = $("candidateNameError");
-        if (errEl) errEl.style.display = "block";
+        if (errEl) {
+          errEl.textContent = "⚠️ Student Name is required when Telegram Auto-Push is enabled.";
+          errEl.style.display = "block";
+        }
         candidateInput.scrollIntoView({ behavior: "smooth", block: "center" });
       }
-      showToast("⚠️ Student Name is required!");
-      alert("Please enter your Student Name before starting the practice drill.");
+      showToast("⚠️ Student Name required for Telegram Auto-Push!");
       return;
     }
+    if (!candidateName) candidateName = "Student";
 
     if (!isGraded && currentQuestions.length > 0 && Object.keys(userAnswers).length > 0) {
       const proceed = confirm("You have an in-progress exam with answers. Starting the mistake drill will discard your progress. Continue?");
@@ -4608,6 +4813,7 @@ Return ONLY a valid JSON array matching this schema:
   }
 
   function focusQuestion(idx, shouldScroll = true) {
+    closeKanjiPopover();
     if (idx < 0 || idx >= currentQuestions.length) return;
     focusedQIdx = idx;
     if (viewMode === "single" && !isGraded) {
@@ -4946,7 +5152,10 @@ Return ONLY a valid JSON array matching this schema:
 
         btn.setAttribute("aria-pressed", chosen === optIdx ? "true" : "false");
         btn.innerHTML = "<span class=\"opt-index\">" + (optIdx + 1) + "</span><span>" + sanitizeRichHTML(optText) + "</span>";
-        btn.addEventListener("click", () => {
+        btn.addEventListener("click", (e) => {
+          if (e.target && e.target.closest(".kanji-tap")) {
+            return; // Kanji dictionary lookup tap: do not select option
+          }
           if (isGraded) return;
           if (q.starData) {
             handleStarOptionClick(idx, optIdx);
@@ -5181,14 +5390,26 @@ Return ONLY a valid JSON array matching this schema:
     $("scoreBig").textContent = correctTotal + " / " + total + " (" + pct + "%)";
     const passTag = $("passTag");
     const thresholdDesc = currentLevel === "N4" ? "≥90/180 (50%)" : "≥80/180 (44%)";
+    let testedSectionsCount = 0;
+    Object.values(sectionStats).forEach((st) => { if (st && st.total > 0) testedSectionsCount++; });
+
     if (passed) {
-      passTag.textContent = "🎉 " + currentLevel + " 合格 (PASS " + thresholdDesc + " + 基準点クリア)";
+      if (testedSectionsCount <= 1) {
+        passTag.textContent = "🎉 " + currentLevel + " 合格 (Section Drill PASS: " + pct + "%)";
+      } else {
+        passTag.textContent = "🎉 " + currentLevel + " 合格 (PASS " + thresholdDesc + " + 基準点クリア)";
+      }
       passTag.className = "pass-tag pass";
       launchConfetti();
     } else {
-      let failDetail = !overallPassed ? ("総合点不足 (<" + thresholdDesc + ")") : "";
-      if (!allSectionsPassed) {
-        failDetail += (failDetail ? " & " : "") + ("基準点未達: " + failedSections.join(", "));
+      let failDetail = "";
+      if (testedSectionsCount <= 1) {
+        failDetail = "Score " + pct + "% (< " + Math.round(overallFraction * 100) + "%)";
+      } else {
+        failDetail = !overallPassed ? ("総合点不足 (<" + thresholdDesc + ")") : "";
+        if (!allSectionsPassed) {
+          failDetail += (failDetail ? " & " : "") + ("基準点未達: " + failedSections.join(", "));
+        }
       }
       passTag.textContent = "❌ " + currentLevel + " 不合格 (" + (failDetail || "< " + thresholdDesc) + ")";
       passTag.className = "pass-tag fail";
@@ -5327,11 +5548,12 @@ Return ONLY a valid JSON array matching this schema:
     });
 
     modal.style.display = "flex";
+    document.body.style.overflow = "hidden";
   }
 
   function closeOmrModal() {
     const modal = $("omrJumpModal");
-    if (modal) modal.style.display = "none";
+    if (modal) { modal.style.display = "none"; document.body.style.overflow = ""; }
   }
 
   function setFontScale(scale) {
@@ -5489,6 +5711,8 @@ Return ONLY a valid JSON array matching this schema:
       clearInterval(timerInterval);
       timerInterval = null;
     }
+    const pill = $("timerDisplay");
+    if (pill) pill.classList.remove("active", "warning");
   }
 
   // Accurate wall-clock time tracking across tab switches and mobile backgrounding
@@ -5699,7 +5923,20 @@ Return ONLY a valid JSON array matching this schema:
     }
   });
 
-  $("kpCloseBtn").addEventListener("click", () => $("kanjiPopover").classList.remove("open"));
+  function closeKanjiPopover() {
+    $("kanjiPopover")?.classList.remove("open");
+    $("kanjiBackdrop")?.classList.remove("open");
+  }
+  $("kpCloseBtn")?.addEventListener("click", closeKanjiPopover);
+  $("kanjiBackdrop")?.addEventListener("click", closeKanjiPopover);
+
+  document.addEventListener("click", (e) => {
+    const pop = $("kanjiPopover");
+    if (!pop || !pop.classList.contains("open")) return;
+    if (!e.target.closest("#kanjiPopover") && !e.target.closest(".kanji-tap") && !e.target.closest("#kanjiBackdrop")) {
+      closeKanjiPopover();
+    }
+  });
 
 
   let telegramAutoPush = localStorage.getItem(STORAGE.TELEGRAM_AUTOPUSH) === "true";
@@ -5905,6 +6142,61 @@ Return ONLY a valid JSON array matching this schema:
       focusQuestion(focusedQIdx + 1, true);
     } else {
       gradeExam(false);
+    }
+  });
+
+  // Setup Panel Toggle Button
+  $("btnEditSetup")?.addEventListener("click", () => {
+    $("examSetupPanel")?.classList.remove("collapsed");
+    $("setupSummaryBar").style.display = "none";
+    $("examSetupPanel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  // Password Visibility Toggles
+  $("toggleGeminiKeyVis")?.addEventListener("click", () => {
+    const input = $("geminiKeyInput");
+    const isPass = input.type === "password";
+    input.type = isPass ? "text" : "password";
+    $("toggleGeminiKeyVis").textContent = isPass ? "🙈" : "👁️";
+  });
+
+  $("toggleTelegramTokenVis")?.addEventListener("click", () => {
+    const input = $("telegramTokenInput");
+    const isPass = input.type === "password";
+    input.type = isPass ? "text" : "password";
+    $("toggleTelegramTokenVis").textContent = isPass ? "🙈" : "👁️";
+  });
+
+  // Real-time Student Name Persistence
+  $("candidateNameInput")?.addEventListener("input", (e) => {
+    const val = e.target.value.trim();
+    if (val) {
+      localStorage.setItem(STORAGE.CANDIDATE_NAME, val);
+      const err = $("candidateNameError");
+      if (err) err.style.display = "none";
+      e.target.style.borderColor = "";
+      e.target.style.boxShadow = "";
+    } else {
+      localStorage.removeItem(STORAGE.CANDIDATE_NAME);
+    }
+  });
+
+  // Lesson Range bidirectional level sync
+  $("lessonRange")?.addEventListener("change", (e) => {
+    const val = e.target.value;
+    if (N4_RANGES.has(val) && currentLevel !== "N4") {
+      setLevel("N4");
+    } else if (N5_RANGES.has(val) && currentLevel !== "N5") {
+      setLevel("N5");
+    }
+  });
+
+  // Timer select change handling
+  $("timerMode")?.addEventListener("change", () => {
+    if ($("timerMode").value === "off") {
+      stopTimer();
+    } else if (!isGraded && currentQuestions.length > 0) {
+      startTimer();
     }
   });
 
