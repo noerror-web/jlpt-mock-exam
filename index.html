@@ -4349,7 +4349,7 @@ Return ONLY a valid JSON array matching this schema:
       $("viewSwitchRow").style.display = "";
       syncViewModeUI();
       renderQuestions();
-      updateNavigator();
+      updateNavigatorUI();
       if (!isGraded) $("submitBar").classList.add("visible");
       $("statusBadge").textContent = isGraded ? "Graded" : `In Progress (${currentLevel})`;
       if (timerIsRunning && remainingSeconds > 0) {
@@ -4530,6 +4530,7 @@ Return ONLY a valid JSON array matching this schema:
   // =========================================================================
   // 8. NAVIGATOR BAR, FLAGGING & STAR-ORDERING INTERACTIONS
   // =========================================================================
+  const updateNavigator = (...args) => updateNavigatorUI(...args);
   function updateNavigatorUI() {
     const strip = $("navStrip");
     const pills = $("navPills");
