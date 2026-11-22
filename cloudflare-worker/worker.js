@@ -10,20 +10,62 @@
 
 const DEFAULT_ALLOWED_ORIGINS = [
   "https://noerror-web.github.io",
+  "http://localhost:8080",
+  "http://localhost:3000",
   "http://localhost",
-  "http://127.0.0.1"
+  "http://127.0.0.1",
+  "http://127.0.0.1:8080"
 ];
 
 function isOriginAllowed(requestOrigin, env) {
-  if (!requestOrigin) return true;
-  const configured = env.ALLOWED_ORIGIN || env.ALLOWED_ORIGINS;
-  if (!configured || configured.trim() === "*") {
-    // If not strictly configured, verify against default domains or allow all for development
-    return true;
+  if (!requestOrigin) return false;
+  try {
+    const reqOriginParsed = new URL(requestOrigin).origin.toLowerCase();
+    const configured = env.ALLOWED_ORIGIN || env.ALLOWED_ORIGINS;
+    if (configured && configured.trim() === "*") return true;
+    const allowedList = configured
+      ? configured.split(",").map((s) => {
+          try { return new URL(s.trim()).origin.toLowerCase(); } catch { return s.trim().toLowerCase(); }
+        })
+      : DEFAULT_ALLOWED_ORIGINS.map((s) => s.toLowerCase());
+    return allowedList.includes(reqOriginParsed);
+  } catch {
+    return false;
   }
-  const allowedList = configured.split(",").map((s) => s.trim().toLowerCase());
-  const reqLower = requestOrigin.toLowerCase();
-  return allowedList.some((allowed) => reqLower === allowed || reqLower.startsWith(allowed));
+}
+
+// In-memory sliding window rate limiter fallback (30 requests/min per IP)
+const ipRateMap = new Map();
+function checkRateLimit(clientIp, env) {
+  // If native Cloudflare rate limiter binding is bound, defer to it (caller handles promise)
+  const now = Date.now();
+  const windowMs = 60 * 1000;
+  const maxReq = 30;
+  const record = ipRateMap.get(clientIp) || { count: 0, resetAt: now + windowMs };
+  if (now > record.resetAt) {
+    record.count = 1;
+    record.resetAt = now + windowMs;
+  } else {
+    record.count++;
+  }
+  ipRateMap.set(clientIp, record);
+
+  // Periodic cleanup if map grows
+  if (ipRateMap.size > 2000) {
+    for (const [ip, rec] of ipRateMap.entries()) {
+      if (now > rec.resetAt) ipRateMap.delete(ip);
+    }
+  }
+  return record.count <= maxReq;
+}
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function extractJsonPayload(rawText) {
@@ -68,6 +110,7 @@ export default {
           "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
           "Access-Control-Allow-Headers": "Content-Type, Authorization, x-goog-api-key",
           "Access-Control-Max-Age": "86400",
+          "Vary": "Origin",
         },
       });
     }
@@ -75,7 +118,16 @@ export default {
     const corsHeaders = {
       "Access-Control-Allow-Origin": allowOriginHeader,
       "Content-Type": "application/json",
+      "Vary": "Origin",
     };
+
+    // Reject POST requests missing an Origin header
+    if (request.method === "POST" && !requestOrigin) {
+      return new Response(
+        JSON.stringify({ ok: false, error: "Origin header is required for POST requests." }),
+        { status: 403, headers: corsHeaders }
+      );
+    }
 
     if (requestOrigin && !allowed) {
       return new Response(
@@ -84,13 +136,29 @@ export default {
       );
     }
 
+    // Rate Limiting per client IP (Cloudflare binding or fallback in-memory window)
+    const clientIp = request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for") || "unknown";
+    if (env.RATE_LIMITER && typeof env.RATE_LIMITER.limit === "function") {
+      const { success } = await env.RATE_LIMITER.limit({ key: clientIp });
+      if (!success) {
+        return new Response(
+          JSON.stringify({ ok: false, error: "Too many requests. Cloudflare rate limit exceeded." }),
+          { status: 429, headers: corsHeaders }
+        );
+      }
+    } else if (!checkRateLimit(clientIp, env)) {
+      return new Response(
+        JSON.stringify({ ok: false, error: "Too many requests. Rate limit exceeded (max 30 req/min)." }),
+        { status: 429, headers: corsHeaders }
+      );
+    }
+
     const url = new URL(request.url);
     const pathname = url.pathname;
 
-    // Health / info endpoint
+    // Health / info endpoint (no secret leakage; keyType removed)
     if (pathname === "/" || pathname === "/health") {
       const activeKey = env.GEMINI_API_KEY || env.VERTEX_API_KEY || "";
-      const isAQ = activeKey.startsWith("AQ.");
       return new Response(
         JSON.stringify({
           status: "online",
@@ -99,19 +167,29 @@ export default {
           features: ["telegram-proxy", "gemini-proxy"],
           hasTelegramToken: Boolean(env.TELEGRAM_BOT_TOKEN),
           hasApiKey: Boolean(activeKey),
-          keyType: activeKey ? (isAQ ? "Google AI Studio Auth Key (AQ.)" : "Google AI Studio Standard Key (AIza)") : "None",
         }),
         { status: 200, headers: corsHeaders }
       );
     }
 
-    // Input payload size check (Guard against memory exhaustion DoS)
-    const contentLength = parseInt(request.headers.get("content-length") || "0", 10);
-    if (contentLength > 102400) { // 100 KB max limit
-      return new Response(
-        JSON.stringify({ ok: false, error: "Payload too large. Max request size is 100 KB." }),
-        { status: 413, headers: corsHeaders }
-      );
+    // Enforce 100 KB limit for all incoming POST bodies by reading as text
+    let body = {};
+    if (request.method === "POST") {
+      const rawBody = await request.text();
+      if (new TextEncoder().encode(rawBody).length > 102400) { // 100 KB max limit
+        return new Response(
+          JSON.stringify({ ok: false, error: "Payload too large. Max request size is 100 KB." }),
+          { status: 413, headers: corsHeaders }
+        );
+      }
+      try {
+        body = JSON.parse(rawBody);
+      } catch {
+        return new Response(
+          JSON.stringify({ ok: false, error: "Malformed JSON payload." }),
+          { status: 400, headers: corsHeaders }
+        );
+      }
     }
 
     // 1. TELEGRAM PROXY ENDPOINT (/api/telegram)
@@ -125,9 +203,8 @@ export default {
       }
 
       try {
-        const body = await request.json();
         const { chatId, text, summary } = body;
-        const targetChatId = chatId || env.TELEGRAM_DEFAULT_CHAT_ID || "5479582136";
+        const targetChatId = chatId || env.TELEGRAM_DEFAULT_CHAT_ID;
 
         if (!targetChatId) {
           return new Response(
@@ -143,24 +220,24 @@ export default {
 
           let secText = "";
           Object.entries(summary.sectionStats || {}).forEach(([secName, st]) => {
-            const sPct = Math.round((st.correct / st.total) * 100);
+            const sPct = st.total > 0 ? Math.round((st.correct / st.total) * 100) : 0;
             const sPass = typeof st.passed === "boolean" ? (st.passed ? "✓" : "✗") : "";
-            secText += `• ${secName}: ${st.correct}/${st.total} (${sPct}%) ${sPass}\n`;
+            secText += `• ${escapeHtml(secName)}: ${st.correct}/${st.total} (${sPct}%) ${sPass}\n`;
           });
 
           messageText = [
-            `🎯 *JLPT ${summary.level} EXAM SUBMISSION*`,
+            `🎯 <b>JLPT ${escapeHtml(summary.level)} EXAM SUBMISSION</b>`,
             `━━━━━━━━━━━━━━━━━━━━`,
-            `👤 *Candidate:* ${candidate}`,
-            `📅 *Date:* ${summary.dateStr}`,
-            `📚 *Scope:* ${summary.scope}`,
-            `📊 *Score:* *${summary.correctTotal} / ${summary.total} (${summary.pct}%)*`,
-            `🏁 *Result:* ${badge}`,
+            `👤 <b>Candidate:</b> ${escapeHtml(candidate)}`,
+            `📅 <b>Date:</b> ${escapeHtml(summary.dateStr)}`,
+            `📚 <b>Scope:</b> ${escapeHtml(summary.scope)}`,
+            `📊 <b>Score:</b> <b>${summary.correctTotal} / ${summary.total} (${summary.pct}%)</b>`,
+            `🏁 <b>Result:</b> ${badge}`,
             `━━━━━━━━━━━━━━━━━━━━`,
-            `📋 *Section Breakdown:*`,
+            `📋 <b>Section Breakdown:</b>`,
             secText.trim(),
             `━━━━━━━━━━━━━━━━━━━━`,
-            `🤖 *Author:* Md Mominur Islam`,
+            `🤖 <b>Author:</b> Md Mominur Islam`,
           ].join("\n");
         }
 
@@ -177,7 +254,7 @@ export default {
           body: JSON.stringify({
             chat_id: targetChatId,
             text: messageText,
-            parse_mode: "Markdown",
+            parse_mode: "HTML",
           }),
         });
 
@@ -205,7 +282,6 @@ export default {
       }
 
       try {
-        const body = await request.json();
         const promptText = body.promptText;
         const requestedModel = body.model;
 
@@ -218,8 +294,8 @@ export default {
 
         const models = [
           requestedModel,
-          "gemini-flash-lite-latest",
           "gemini-flash-latest",
+          "gemini-flash-lite-latest",
           "gemini-2.5-flash",
           "gemini-3.8-flash",
         ].filter(Boolean);
