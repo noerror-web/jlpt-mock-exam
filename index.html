@@ -4022,7 +4022,6 @@
 
   const DEFAULT_TELEGRAM_CHAT_ID = "5479582136";
   const DEFAULT_CLOUDFLARE_URL = "https://jlpt-mock-exam-proxy.mominurislam.workers.dev";
-  const DEFAULT_TELEGRAM_TOKEN = "8863407575:AAFnzG5X9eDW75XC1Vn_qhahPvPE25FaMy4";
   function getCfUrl() {
     const val = $("cloudflareUrlInput")?.value.trim() || localStorage.getItem(STORAGE.CLOUDFLARE_URL) || DEFAULT_CLOUDFLARE_URL;
     return val.replace(/\/+$/, "");
@@ -6491,8 +6490,8 @@ Return ONLY a valid JSON array matching this schema:
       }
     }
 
-    // 2. Direct Telegram API Fallback (Guarantees delivery to chatId)
-    const directToken = $("telegramTokenInput")?.value.trim() || localStorage.getItem(STORAGE.TELEGRAM_TOKEN) || DEFAULT_TELEGRAM_TOKEN;
+    // 2. Direct Telegram API Fallback (if user configured token in settings)
+    const directToken = $("telegramTokenInput")?.value.trim() || localStorage.getItem(STORAGE.TELEGRAM_TOKEN) || "";
     if (directToken) {
       const thresholdDesc = summary.level === "N4" ? "≥ 90/180" : "≥ 80/180";
       const badge = summary.passed ? ("✅ PASS (合格ライン " + thresholdDesc + ")") : ("❌ KEEP PRACTICING (&lt; " + thresholdDesc + ")");
@@ -6721,8 +6720,8 @@ Return ONLY a valid JSON array matching this schema:
   });
 
   
-  const savedTelegramToken = localStorage.getItem(STORAGE.TELEGRAM_TOKEN) || DEFAULT_TELEGRAM_TOKEN;
-  if ($("telegramTokenInput")) $("telegramTokenInput").value = savedTelegramToken;
+  const savedTelegramToken = localStorage.getItem(STORAGE.TELEGRAM_TOKEN) || "";
+  if (savedTelegramToken && $("telegramTokenInput")) $("telegramTokenInput").value = savedTelegramToken;
   const savedChatId = localStorage.getItem(STORAGE.TELEGRAM_CHAT_ID) || DEFAULT_TELEGRAM_CHAT_ID;
   if ($("telegramChatIdInput")) $("telegramChatIdInput").value = savedChatId;
 
