@@ -152,6 +152,15 @@
     return opts;
   }
 
+  function friendlyGenError(reason) {
+    const text = String(reason || "").trim();
+    if (!text) return "no response";
+    if (/fetch|network|offline|load failed/i.test(text)) return "network blocked or offline";
+    if (/origin|403|forbidden/i.test(text)) return "the relay rejected this site";
+    if (/quota|429/i.test(text)) return "the model is rate-limited";
+    return text.slice(0, 110);
+  }
+
   function setupNote(message, isError) {
     const note = byId("setupNote");
     if (!note) return;
@@ -259,13 +268,20 @@
 
     const button = byId("startBtn");
     button.disabled = true;
-    button.textContent = "Building your paper…";
-    setupNote(opts.source === "bank" ? "" : "Fetching questions…");
+    const ai = opts.source === "gemini";
+    button.textContent = ai ? "Writing your " + opts.level + " paper…" : "Building your paper…";
+    if (ai) {
+      setupNote("Gemini is writing " + opts.count + " new " + opts.level + " questions. This takes a few seconds; none are reused from earlier papers.");
+    }
     try {
       const questions = await L.buildQuestions(opts);
       if (!questions.length) throw new Error("No questions matched those filters.");
-      if (opts.source !== "bank" && questions.length && opts.source === "gemini") {
-        setupNote("AI questions loaded. Offline questions would be used if the model failed.");
+      const gen = L.state.generation || {};
+      if (ai && gen.used === "gemini") {
+        const short = gen.got < opts.count ? " (" + gen.got + " usable of " + opts.count + ")" : "";
+        setupNote(gen.got + " fresh " + opts.level + " questions from Gemini" + short + ". Nothing repeated from your earlier papers.");
+      } else if (ai) {
+        setupNote("Gemini is unavailable (" + friendlyGenError(gen.reason) + "). Using the offline " + opts.level + " paper.", true);
       }
       const exam = L.createExam({
         level: opts.level,

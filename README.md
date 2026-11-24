@@ -33,8 +33,14 @@ Open `index.html` from a local web server, or use the hosted copy on GitHub Page
   papers with an answer key.
 - **Question sources** — offline bank (default), live kanji/vocabulary APIs, or
   AI-generated questions through Gemini (direct key or your own proxy URL).
+- **Fresh AI papers** — Gemini writes a new N5 or N4 paper on request. The prompt pins the
+  level (no N3+ grammar, vocabulary or kanji), demands JLPT exam wording and section mix,
+  and rejects any item tagged for another level. Generated questions are remembered per
+  device, so later papers skip what you have already seen.
+- **Fair options** — option order is shuffled with a stable per-question seed, so the
+  correct answer is spread across A–D instead of always first.
 - **Private by default** — everything is stored in `localStorage` on the device; exports
-  never include the API key.
+  never include the API key or any Telegram secret.
 
 ## Layout
 
@@ -73,7 +79,13 @@ In **Tools & settings** add either:
 - a **Proxy URL** for your own worker that injects the key server-side, so it never reaches
   the browser.
 
-If the model or network fails, the app falls back to the offline bank and says so.
+The app ships with a relay URL that already holds a key, so AI papers work without setup.
+Add your own key or worker URL to use your quota instead. If the model or network fails,
+the app falls back to the offline bank and says why on the start screen.
+
+Each generated paper carries a random seed and the list of recent questions, and only
+new items are kept. The answer key is recalculated after options are shuffled, and
+reading items must include a passage.
 
 ## Credits
 

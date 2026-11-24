@@ -4,12 +4,13 @@
 (function () {
   "use strict";
 
-  const VERSION = "6.3.1";
+  const VERSION = "6.4.0";
   const STORE = {
     settings: "jlpt6.settings",
     exam: "jlpt6.exam",
     mistakes: "jlpt6.mistakes",
-    stats: "jlpt6.stats"
+    stats: "jlpt6.stats",
+    generated: "jlpt6.generated"
   };
 
   const SECTION_META = {
@@ -25,7 +26,8 @@
   const DEFAULT_SETTINGS = {
     level: "N5", name: "", source: "bank", section: "all", lesson: "all",
     count: 20, timer: 15, layout: "focus", furigana: true, autoAdvance: false,
-    study: false, lang: "both", theme: "auto", workerUrl: "", apiKey: "",
+    study: false, lang: "both", theme: "auto",
+    workerUrl: "https://jlpt-mock-exam-proxy.mominurislam.workers.dev", apiKey: "",
     telegramUrl: "https://jlpt-mock-exam-proxy.mominurislam.workers.dev/api/telegram"
   };
 
@@ -62,6 +64,22 @@
     const arr = list.slice();
     for (let i = arr.length - 1; i > 0; i -= 1) {
       const j = Math.floor(Math.random() * (i + 1));
+      const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function seededShuffle(list, seed) {
+    const arr = list.slice();
+    let s = 2166136261;
+    const key = String(seed || "");
+    for (let i = 0; i < key.length; i += 1) {
+      s ^= key.charCodeAt(i);
+      s = Math.imul(s, 16777619) >>> 0;
+    }
+    for (let i = arr.length - 1; i > 0; i -= 1) {
+      s = (Math.imul(s, 1103515245) + 12345) >>> 0;
+      const j = s % (i + 1);
       const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
     }
     return arr;
@@ -174,20 +192,28 @@
   function sectionKey(raw) {
     const s = String(raw || "");
     if (s === "vocab" || s === "grammar" || s === "reading") return s;
-    if (s.indexOf("読解") !== -1) return "reading";
-    if (s.indexOf("文法") !== -1) return "grammar";
+    if (/読解|reading/i.test(s)) return "reading";
+    if (/文法|grammar/i.test(s)) return "grammar";
     return "vocab";
   }
 
   function normalizeQuestion(raw, level) {
     if (!raw || typeof raw !== "object") return null;
+    // Level purity: a question tagged for another level is never accepted.
+    if (raw.level && String(raw.level).toUpperCase().indexOf(String(level).toUpperCase()) === -1) return null;
     const prompt = typeof raw.prompt === "string" ? raw.prompt.trim() : "";
     const options = Array.isArray(raw.options)
       ? raw.options.filter((o) => typeof o === "string" && o.trim()).map((o) => o.trim())
       : [];
     if (options.length !== 4 || new Set(options).size !== 4) return null;
     let answer = Number(raw.answer);
-    if (!Number.isInteger(answer) || answer < 0 || answer >= options.length) return null;
+    if (!Number.isInteger(answer) || answer < 0 || answer >= options.length) {
+      if (typeof raw.answer === "string" && options.indexOf(raw.answer.trim()) !== -1) {
+        answer = options.indexOf(raw.answer.trim());
+      } else {
+        return null;
+      }
+    }
 
     let starData = null;
     if (raw.starData && Array.isArray(raw.starData.ordered) && raw.starData.ordered.length === 4) {
@@ -206,12 +232,19 @@
     const finalPrompt = prompt || (starData ? "次の言葉を並べたとき、★に入るものはどれですか。" : "");
     if (!finalPrompt) return null;
 
+    // Stable option order per question, so the answer is not always option A
+    // while ids stay identical across reloads.
+    const correctText = options[answer];
+    const orderedOptions = seededShuffle(options, finalPrompt + "|" + options.join("|"));
+    answer = orderedOptions.indexOf(correctText);
+    if (answer === -1) return null;
+
     const section = sectionKey(raw.section);
     const rawSection = String(raw.section || "");
     return {
       id: "q" + hashString(section + "|" + finalPrompt + "|" + options.join("|") +
         (starData ? "|" + starData.before + starData.after : "")),
-      level: raw.level || level || state.settings.level,
+      level: level || state.settings.level,
       section: section,
       sectionLabel: rawSection && rawSection !== section ? rawSection : SECTION_META[section].label,
       subtype: String(raw.subtype || ""),
@@ -219,7 +252,7 @@
       passage: String(raw.passage || ""),
       prompt: finalPrompt,
       kana: String(raw.kana || ""),
-      options: options,
+      options: orderedOptions,
       answer: answer,
       starData: starData,
       exp_en: String(raw.exp_en || ""),
@@ -388,19 +421,69 @@
     return shuffle(questions.filter(Boolean)).slice(0, opts.count);
   }
 
-  function geminiPrompt(opts) {
+  const LEVEL_GUIDE = {
+    N5: "JLPT N5 only: hiragana and katakana words plus about 100 basic kanji (numbers, days, family, school, food, places, directions); roughly 800 everyday words; です/ます, particles は・が・を・に・で・へ・と, past and negative forms, basic て-form, い and な adjectives, counters 一つ・二つ, dates and times.",
+    N4: "JLPT N4 only: about 300 kanji and roughly 1,500 words; plain and polite forms, て-form requests, potential, passive, causative, conditionals たら・ば・なら, 〜ている・〜てある, giving and receiving あげる・くれる・もらう, basic keigo."
+  };
+
+  function sectionQuota(count, section) {
+    if (section !== "all") return { [section]: count };
+    const vocab = Math.max(1, Math.round(count * 0.4));
+    const grammar = Math.max(1, Math.round(count * 0.3));
+    return { vocab: vocab, grammar: grammar, reading: Math.max(1, count - vocab - grammar) };
+  }
+
+  function geminiPrompt(opts, avoid) {
+    const count = clamp(Number(opts.count) || 20, 1, 40);
+    const level = opts.level === "N4" ? "N4" : "N5";
+    const quota = sectionQuota(count, opts.section);
+    const sectionLine = Object.keys(quota).map((key) =>
+      SECTION_META[key].label + " (" + key + "): exactly " + quota[key]).join("; ");
+    const avoidList = (avoid || []).filter(Boolean).slice(-30)
+      .map((p) => "- " + String(p).replace(/\s+/g, " ").slice(0, 110)).join("\n");
     return [
-      "You write JLPT practice questions. Produce " + Math.min(opts.count, 25) + " multiple-choice questions for JLPT " + opts.level + ".",
-      "Sections allowed: " + (opts.section === "all" ? "vocabulary, grammar, reading" : opts.section) + ".",
-      "Lessons: " + (opts.lesson === "all" ? "any" : opts.lesson) + ".",
-      "Return ONLY valid JSON: an array of objects with keys:",
-      'section (one of "文字・語彙", "文法", "読解" with the level), subtype (string), lesson (string),',
-      "prompt (Japanese sentence with ＿＿ for the blank), options (exactly 4 distinct Japanese strings),",
-      "answer (0-based index), kana (reading of the full sentence), exp_en (one clear English sentence),",
-      "exp_bn (the same explanation in Bengali script).",
-      "For 文法 questions that ask where ★ goes, also add starData: {before, after, ordered:[4 words in correct order], starPos: 0-3}.",
-      "Do not repeat questions. Do not include any text outside the JSON array."
-    ].join(" ");
+      "You are a JLPT item writer. Create a fresh mock-exam paper of " + count + " questions for " + level + ".",
+      "LEVEL CONTRACT: " + LEVEL_GUIDE[level],
+      "Every question must be solvable with " + level + " knowledge alone. Never use N3, N2 or N1 grammar, vocabulary or kanji. Do not label items N3+.",
+      "SECTION MIX: " + sectionLine + ".",
+      "Lessons: " + (opts.lesson === "all" ? "spread across the whole level" : opts.lesson) + ".",
+      "EXAM STYLE: follow real JLPT wording. Vocabulary: kanji reading, orthography, context fill. Grammar: sentence fill and ★ word-order items (at most 3). Reading: a short passage plus one question about it.",
+      "For every question: prompt in Japanese with ＿＿ or （　　） for the blank; exactly 4 distinct options; exactly one correct option; no romaji; no English inside Japanese text. Rotate correct answers across positions instead of always using the first.",
+      "READING RULE: for section 読解 put the passage in \"passage\" (80–160 characters for N5, 120–220 for N4) and the question in \"prompt\".",
+      "FRESHNESS: this is request seed " + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8) + ". Never reuse any of these earlier questions:\n" + (avoidList || "(none yet)"),
+      "Return ONLY a JSON array, no prose. Each object: level (\"" + level + "\"), section (\"文字・語彙\" | \"文法\" | \"読解\"), subtype, lesson, passage (reading only), prompt, kana, options (4 strings), answer (0-3), exp_en (one clear English sentence), exp_bn (same in Bengali script).",
+      "Star questions also need starData: {before, after, ordered:[4 words in the correct order], starPos:0-3}."
+    ].join("\n");
+  }
+
+  /* ------------------------------------------------------------ generation history */
+
+  function promptKey(q) {
+    return String((q.passage || "") + "|" + (q.prompt || "")).replace(/\s+/g, " ").trim().toLowerCase();
+  }
+
+  function readGenerated() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(STORE.generated) || "{}");
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch (err) { return {}; }
+  }
+
+  function generatedSeen(level) {
+    const all = readGenerated();
+    const list = Array.isArray(all[level]) ? all[level] : [];
+    return {
+      ids: new Set(list.map((item) => item.id).filter(Boolean)),
+      prompts: new Set(list.map((item) => item.key).filter(Boolean))
+    };
+  }
+
+  function rememberGenerated(level, questions) {
+    const all = readGenerated();
+    const list = Array.isArray(all[level]) ? all[level] : [];
+    questions.forEach((q) => list.push({ id: q.id, key: promptKey(q) }));
+    all[level] = list.slice(-150);
+    try { localStorage.setItem(STORE.generated, JSON.stringify(all)); } catch (err) { /* storage full */ }
   }
 
   function extractJson(text) {
@@ -419,14 +502,17 @@
     for (const model of models) {
       try {
         const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 25000);
+        const timer = setTimeout(() => controller.abort(), 40000);
         let res;
         try {
           res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent", {
             method: "POST",
             headers: { "Content-Type": "application/json", "x-goog-api-key": key },
             signal: controller.signal,
-            body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: promptText }] }],
+              generationConfig: { temperature: 1, topP: 0.95, maxOutputTokens: 8192 }
+            })
           });
         } finally { clearTimeout(timer); }
         if (!res.ok) throw new Error("Gemini HTTP " + res.status);
@@ -441,8 +527,7 @@
     throw lastError || new Error("Gemini request failed.");
   }
 
-  async function fromGemini(opts) {
-    const promptText = geminiPrompt(opts);
+  async function requestGemini(promptText) {
     const worker = String(state.settings.workerUrl || "").trim().replace(/\/+$/, "");
     let payload = null;
     if (worker) {
@@ -460,23 +545,70 @@
       }
     }
     if (!payload) payload = await callGeminiDirect(promptText);
-    const questions = payload
-      .map((raw) => normalizeQuestion(raw, opts.level))
-      .filter(Boolean);
-    if (!questions.length) throw new Error("The model returned no usable questions.");
-    return questions.slice(0, opts.count);
+    return Array.isArray(payload) ? payload : [];
+  }
+
+  async function fromGemini(opts) {
+    const level = opts.level === "N4" ? "N4" : "N5";
+    const wanted = clamp(Number(opts.count) || 20, 1, 40);
+    const seen = generatedSeen(level);
+    const collected = [];
+    const keys = new Set(seen.prompts);
+
+    for (let attempt = 0; attempt < 2 && collected.length < wanted; attempt += 1) {
+      const avoid = Array.from(keys).concat(collected.map(promptKey));
+      const payload = await requestGemini(geminiPrompt(opts, avoid));
+      payload.forEach((raw) => {
+        if (collected.length >= wanted) return;
+        const q = normalizeQuestion(raw, level);
+        if (!q) return;
+        if (q.section === "reading" && !String(q.passage || "").trim()) return;
+        const key = promptKey(q);
+        if (seen.ids.has(q.id) || keys.has(key)) return;
+        seen.ids.add(q.id);
+        keys.add(key);
+        collected.push(q);
+      });
+    }
+
+    if (!collected.length) throw new Error("The model returned no usable " + level + " questions. Nothing is reused across papers, so try again.");
+    rememberGenerated(level, collected);
+    return collected;
   }
 
   async function buildQuestions(opts) {
+    state.generation = { requested: opts.count, used: "bank", got: 0, reason: "" };
     if (opts.source === "online") {
-      try { const q = await fromOnline(opts); if (q.length) return q; } catch (err) { /* fall back below */ }
-      return fromBank(opts);
+      try {
+        const q = await fromOnline(opts);
+        if (q.length) {
+          state.generation = { requested: opts.count, used: "online", got: q.length, reason: "" };
+          return q;
+        }
+      } catch (err) {
+        state.generation.reason = (err && err.message) || "live sources unavailable";
+      }
+      const fallback = fromBank(opts);
+      state.generation.got = fallback.length;
+      return fallback;
     }
     if (opts.source === "gemini") {
-      try { const q = await fromGemini(opts); if (q.length) return q; } catch (err) { /* fall back below */ }
-      return fromBank(opts);
+      try {
+        const q = await fromGemini(opts);
+        if (q.length) {
+          state.generation = { requested: opts.count, used: "gemini", got: q.length, reason: "" };
+          return q;
+        }
+      } catch (err) {
+        state.generation.reason = (err && err.message) || "the model did not answer";
+      }
+      const fallback = fromBank(opts);
+      state.generation.got = fallback.length;
+      return fallback;
     }
-    return fromBank(opts);
+    const bank = fromBank(opts);
+    state.generation.got = bank.length;
+    return bank;
   }
 
   /* ---------------------------------------------------------------- exam model */
@@ -664,6 +796,7 @@
     furiganize: furiganize,
     speak: speak,
     buildQuestions: buildQuestions,
+    geminiPrompt: geminiPrompt,
     createExam: createExam,
     currentRemaining: currentRemaining,
     saveExam: saveExam,
