@@ -686,9 +686,9 @@
     byId("reviewWrongBtn").disabled = result.correct === result.totalQ;
   }
 
-  function copyResult() {
+  function resultSummary() {
     const { exam, result } = state.lastResult || {};
-    if (!exam || !result) return;
+    if (!exam || !result) return "";
     const lines = [
       "JLPT " + exam.level + " · " + (exam.source === "mistakes" ? "Mistake drill" : "Mock exam"),
       "Score: " + result.total + "/" + result.max + " (" + (result.pass ? "pass" : "below pass mark") + ")",
@@ -698,7 +698,40 @@
       const s = result.sections[key];
       lines.push(L.SECTION_META[key].en + ": " + s.correct + "/" + s.total);
     });
-    const text = lines.join("\n");
+    return lines.join("\n");
+  }
+
+  async function telegramSend(text) {
+    const token = (state.settings.telegramToken || "").trim();
+    const chat = (state.settings.telegramChat || "").trim();
+    if (!token || !chat) {
+      openDrawer();
+      toast("Add a bot token and chat ID in Tools & settings", true);
+      return false;
+    }
+    try {
+      const res = await fetch("https://api.telegram.org/bot" + token + "/sendMessage", {
+        method: "POST",
+        body: new URLSearchParams({ chat_id: chat, text: text, disable_web_page_preview: "true" })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) throw new Error(data.description || "HTTP " + res.status);
+      return true;
+    } catch (err) {
+      toast("Telegram failed: " + err.message, true);
+      return false;
+    }
+  }
+
+  async function sendResultTelegram() {
+    const text = resultSummary();
+    if (!text) return;
+    if (await telegramSend(text)) toast("Result sent to Telegram");
+  }
+
+  function copyResult() {
+    const text = resultSummary();
+    if (!text) return;
     const done = () => toast("Result copied");
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(done, () => copyFallback(text, done));
@@ -729,7 +762,7 @@
       const meta = L.SECTION_META[key];
       const row = el("div", "sbar" + (s.ok ? "" : " low"));
       const name = el("span", "name", meta.label + " · " + meta.en);
-      const val = el("span", "val", s.points + " / " + s.correct + " correct of " + s.total);
+      const val = el("span", "val", s.correct + " of " + s.total + " correct · " + s.points + " pts");
       const track = el("div", "track");
       const fill = el("div", "fill");
       fill.style.width = Math.round((s.points / 60) * 100) + "%";
@@ -1151,6 +1184,8 @@
   function openDrawer() {
     byId("workerUrlInput").value = state.settings.workerUrl || "";
     byId("apiKeyInput").value = state.settings.apiKey || "";
+    byId("tgTokenInput").value = state.settings.telegramToken || "";
+    byId("tgChatInput").value = state.settings.telegramChat || "";
     byId("appVersion").textContent = L.VERSION;
     byId("drawer").hidden = false;
     byId("drawerBackdrop").hidden = false;
@@ -1166,6 +1201,20 @@
     state.settings.apiKey = byId("apiKeyInput").value.trim();
     L.saveSettings();
     toast("AI settings saved on this device.");
+  }
+
+  function saveTelegramSettings() {
+    state.settings.telegramToken = byId("tgTokenInput").value.trim();
+    state.settings.telegramChat = byId("tgChatInput").value.trim();
+    L.saveSettings();
+    toast("Telegram settings saved on this device.");
+  }
+
+  async function testTelegram() {
+    saveTelegramSettings();
+    if (await telegramSend("JLPT Exam Lab is connected. Exam results can be sent here.")) {
+      toast("Test message sent to Telegram");
+    }
   }
 
   function clearApiKey() {
@@ -1362,6 +1411,7 @@
     byId("backToSetupBtn").addEventListener("click", () => { showView("setup"); renderSetup(); });
     byId("printReviewBtn").addEventListener("click", () => printPaper("review"));
     byId("copyResultBtn").addEventListener("click", copyResult);
+    byId("telegramBtn").addEventListener("click", sendResultTelegram);
     byId("reviewWrongBtn").addEventListener("click", () => {
       const { exam, result } = state.lastResult || {};
       if (!exam) return;
@@ -1389,6 +1439,8 @@
 
     byId("saveApiBtn").addEventListener("click", saveApiSettings);
     byId("clearApiBtn").addEventListener("click", clearApiKey);
+    byId("saveTgBtn").addEventListener("click", saveTelegramSettings);
+    byId("testTgBtn").addEventListener("click", testTelegram);
     byId("clearDataBtn").addEventListener("click", clearAllData);
 
     $$("[data-close-dialog]").forEach((btn) => btn.addEventListener("click", () => btn.closest("dialog").close()));

@@ -196,6 +196,7 @@
         <button type="button" class="btn btn-ghost" id="reviewWrongBtn">Drill wrong answers</button>
         <button type="button" class="btn btn-ghost" id="printReviewBtn">Print review</button>
         <button type="button" class="btn btn-ghost" id="copyResultBtn">Copy result</button>
+        <button type="button" class="btn btn-ghost" id="telegramBtn">Send to Telegram</button>
         <button type="button" class="btn btn-ghost" id="backToSetupBtn">Back to setup</button>
       </div>
 
@@ -279,6 +280,21 @@
         <button type="button" class="btn btn-sm btn-ghost" id="clearApiBtn">Clear key</button>
       </div>
       <p class="note">Used only when the question source is “AI generated”. A worker URL keeps the key off this device; a direct key is sent straight to Google.</p>
+    </div>
+
+    <div class="group">
+      <h3>Telegram</h3>
+      <label class="field"><span class="tiny muted">Bot token (from @BotFather, stored on this device only)</span>
+        <input id="tgTokenInput" type="password" placeholder="123456:ABC…" autocomplete="off" spellcheck="false" />
+      </label>
+      <label class="field"><span class="tiny muted">Chat ID (your numeric Telegram ID or group ID)</span>
+        <input id="tgChatInput" placeholder="123456789" autocomplete="off" spellcheck="false" />
+      </label>
+      <div class="row">
+        <button type="button" class="btn btn-sm" id="saveTgBtn">Save</button>
+        <button type="button" class="btn btn-sm btn-ghost" id="testTgBtn">Send test</button>
+      </div>
+      <p class="note">Press “Send to Telegram” on the results screen to push your score to that chat. The token is kept in this browser and is never included in exports; messages go only to Telegram's API when you press send.</p>
     </div>
 
     <div class="group">

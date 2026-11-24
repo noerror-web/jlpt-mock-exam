@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "6.0.0";
+  const VERSION = "6.2.0";
   const STORE = {
     settings: "jlpt6.settings",
     exam: "jlpt6.exam",
@@ -25,7 +25,8 @@
   const DEFAULT_SETTINGS = {
     level: "N5", name: "", source: "bank", section: "all", lesson: "all",
     count: 20, timer: 15, layout: "focus", furigana: true, autoAdvance: false,
-    study: false, lang: "both", theme: "auto", workerUrl: "", apiKey: ""
+    study: false, lang: "both", theme: "auto", workerUrl: "", apiKey: "",
+    telegramToken: "", telegramChat: ""
   };
 
   /* ---------------------------------------------------------------- utils */
@@ -618,6 +619,7 @@
   function exportPayload() {
     const settings = Object.assign({}, state.settings);
     delete settings.apiKey;
+    delete settings.telegramToken;
     return {
       app: "jlpt-exam-lab",
       version: VERSION,

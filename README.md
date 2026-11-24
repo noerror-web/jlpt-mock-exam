@@ -21,8 +21,12 @@ Open `index.html` from a local web server, or use the hosted copy on GitHub Page
   as lessons.
 - **Progress stats** — lifetime accuracy for Vocabulary & Kanji, Grammar and Reading on the
   setup screen, so weak areas are visible before the next exam.
-- **Copy or print** — a result summary copies to the clipboard in one tap, and the whole
-  paper prints with an answer key.
+- **Copy, print or send** — a result summary copies to the clipboard in one tap, the whole
+  paper prints with an answer key, and “Send to Telegram” pushes the score to a chat you
+  configure in Tools & settings.
+- **Telegram in two fields** — paste a bot token from @BotFather and your chat ID; both stay
+  in this browser, are never included in exports, and are used only when you press send.
+  No server or Cloudflare account is involved.
 - **Mistake bank and drills** — wrong answers are collected; answer one correctly twice
   and it clears. Flashcards work from the mistake bank or the full level bank.
 - **Study tools** — furigana toggle, read-aloud, a kanji popover (kanjiapi), and printable
