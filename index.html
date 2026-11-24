@@ -115,7 +115,9 @@
           <div class="toggle-row">
             <label class="switch"><input type="checkbox" id="furiganaToggle" checked /><span>Furigana</span></label>
             <label class="switch"><input type="checkbox" id="autoAdvanceToggle" /><span>Auto-advance</span></label>
+            <label class="switch"><input type="checkbox" id="studyToggle" /><span>Study mode</span></label>
           </div>
+          <p class="form-note">Study mode shows the answer and explanation right after you choose.</p>
 
           <button class="btn btn-primary btn-block" id="startBtn" type="submit">Start exam</button>
           <p class="form-note" id="setupNote" role="status"></p>
@@ -130,6 +132,8 @@
             <div class="stat"><b id="statAccuracy">—</b><span>accuracy</span></div>
             <div class="stat"><b id="statStreak">0</b><span>day streak</span></div>
           </div>
+
+          <div class="stats-detail" id="sectionStats"></div>
 
           <div class="quick-actions">
             <button type="button" id="mistakesBtn">Mistake drill <span class="badge" id="mistakeBadge">0</span></button>
@@ -194,6 +198,7 @@
         <button type="button" class="btn btn-primary" id="newExamBtn">New exam</button>
         <button type="button" class="btn btn-ghost" id="reviewWrongBtn">Drill wrong answers</button>
         <button type="button" class="btn btn-ghost" id="printReviewBtn">Print review</button>
+        <button type="button" class="btn btn-ghost" id="copyResultBtn">Copy result</button>
         <button type="button" class="btn btn-ghost" id="backToSetupBtn">Back to setup</button>
       </div>
 

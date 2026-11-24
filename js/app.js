@@ -125,6 +125,8 @@
     byId("viewSelect").value = state.settings.layout;
     byId("furiganaToggle").checked = !!state.settings.furigana;
     byId("autoAdvanceToggle").checked = !!state.settings.autoAdvance;
+    byId("studyToggle").checked = !!state.settings.study;
+    renderSectionStats();
   }
 
   function readSetupForm() {
@@ -138,12 +140,13 @@
       timer: Number(byId("timerSelect").value) || 0,
       layout: byId("viewSelect").value,
       furigana: byId("furiganaToggle").checked,
-      autoAdvance: byId("autoAdvanceToggle").checked
+      autoAdvance: byId("autoAdvanceToggle").checked,
+      study: byId("studyToggle").checked
     };
     Object.assign(state.settings, {
       name: opts.name, source: opts.source, section: opts.section, lesson: opts.lesson,
       count: opts.count, timer: opts.timer, layout: opts.layout, furigana: opts.furigana,
-      autoAdvance: opts.autoAdvance
+      autoAdvance: opts.autoAdvance, study: opts.study
     });
     L.saveSettings();
     return opts;
@@ -163,6 +166,32 @@
     byId("statSolved").textContent = String(solved);
     byId("statAccuracy").textContent = solved ? Math.round((correct / solved) * 100) + "%" : "—";
     byId("statStreak").textContent = String(L.streakCount());
+  }
+
+  function renderSectionStats() {
+    const slot = byId("sectionStats");
+    if (!slot) return;
+    slot.innerHTML = "";
+    const bySection = state.stats.bySection || {};
+    const keys = ["vocab", "grammar", "reading"].filter((key) => bySection[key] && bySection[key].solved);
+    if (!keys.length) {
+      slot.append(el("p", "muted tiny", "Finish an exam to build per-section accuracy."));
+      return;
+    }
+    keys.forEach((key) => {
+      const s = bySection[key];
+      const pct = Math.round((s.correct / s.solved) * 100);
+      const meta = L.SECTION_META[key];
+      const row = el("div", "sbar" + (pct < 60 ? " low" : ""));
+      row.append(el("span", "name", meta.label + " · " + meta.en));
+      row.append(el("span", "val", pct + "% of " + s.solved));
+      const track = el("div", "track");
+      const fill = el("div", "fill");
+      fill.style.width = pct + "%";
+      track.append(fill);
+      row.append(track);
+      slot.append(row);
+    });
   }
 
   function renderBadges() {
@@ -200,6 +229,7 @@
     byId("heroLevel").textContent = state.settings.level;
     byId("heroCount").textContent = String(L.loadBank(state.settings.level).length);
     renderStats();
+    renderSectionStats();
     renderBadges();
     renderResume();
     syncLevelButtons();
@@ -354,6 +384,9 @@
     card.append(prompt);
 
     card.append(renderOptions(q, index));
+    if (state.settings.study && exam.answers[index] != null) {
+      card.append(feedbackBlock(q, exam.answers[index]));
+    }
 
     const actions = el("div", "q-actions");
     const speakBtn = el("button", "btn btn-ghost btn-sm", "🔊 Read aloud");
@@ -400,14 +433,22 @@
   function renderOptions(q, index) {
     const exam = state.exam;
     const wrap = el("div", "options");
+    const answered = exam.answers[index];
+    const locked = state.settings.study && answered != null;
     q.options.forEach((option, k) => {
       const label = el("label", "option");
       const input = el("input");
       input.type = "radio";
       input.name = "q-" + index;
       input.value = String(k);
-      input.checked = exam.answers[index] === k;
-      if (!exam.graded) input.addEventListener("change", () => onAnswer(index, k));
+      input.checked = answered === k;
+      if (locked) {
+        input.disabled = true;
+        if (k === q.answer) label.classList.add("is-correct");
+        if (k === answered && k !== q.answer) label.classList.add("is-wrong");
+        if (k === answered) label.classList.add("is-chosen");
+      }
+      if (!exam.graded && !locked) input.addEventListener("change", () => onAnswer(index, k));
       const marker = el("span", "marker", String.fromCharCode(65 + k));
       const text = el("span", "opt-text");
       text.innerHTML = L.rich(option);
@@ -424,6 +465,15 @@
     L.saveExam();
     updateProgress();
     renderNavigator();
+    if (state.settings.study) {
+      const card = byId("qcard-" + index);
+      if (card) {
+        const fresh = renderQuestion(exam.questions[index], index);
+        card.replaceWith(fresh);
+        if (state.current === index) setFocus(index, false);
+      }
+      return;
+    }
     if (exam.layout === "focus" && state.settings.autoAdvance) {
       setTimeout(() => {
         if (state.exam === exam && state.current === index && index < exam.questions.length - 1) {
@@ -634,6 +684,41 @@
     renderSectionBars(result);
     renderReview();
     byId("reviewWrongBtn").disabled = result.correct === result.totalQ;
+  }
+
+  function copyResult() {
+    const { exam, result } = state.lastResult || {};
+    if (!exam || !result) return;
+    const lines = [
+      "JLPT " + exam.level + " · " + (exam.source === "mistakes" ? "Mistake drill" : "Mock exam"),
+      "Score: " + result.total + "/" + result.max + " (" + (result.pass ? "pass" : "below pass mark") + ")",
+      result.correct + " of " + result.totalQ + " correct · " + L.fmtDuration(exam.elapsed)
+    ];
+    result.keys.forEach((key) => {
+      const s = result.sections[key];
+      lines.push(L.SECTION_META[key].en + ": " + s.correct + "/" + s.total);
+    });
+    const text = lines.join("\n");
+    const done = () => toast("Result copied");
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, () => copyFallback(text, done));
+    } else {
+      copyFallback(text, done);
+    }
+  }
+
+  function copyFallback(text, done) {
+    const area = document.createElement("textarea");
+    area.value = text;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    document.body.append(area);
+    area.select();
+    let ok = false;
+    try { ok = document.execCommand("copy"); } catch (err) { ok = false; }
+    area.remove();
+    if (ok) done(); else toast("Copy failed — select the result text manually", true);
   }
 
   function renderSectionBars(result) {
@@ -1276,6 +1361,7 @@
     byId("newExamBtn").addEventListener("click", () => { showView("setup"); renderSetup(); });
     byId("backToSetupBtn").addEventListener("click", () => { showView("setup"); renderSetup(); });
     byId("printReviewBtn").addEventListener("click", () => printPaper("review"));
+    byId("copyResultBtn").addEventListener("click", copyResult);
     byId("reviewWrongBtn").addEventListener("click", () => {
       const { exam, result } = state.lastResult || {};
       if (!exam) return;

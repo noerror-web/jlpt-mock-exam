@@ -16,12 +16,19 @@ Open `index.html` from a local web server, or use the hosted copy on GitHub Page
   the real start time, and can be resumed or discarded from the setup screen.
 - **Review that teaches** — every question shows the correct answer, the reading and the
   explanation in English, Bengali, or both.
+- **Study mode** — an optional instant-feedback mode that locks the question once you
+  choose and shows the answer and explanation straight away, so practice sessions double
+  as lessons.
+- **Progress stats** — lifetime accuracy for Vocabulary & Kanji, Grammar and Reading on the
+  setup screen, so weak areas are visible before the next exam.
+- **Copy or print** — a result summary copies to the clipboard in one tap, and the whole
+  paper prints with an answer key.
 - **Mistake bank and drills** — wrong answers are collected; answer one correctly twice
   and it clears. Flashcards work from the mistake bank or the full level bank.
 - **Study tools** — furigana toggle, read-aloud, a kanji popover (kanjiapi), and printable
   papers with an answer key.
 - **Question sources** — offline bank (default), live kanji/vocabulary APIs, or
-  AI-generated questions through Gemini (direct key or a Cloudflare Worker proxy).
+  AI-generated questions through Gemini (direct key or your own proxy URL).
 - **Private by default** — everything is stored in `localStorage` on the device; exports
   never include the API key.
 
@@ -38,7 +45,6 @@ js/data/furigana.js        kanji reading pairs for ruby annotations
 js/data/kanji-readings.js  offline fallback readings for the kanji popover
 sw.js                      service worker (offline shell)
 validate-questions.js      question bank validator
-cloudflare-worker/         optional Gemini proxy worker
 ```
 
 Scripts are classic (non-module) scripts so the app also works when opened from a
@@ -59,8 +65,8 @@ relative, so GitHub Pages project sites (`/jlpt-mock-exam/`) work as-is.
 In **Tools & settings** add either:
 
 - a **Gemini API key** (sent directly to Google and stored only on this device), or
-- a **Worker URL** for the included `cloudflare-worker` (set `GEMINI_API_KEY` as a Worker
-  secret) so the key never reaches the browser.
+- a **Proxy URL** for your own worker that injects the key server-side, so it never reaches
+  the browser.
 
 If the model or network fails, the app falls back to the offline bank and says so.
 

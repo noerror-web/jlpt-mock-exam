@@ -201,7 +201,7 @@ img { max-width: 100%; }
   font-size: .76rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
   color: var(--muted); display: flex; align-items: baseline; gap: 6px;
 }
-.field .hint { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--faint); }
+.field .hint { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--muted); }
 
 .field input, .field select {
   width: 100%; min-height: 42px;
@@ -330,7 +330,14 @@ img { max-width: 100%; }
   font-size: .72rem; font-weight: 750; letter-spacing: .04em;
 }
 .dot { color: var(--faint); }
-.exam-tools { display: flex; align-items: center; gap: 6px; }
+.exam-tools { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+
+@media (max-width: 520px) {
+  .exam-head { flex-wrap: wrap; row-gap: 8px; }
+  .exam-meta { flex: 1 1 100%; }
+  .exam-tools { flex: 1 1 100%; justify-content: space-between; }
+  .exam-tools .timer-chip { margin-right: auto; }
+}
 
 .timer-chip {
   display: inline-flex; align-items: center; gap: 6px;
@@ -633,7 +640,7 @@ dialog ul { margin: 8px 0 0; padding-left: 20px; color: var(--muted); font-size:
 
 /* ---------------------------------------------------------------- confetti */
 
-#confetti { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 90; }
+#confetti { position: fixed; inset: 0; display: block; width: 100%; height: 100%; pointer-events: none; z-index: 90; }
 
 /* ---------------------------------------------------------------- print */
 
@@ -668,3 +675,7 @@ dialog ul { margin: 8px 0 0; padding-left: 20px; color: var(--muted); font-size:
   .q-actions .spacer { display: none; }
   .exam-bar { position: static; }
 }
+
+.stats-detail { display: grid; gap: 10px; }
+.stats-detail:empty { display: none; }
+.stats-detail .tiny { margin: 0; }

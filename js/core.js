@@ -25,7 +25,7 @@
   const DEFAULT_SETTINGS = {
     level: "N5", name: "", source: "bank", section: "all", lesson: "all",
     count: 20, timer: 15, layout: "focus", furigana: true, autoAdvance: false,
-    lang: "both", theme: "auto", workerUrl: "", apiKey: ""
+    study: false, lang: "both", theme: "auto", workerUrl: "", apiKey: ""
   };
 
   /* ---------------------------------------------------------------- utils */
@@ -591,6 +591,13 @@
     stats.correct = (stats.correct || 0) + result.correct;
     stats.days = stats.days || {};
     stats.days[dayKey()] = (stats.days[dayKey()] || 0) + 1;
+    stats.bySection = stats.bySection || {};
+    Object.keys(result.sections || {}).forEach((key) => {
+      const s = result.sections[key];
+      const bucket = stats.bySection[key] || (stats.bySection[key] = { solved: 0, correct: 0 });
+      bucket.solved += s.total;
+      bucket.correct += s.correct;
+    });
     saveStats();
   }
 
