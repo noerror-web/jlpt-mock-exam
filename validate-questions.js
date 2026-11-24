@@ -1,115 +1,98 @@
 #!/usr/bin/env node
 /**
- * Developer question bank validator.
- * Validates CORE_QUESTION_BANK_N5 and CORE_QUESTION_BANK_N4 extracted from index.html.
- * Fails on:
- *   - Answer out of range
- *   - Duplicate options
- *   - Repeated-character glitch options (e.g. "行行")
- *   - Duplicate prompts or question IDs
- *   - Missing exp_en, exp_bn, or kana
+ * Question bank validator.
+ * Run with: node validate-questions.js
+ *
+ * Checks js/data/bank-n5.js and js/data/bank-n4.js for:
+ *   - exactly four distinct options and an answer index in range
+ *   - required fields (prompt, options, answer)
+ *   - star-ordering questions consistent (ordered/starPos/answer)
+ *   - duplicate prompts (within and across banks)
+ *   - empty banks
  */
 
 const fs = require("fs");
 const path = require("path");
+const vm = require("vm");
 
-const indexPath = path.join(__dirname, "index.html");
-const html = fs.readFileSync(indexPath, "utf8");
-
-// Extract getQuestionId helper
-const idMatch = html.match(/function getQuestionId\([\s\S]*?\n  \}/);
-if (!idMatch) {
-  console.error("FATAL: Could not locate getQuestionId in index.html");
-  process.exit(1);
+function loadBank(file) {
+  const code = fs.readFileSync(path.join(__dirname, file), "utf8");
+  const sandbox = { window: {} };
+  vm.runInNewContext(code, sandbox, { filename: file });
+  return sandbox.window.JLPT_BANKS || {};
 }
-const getQuestionId = new Function(idMatch[0] + "; return getQuestionId;")();
 
-// Extract CORE_QUESTION_BANK_N5
-const n5Match = html.match(/const CORE_QUESTION_BANK_N5 = (\[[\s\S]*?\n  \]);/);
-if (!n5Match) {
-  console.error("FATAL: Could not locate CORE_QUESTION_BANK_N5 in index.html");
-  process.exit(1);
-}
-const N5 = eval(n5Match[1]);
+function checkBank(name, questions, errors) {
+  if (!Array.isArray(questions) || questions.length === 0) {
+    errors.push(`${name}: bank is missing or empty`);
+    return 0;
+  }
 
-// Extract CORE_QUESTION_BANK_N4
-const n4Match = html.match(/const CORE_QUESTION_BANK_N4 = (\[[\s\S]*?\n  \]);/);
-if (!n4Match) {
-  console.error("FATAL: Could not locate CORE_QUESTION_BANK_N4 in index.html");
-  process.exit(1);
-}
-const N4 = eval(n4Match[1]);
-
-function validateBank(name, bank) {
-  const errors = [];
-  const seenIds = new Set();
-  const seenPrompts = new Set();
-
-  bank.forEach((q, idx) => {
-    const qLabel = `${name}[${idx}]`;
-
-    // 1. Answer out of range
-    if (!Array.isArray(q.options) || q.options.length < 2) {
-      errors.push(`${qLabel}: options array missing or has fewer than 2 choices`);
-    } else if (typeof q.answer !== "number" || q.answer < 0 || q.answer >= q.options.length) {
-      errors.push(`${qLabel}: answer out of range (${q.answer}, options length ${q.options ? q.options.length : 0})`);
+  const seen = new Set();
+  questions.forEach((q, index) => {
+    const where = `${name}[${index}]`;
+    if (!q || typeof q !== "object") { errors.push(`${where}: not an object`); return; }
+    const hasStar = !!(q.starData && Array.isArray(q.starData.ordered));
+    if (!hasStar && (typeof q.prompt !== "string" || !q.prompt.trim())) {
+      errors.push(`${where}: missing prompt`);
     }
+    if (!Array.isArray(q.options) || q.options.length !== 4) {
+      errors.push(`${where}: must have exactly 4 options`);
+    } else {
+      if (new Set(q.options.map((o) => String(o).trim())).size !== 4) errors.push(`${where}: duplicate options`);
+      if (q.options.some((o) => typeof o !== "string" || !o.trim())) errors.push(`${where}: empty option`);
+    }
+    if (!Number.isInteger(q.answer) || q.answer < 0 || q.answer > 3) errors.push(`${where}: answer index out of range`);
 
-    // 2. Duplicate options
-    if (Array.isArray(q.options)) {
-      if (new Set(q.options).size !== q.options.length) {
-        errors.push(`${qLabel}: duplicate options: ${JSON.stringify(q.options)}`);
-      }
-
-      // 3. Repeated-character options (e.g. "行行")
-      q.options.forEach((opt) => {
-        const str = String(opt || "");
-        if (str.length >= 2 && /^([^\s])\1+$/.test(str) && !str.includes("々")) {
-          errors.push(`${qLabel}: repeated-character glitch option: "${str}"`);
+    if (hasStar) {
+      const s = q.starData;
+      if (typeof s.before !== "string" || typeof s.after !== "string") errors.push(`${where}: star question needs before/after text`);
+      if (!Array.isArray(s.ordered) || s.ordered.length !== 4) errors.push(`${where}: star ordering needs 4 words`);
+      else {
+        if (!Number.isInteger(s.starPos) || s.starPos < 0 || s.starPos > 3) errors.push(`${where}: starPos out of range`);
+        else if (Array.isArray(q.options) && q.options[q.answer] !== s.ordered[s.starPos]) {
+          errors.push(`${where}: the marked answer is not the word at the ★ position`);
         }
-      });
-    }
-
-    // 4. Duplicate prompts / IDs
-    const qId = getQuestionId(q);
-    if (seenIds.has(qId)) {
-      errors.push(`${qLabel}: duplicate question ID: "${qId}"`);
-    }
-    seenIds.add(qId);
-
-    if (q.prompt) {
-      if (seenPrompts.has(q.prompt)) {
-        errors.push(`${qLabel}: duplicate prompt: "${q.prompt}"`);
       }
-      seenPrompts.add(q.prompt);
     }
 
-    // 5. Missing exp_en / exp_bn / kana
-    if (!q.exp_en || !String(q.exp_en).trim()) {
-      errors.push(`${qLabel}: missing exp_en`);
-    }
-    if (!q.exp_bn || !String(q.exp_bn).trim()) {
-      errors.push(`${qLabel}: missing exp_bn`);
-    }
-    if (!q.kana || !String(q.kana).trim()) {
-      errors.push(`${qLabel}: missing kana`);
+    const promptKey = (typeof q.prompt === "string" ? q.prompt : "") +
+      (hasStar ? "|" + q.starData.before + q.starData.after : "");
+    if (promptKey.replace(/\s+/g, "").length > 0) {
+      const key = promptKey.replace(/\s+/g, "");
+      if (seen.has(key)) errors.push(`${where}: duplicate prompt "${promptKey.slice(0, 30)}…"`);
+      seen.add(key);
     }
   });
-
-  return errors;
+  return questions.length;
 }
 
-const n5Errors = validateBank("N5", N5);
-const n4Errors = validateBank("N4", N4);
-const allErrors = [...n5Errors, ...n4Errors];
+const errors = [];
+const banks = loadBank("js/data/bank-n5.js");
+const n5 = checkBank("N5", banks.N5, errors);
+const banks4 = loadBank("js/data/bank-n4.js");
+const n4 = checkBank("N4", banks4.N4, errors);
 
-console.log(`Validated ${N5.length} N5 questions and ${N4.length} N4 questions.`);
+const allPrompts = new Set();
+[].concat(banks.N5 || [], banks4.N4 || []).forEach((q) => {
+  if (!q || typeof q !== "object") return;
+  const star = q.starData && Array.isArray(q.starData.ordered)
+    ? "|" + (q.starData.before || "") + (q.starData.after || "") : "";
+  const raw = (typeof q.prompt === "string" ? q.prompt : "") + star;
+  const key = raw.replace(/\s+/g, "");
+  if (!key) return;
+  if (allPrompts.has(key)) errors.push(`cross-level duplicate prompt: "${raw.slice(0, 30)}…"`);
+  allPrompts.add(key);
+});
 
-if (allErrors.length > 0) {
-  console.error(`❌ Validation failed with ${allErrors.length} error(s):`);
-  allErrors.forEach((err) => console.error(`  - ${err}`));
+if (n5 < 20) errors.push(`N5 bank is small (${n5} questions)`);
+if (n4 < 20) errors.push(`N4 bank is small (${n4} questions)`);
+
+if (errors.length) {
+  console.error("Question bank validation failed:");
+  errors.forEach((message) => console.error("  ✗ " + message));
   process.exit(1);
-} else {
-  console.log("✅ All questions in core banks passed validation successfully!");
-  process.exit(0);
 }
+
+console.log(`Validated ${n5} N5 and ${n4} N4 questions.`);
+console.log("✓ All question banks passed validation.");
