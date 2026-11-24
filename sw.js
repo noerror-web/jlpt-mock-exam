@@ -1,17 +1,24 @@
 /**
- * JLPT N5/N4 Mock Exam Generator - Service Worker
- * Network-first strategy for index.html/navigation with offline cache fallback.
- * Stale-while-revalidate for static shell assets.
- * Designed for GitHub Pages subpath hosting (/jlpt-mock-exam/).
+ * JLPT Exam Lab — service worker (v6)
+ * Navigation: network-first, cached shell as offline fallback.
+ * Static assets: cache-first with background refresh.
+ * Works from a GitHub Pages subpath (/jlpt-mock-exam/).
  */
 
-const VERSION = "v5.2";
-const CACHE_NAME = `jlpt-mock-exam-${VERSION}`;
+const VERSION = "v6.0.0";
+const CACHE_NAME = "jlpt-exam-lab-" + VERSION;
 
 const APP_SHELL = [
   "./",
   "./index.html",
   "./manifest.json",
+  "./assets/styles.css",
+  "./js/core.js",
+  "./js/app.js",
+  "./js/data/bank-n5.js",
+  "./js/data/bank-n4.js",
+  "./js/data/furigana.js",
+  "./js/data/kanji-readings.js",
   "./icon.svg",
   "./icon-192.png",
   "./icon-512.png",
@@ -19,116 +26,58 @@ const APP_SHELL = [
   "./apple-touch-icon.png"
 ];
 
-// Install: Cache app shell
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(APP_SHELL);
-    })
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(APP_SHELL))
+      .catch(() => { /* a missing optional asset must not block install */ })
   );
 });
 
-// Allow client to trigger skipWaiting on demand
-self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SKIP_WAITING") {
-    self.skipWaiting();
-  }
-});
-
-// Activate: Clean up old caches and claim clients immediately
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      );
-    }).then(() => self.clients.claim())
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
+      .then(() => self.clients.claim())
   );
 });
 
-// Fetch: Network-First for HTML/navigation; Stale-While-Revalidate for app assets
+self.addEventListener("message", (event) => {
+  if (event.data === "SKIP_WAITING") self.skipWaiting();
+});
+
 self.addEventListener("fetch", (event) => {
-  const req = event.request;
-  const url = new URL(req.url);
+  const request = event.request;
+  if (request.method !== "GET") return;
 
-  // Ignore non-GET requests and non-http(s)
-  if (req.method !== "GET" || !url.protocol.startsWith("http")) return;
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
 
-  // External APIs (kanjiapi, jlpt-vocab, googleapis, telegram, tatoeba, cloudflare workers) -> Bypass SW cache
-  if (
-    url.hostname.includes("kanjiapi.dev") ||
-    url.hostname.includes("jlpt-vocab-api") ||
-    url.hostname.includes("googleapis.com") ||
-    url.hostname.includes("telegram.org") ||
-    url.hostname.includes("tatoeba.org") ||
-    url.hostname.includes("workers.dev")
-  ) {
-    return; // Bypass SW cache; app handles its own localStorage caching
-  }
-
-  // Google Fonts caching
-  if (url.hostname.includes("fonts.googleapis.com") || url.hostname.includes("fonts.gstatic.com")) {
+  if (request.mode === "navigate") {
     event.respondWith(
-      caches.open(CACHE_NAME).then(async (cache) => {
-        const cached = await cache.match(req);
-        if (cached) return cached;
-        try {
-          const res = await fetch(req);
-          if (res.ok) cache.put(req, res.clone());
-          return res;
-        } catch {
-          return cached || new Response("", { status: 408 });
-        }
-      })
+      fetch(request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          return response;
+        })
+        .catch(() => caches.match(request).then((hit) => hit || caches.match("./index.html")))
     );
     return;
   }
 
-  // App Shell: Only handle same-origin GET requests
-  if (url.origin === self.location.origin) {
-    const isNavigationOrHtml =
-      req.mode === "navigate" ||
-      url.pathname.endsWith("/index.html") ||
-      url.pathname.endsWith("/") ||
-      url.pathname.endsWith("/jlpt-mock-exam");
-
-    if (isNavigationOrHtml) {
-      // Network-First with Offline Cache Fallback for instant updates
-      event.respondWith(
-        fetch(req)
-          .then((res) => {
-            if (res && res.status === 200) {
-              const resClone = res.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone));
-            }
-            return res;
-          })
-          .catch(async () => {
-            const cached = await caches.match(req);
-            return (
-              cached ||
-              (await caches.match("./index.html")) ||
-              (await caches.match("./")) ||
-              new Response("Offline", { status: 503 })
-            );
-          })
-      );
-      return;
-    }
-
-    // Static Assets (icons, manifest): Stale-While-Revalidate
-    event.respondWith(
-      caches.open(CACHE_NAME).then(async (cache) => {
-        const cached = await cache.match(req);
-        const networkFetch = fetch(req).then((res) => {
-          if (res && res.status === 200 && res.type === "basic") {
-            cache.put(req, res.clone());
+  event.respondWith(
+    caches.match(request).then((hit) => {
+      const network = fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
           }
-          return res;
-        }).catch(() => null);
-
-        return cached || (await networkFetch) || new Response("Offline", { status: 503 });
-      })
-    );
-  }
+          return response;
+        })
+        .catch(() => hit);
+      return hit || network;
+    })
+  );
 });

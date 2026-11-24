@@ -1,13 +1,13 @@
 {
   "id": "./",
-  "name": "JLPT N5 / N4 Practice & Mock Exam Generator",
-  "short_name": "JLPT Exam",
-  "description": "Interactive Japanese Language Proficiency Test (N5 & N4) practice and mock exam generator with bilingual Bengali and English explanations.",
+  "name": "JLPT Exam Lab — N5 & N4 practice",
+  "short_name": "JLPT Lab",
+  "description": "Timed JLPT N5 and N4 mock exams with instant scoring, mistake drills, flashcards and bilingual Bengali and English explanations. Works offline.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#1d4ed8",
+  "background_color": "#f6f4ee",
+  "theme_color": "#c2452d",
   "categories": ["education", "language", "productivity"],
   "icons": [
     {

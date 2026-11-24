@@ -1,73 +1,75 @@
-# JLPT N5 / N4 Practice & Mock Exam Generator
+# JLPT Exam Lab
 
-A modern, offline-capable progressive web application (PWA) for official Japanese Language Proficiency Test (JLPT) N5 and N4 exam preparation. Zero build step, zero dependencies, deployable directly on GitHub Pages. Created by **Md Mominur Islam**.
+A free JLPT N5 and N4 practice app: timed mock exams with JLPT-style scoring, instant
+feedback in English and Bengali, mistake drills, flashcards, furigana and a kanji
+dictionary. It is a static site with no build step and works offline once loaded.
 
-🔗 **Live Web App:** [https://noerror-web.github.io/jlpt-mock-exam/](https://noerror-web.github.io/jlpt-mock-exam/)
+Open `index.html` from a local web server, or use the hosted copy on GitHub Pages.
 
----
+## Features
 
-## ✨ Features
+- **Mock exams** — N5 (59 questions) and N4 (40 questions) across 文字・語彙, 文法 and 読解,
+  filtered by lesson range and section.
+- **Real scoring** — each section scales to 60 points (180 total); N5 pass mark 80,
+  N4 pass mark 90, with the official 19/60 minimum per section.
+- **Saved progress** — an exam in progress survives a reload, including the timer and
+  the real start time, and can be resumed or discarded from the setup screen.
+- **Review that teaches** — every question shows the correct answer, the reading and the
+  explanation in English, Bengali, or both.
+- **Mistake bank and drills** — wrong answers are collected; answer one correctly twice
+  and it clears. Flashcards work from the mistake bank or the full level bank.
+- **Study tools** — furigana toggle, read-aloud, a kanji popover (kanjiapi), and printable
+  papers with an answer key.
+- **Question sources** — offline bank (default), live kanji/vocabulary APIs, or
+  AI-generated questions through Gemini (direct key or a Cloudflare Worker proxy).
+- **Private by default** — everything is stored in `localStorage` on the device; exports
+  never include the API key.
 
-- **📱 Offline Progressive Web App (PWA)**: Complete offline support via Service Worker caching (`sw.js` and `manifest.json`). Installable on iOS Safari and Android Chrome as a native-like app.
-- **📚 100-Item Built-in Offline Fallback Bank**: Authentic offline questions (60 for N5, 40 for N4) covering Kanji Reading, Orthography, Context Vocabulary, Grammar, ★ Star-Ordering, and Reading Comprehension passages when network APIs are unreachable.
-- **🌐 Zero-Key Live API Mode**: Dynamically generates fresh vocabulary and kanji questions using `kanjiapi.dev`, `jlpt-vocab-api`, and contextual sentence banks with strict level filtering (excluding non-N5 kanji like `嫌` in N5 exams).
-- **🔲 Focus Exam Mode (1 by 1) & 📜 List View**: Toggle between a traditional all-at-once question list and a focused single-question view with progress tracking and mobile sticky action bar.
-- **⚖️ Real JLPT Scoring Engine**: Evaluates genuine JLPT certification pass criteria:
-  - **Overall Score Cutoff**: N5 ≥ 44.4% (80/180), N4 ≥ 50.0% (90/180).
-  - **Sectional Minimum (基準点)**: Every tested section (`文字・語彙`, `文法`, `読解`) must achieve at least 32%. A failing section triggers `不合格 (基準点未達)`.
-- **📊 Visual Results Dashboard**: Section score metric bars with 32% threshold indicators, time taken, weak topic breakdown chips, and pure Canvas confetti celebration on passing.
-- **🃏 Mistake Bank & Interactive Flashcards**: Spaced repetition mistake review system with interactive 3D flip flashcards (front: Japanese prompt with furigana; back: reading, answer, and bilingual explanations).
-- **⏱ Wall-Clock Exam Timer**: Drift-free timer synchronized with `Date.now()` and `visibilitychange` listeners, preventing time drift when mobile screens sleep or tabs switch.
-- **🇧🇩 + 🇬🇧 Bilingual Explanations**: Accurate explanations available in both Bengali (বাংলা) and English, with instant view toggles.
-- **★ Star Ordering (文の組み立て)**: Interactive tap-to-arrange slot mechanic mirroring the official JLPT exam format with lexical duplicate-chip support.
-- **🔊 Japanese Speech Synthesis (TTS)**: Native browser audio playback for sentences and reading passages.
-- **📖 Tap-Any-Kanji Popover**: Bottom sheet on mobile and floating card on desktop displaying stroke counts, on/kun readings, and meanings with active-question anti-cheat protection.
-- **💾 Auto-Save & Resume**: Persists active in-progress exams across page reloads and offers an instant "⚡ Resume Exam" prompt.
-- **✈️ Telegram Auto-Push via Worker**: Automatically dispatches formatted score cards to Telegram via private serverless proxy.
+## Layout
 
----
+```
+index.html                 markup and view shells
+assets/styles.css          design system, light and dark themes
+js/core.js                 data model, question generation, grading, persistence
+js/app.js                  setup, exam UI, timer, results, drills, flashcards, tools
+js/data/bank-n5.js         N5 question bank
+js/data/bank-n4.js         N4 question bank
+js/data/furigana.js        kanji reading pairs for ruby annotations
+js/data/kanji-readings.js  offline fallback readings for the kanji popover
+sw.js                      service worker (offline shell)
+validate-questions.js      question bank validator
+cloudflare-worker/         optional Gemini proxy worker
+```
 
-## 🚀 Getting Started
+Scripts are classic (non-module) scripts so the app also works when opened from a
+simple static host. `js/core.js` loads before `js/app.js`.
 
-No build tools, Node modules, or compilation required.
+## Developing
 
-Simply open [`index.html`](index.html) in any modern browser, or visit the live deployment at [https://noerror-web.github.io/jlpt-mock-exam/](https://noerror-web.github.io/jlpt-mock-exam/).
+```bash
+python3 -m http.server 8000     # then open http://localhost:8000
+node validate-questions.js      # checks both banks
+```
 
----
+No install step is required. To deploy, push the folder to any static host; the paths are
+relative, so GitHub Pages project sites (`/jlpt-mock-exam/`) work as-is.
 
-## ☁️ Cloudflare Worker Proxy & Security
+## AI question generation (optional)
 
-A production-ready serverless proxy is included in [`cloudflare-worker/`](cloudflare-worker/) to keep your Telegram Bot Token and Gemini API Key 100% private.
+In **Tools & settings** add either:
 
-### Worker Environment Variables:
-Set in Cloudflare Dashboard under **Settings ➔ Variables and Secrets** or via Wrangler CLI:
-- `TELEGRAM_BOT_TOKEN`: Your Telegram Bot Token (`YOUR_TELEGRAM_BOT_TOKEN`).
-- `GEMINI_API_KEY`: Your Google AI Studio API Key (`AQ...` or `AIza...`).
-- `ALLOWED_ORIGIN`: (Optional) Comma-separated list of allowed origins (e.g. `https://noerror-web.github.io,http://localhost`).
+- a **Gemini API key** (sent directly to Google and stored only on this device), or
+- a **Worker URL** for the included `cloudflare-worker` (set `GEMINI_API_KEY` as a Worker
+  secret) so the key never reaches the browser.
 
-### Security Hardening:
-- **CORS Allowlist**: Validates incoming `Origin` against allowed hosts.
-- **Payload Size Guards**: Rejects payloads over 100 KB with `HTTP 413`.
-- **Secret Sanitization**: Redacts sensitive API keys and internal URLs from error responses.
-- **Robust JSON Parsing**: Regex extraction handles conversational prose and markdown fences from LLM responses without crashing.
+If the model or network fails, the app falls back to the offline bank and says so.
 
----
+## Credits
 
-## 📋 Changelog
+Question banks, explanations and the original app idea come from
+[noerror-web/jlpt-mock-exam](https://github.com/noerror-web/jlpt-mock-exam).
+Dictionary data: [kanjiapi.dev](https://kanjiapi.dev). Vocabulary:
+[jlpt-vocab-api](https://github.com/WelkinYang/JLPT_Vocab). Fonts: Google Fonts
+(Noto Sans JP, Noto Sans Bengali, Inter).
 
-### Version 5.0 (Latest Release)
-- **PWA & Offline System**: Added `manifest.json`, `sw.js` with stale-while-revalidate caching, and relative subpath resolution for GitHub Pages.
-- **Offline Question Banks**: Expanded to 60 authentic N5 questions and 40 authentic N4 questions.
-- **Exam Flow**: Added Focus Mode (1 question at a time) with mobile bottom sticky navigation alongside classic List view.
-- **Mistake Bank Flashcards**: Added interactive 3D flip card mode with mastery tracking.
-- **Real JLPT Scoring**: Implemented authentic JLPT overall thresholds and sectional minimum (基準点 ≥ 32%) scoring.
-- **Mobile Ergonomics**: Streamlined header to ≤ 52px on phones; transformed dictionary popover into mobile bottom sheet.
-- **Wall-Clock Timer**: Synchronized with `Date.now()` and `visibilitychange` to eliminate mobile background sleep drift.
-- **Auto-Save & Resume**: Preserves in-progress exams in `localStorage` with a 1-click restore banner.
-- **Accessibility & Animations**: Added `:focus-visible`, `prefers-reduced-motion` compliance, and pure Canvas pass confetti.
-
----
-
-## 👤 Author
-
-**Md Mominur Islam**
+Not affiliated with the Japan Foundation or JEES. JLPT is a trademark of its owners.
