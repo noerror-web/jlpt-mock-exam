@@ -3138,6 +3138,7 @@
       userAnswers,
       flagged: Array.from(flaggedQuestions),
       starSlotsState,
+      examStartTime,
       remainingSeconds,
       timerEndTime,
       timerIsRunning,
@@ -4547,6 +4548,7 @@ Return ONLY a valid JSON array matching this schema:
 
   let currentFcIndex = 0;
   let flashcardDeck = [];
+  let pausedExamRemaining = 0;
 
   function startFlashcardMode() {
     const mistakes = loadJSON(STORAGE.MISTAKES, []);
@@ -4561,6 +4563,9 @@ Return ONLY a valid JSON array matching this schema:
     flashcardDeck = shuffle(mistakes);
     currentFcIndex = 0;
     inFlashcardMode = true;
+    if (timerIsRunning) {
+      pausedExamRemaining = Math.max(0, Math.round((timerEndTime - Date.now()) / 1000));
+    }
     stopTimer();
     $("timerDisplay").classList.remove("active");
     $("scoreCard").classList.remove("visible");
@@ -4580,7 +4585,10 @@ Return ONLY a valid JSON array matching this schema:
       updateNavigatorUI();
       if (!isGraded) $("submitBar").classList.add("visible");
       $("statusBadge").textContent = isGraded ? "Graded" : `In Progress (${currentLevel})`;
-      if (timerIsRunning && remainingSeconds > 0) {
+      if (!isGraded && pausedExamRemaining > 0) {
+        remainingSeconds = pausedExamRemaining;
+        pausedExamRemaining = 0;
+        timerEndTime = Date.now() + remainingSeconds * 1000;
         startTimerInterval();
         $("timerDisplay").classList.add("active");
       }
@@ -4732,9 +4740,13 @@ Return ONLY a valid JSON array matching this schema:
     }
 
     localStorage.removeItem(STORAGE.ACTIVE_EXAM);
+    pausedExamRemaining = 0;
 
     const mistakes = loadJSON(STORAGE.MISTAKES, []);
-    if (mistakes.length === 0) return;
+    if (mistakes.length === 0) {
+      showToast("No mistakes saved in bank yet!");
+      return;
+    }
 
     isGraded = false;
     reviewWrongOnly = false;
