@@ -702,20 +702,20 @@
   }
 
   async function telegramSend(text) {
-    const token = (state.settings.telegramToken || "").trim();
-    const chat = (state.settings.telegramChat || "").trim();
-    if (!token || !chat) {
+    const url = (state.settings.telegramUrl || "").trim();
+    if (!/^https:\/\//.test(url)) {
       openDrawer();
-      toast("Add a bot token and chat ID in Tools & settings", true);
+      toast("Add your Telegram relay URL in Tools & settings", true);
       return false;
     }
     try {
-      const res = await fetch("https://api.telegram.org/bot" + token + "/sendMessage", {
+      const res = await fetch(url, {
         method: "POST",
-        body: new URLSearchParams({ chat_id: chat, text: text, disable_web_page_preview: "true" })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: text })
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.ok) throw new Error(data.description || "HTTP " + res.status);
+      if (!res.ok || !data.ok) throw new Error(data.error || "HTTP " + res.status);
       return true;
     } catch (err) {
       toast("Telegram failed: " + err.message, true);
@@ -1184,8 +1184,7 @@
   function openDrawer() {
     byId("workerUrlInput").value = state.settings.workerUrl || "";
     byId("apiKeyInput").value = state.settings.apiKey || "";
-    byId("tgTokenInput").value = state.settings.telegramToken || "";
-    byId("tgChatInput").value = state.settings.telegramChat || "";
+    byId("tgUrlInput").value = state.settings.telegramUrl || "";
     byId("appVersion").textContent = L.VERSION;
     byId("drawer").hidden = false;
     byId("drawerBackdrop").hidden = false;
@@ -1204,10 +1203,9 @@
   }
 
   function saveTelegramSettings() {
-    state.settings.telegramToken = byId("tgTokenInput").value.trim();
-    state.settings.telegramChat = byId("tgChatInput").value.trim();
+    state.settings.telegramUrl = byId("tgUrlInput").value.trim();
     L.saveSettings();
-    toast("Telegram settings saved on this device.");
+    toast("Telegram relay URL saved.");
   }
 
   async function testTelegram() {

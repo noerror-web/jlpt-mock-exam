@@ -284,17 +284,14 @@
 
     <div class="group">
       <h3>Telegram</h3>
-      <label class="field"><span class="tiny muted">Bot token (from @BotFather, stored on this device only)</span>
-        <input id="tgTokenInput" type="password" placeholder="123456:ABC…" autocomplete="off" spellcheck="false" />
-      </label>
-      <label class="field"><span class="tiny muted">Chat ID (your numeric Telegram ID or group ID)</span>
-        <input id="tgChatInput" placeholder="123456789" autocomplete="off" spellcheck="false" />
+      <label class="field"><span class="tiny muted">Relay URL (your Cloudflare Worker)</span>
+        <input id="tgUrlInput" placeholder="https://jlpt-telegram.you.workers.dev" autocomplete="off" spellcheck="false" />
       </label>
       <div class="row">
         <button type="button" class="btn btn-sm" id="saveTgBtn">Save</button>
         <button type="button" class="btn btn-sm btn-ghost" id="testTgBtn">Send test</button>
       </div>
-      <p class="note">Press “Send to Telegram” on the results screen to push your score to that chat. The token is kept in this browser and is never included in exports; messages go only to Telegram's API when you press send.</p>
+      <p class="note">The worker holds the bot token and your chat ID as secrets and only ever sends to you, so nobody else can use your bot. Press “Send to Telegram” on the results screen to push a score.</p>
     </div>
 
     <div class="group">

@@ -21,12 +21,12 @@ Open `index.html` from a local web server, or use the hosted copy on GitHub Page
   as lessons.
 - **Progress stats** — lifetime accuracy for Vocabulary & Kanji, Grammar and Reading on the
   setup screen, so weak areas are visible before the next exam.
-- **Copy, print or send** — a result summary copies to the clipboard in one tap, the whole
-  paper prints with an answer key, and “Send to Telegram” pushes the score to a chat you
-  configure in Tools & settings.
-- **Telegram in two fields** — paste a bot token from @BotFather and your chat ID; both stay
-  in this browser, are never included in exports, and are used only when you press send.
-  No server or Cloudflare account is involved.
+- **Copy, print or send** — a result summary copies to the clipboard in one tap, and the
+  whole paper prints with an answer key.
+- **Results to your own Telegram** — a small Cloudflare Worker holds the bot token and your
+  chat ID as secrets and only ever sends to that one chat. The app just stores the worker
+  URL and calls it when you press “Send to Telegram”, so the token never reaches the
+  browser and nobody else can use your bot.
 - **Mistake bank and drills** — wrong answers are collected; answer one correctly twice
   and it clears. Flashcards work from the mistake bank or the full level bank.
 - **Study tools** — furigana toggle, read-aloud, a kanji popover (kanjiapi), and printable
@@ -49,6 +49,7 @@ js/data/furigana.js        kanji reading pairs for ruby annotations
 js/data/kanji-readings.js  offline fallback readings for the kanji popover
 sw.js                      service worker (offline shell)
 validate-questions.js      question bank validator
+cloudflare-worker/         Telegram relay (token stays server-side)
 ```
 
 Scripts are classic (non-module) scripts so the app also works when opened from a
@@ -83,3 +84,26 @@ Dictionary data: [kanjiapi.dev](https://kanjiapi.dev). Vocabulary:
 (Noto Sans JP, Noto Sans Bengali, Inter).
 
 Not affiliated with the Japan Foundation or JEES. JLPT is a trademark of its owners.
+
+## Telegram relay
+
+`cloudflare-worker/` contains a single-file Worker (`worker.js`) that forwards a text
+result to one fixed chat.
+
+1. Create a bot with @BotFather, then send it any message and note your numeric chat ID
+   (for example from @userinfobot).
+2. From `cloudflare-worker/`, deploy and set the secrets:
+
+   ```sh
+   npx wrangler deploy
+   npx wrangler secret put TELEGRAM_BOT_TOKEN
+   npx wrangler secret put TELEGRAM_CHAT_ID
+   ```
+
+3. Put your app's origin in `ALLOWED_ORIGIN` (for example
+   `https://noerror-web.github.io`) so other sites cannot call the worker.
+4. Paste the resulting `https://<name>.<account>.workers.dev` URL into Tools & settings →
+   Telegram, and press “Send test”.
+
+The worker accepts only `POST { "text": "..." }`, limits the text length, and sends to the
+chat ID from its environment — never to a chat supplied by the caller.
