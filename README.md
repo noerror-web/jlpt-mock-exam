@@ -87,8 +87,14 @@ Not affiliated with the Japan Foundation or JEES. JLPT is a trademark of its own
 
 ## Telegram relay
 
-`cloudflare-worker/` contains a single-file Worker (`worker.js`) that forwards a text
-result to one fixed chat.
+The app comes pre-configured with the existing relay
+`https://jlpt-mock-exam-proxy.mominurislam.workers.dev/api/telegram`, where the bot token
+and the destination chat ID are already stored as Worker secrets. The app sends only the
+text; the worker decides which chat receives it.
+
+`cloudflare-worker/` contains a replacement single-file Worker (`worker.js`) that forwards
+a text result to one fixed chat and refuses any caller-supplied chat ID, if you ever want
+to host your own.
 
 1. Create a bot with @BotFather, then send it any message and note your numeric chat ID
    (for example from @userinfobot).
