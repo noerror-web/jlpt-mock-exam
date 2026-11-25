@@ -5,7 +5,7 @@
  * Works from a GitHub Pages subpath (/jlpt-mock-exam/).
  */
 
-const VERSION = "v6.7.2";
+const VERSION = "v6.7.3";
 const CACHE_NAME = "jlpt-exam-lab-" + VERSION;
 
 const APP_SHELL = [

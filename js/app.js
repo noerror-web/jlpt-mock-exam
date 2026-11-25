@@ -852,6 +852,7 @@
     const chosen = exam.answers[index];
     const correct = chosen === q.answer;
     const item = el("details", "card review-item " + (correct ? "correct" : "wrong"));
+    if (q.passage) item.open = true;
     const summary = el("summary");
     summary.append(el("span", "status-dot"));
     const label = el("span", "rq");
