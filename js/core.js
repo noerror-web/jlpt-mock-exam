@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "6.8.0";
+  const VERSION = "6.9.0";
   const STORE = {
     settings: "jlpt6.settings",
     exam: "jlpt6.exam",
@@ -27,17 +27,17 @@
   const SECTION_META = {
     vocab: { label: "文字・語彙", en: "Vocabulary & Kanji" },
     grammar: { label: "文法", en: "Grammar" },
-    reading: { label: "読解", en: "Reading" }
+    reading: { label: "読解", en: "Reading" },
+    listening: { label: "聴解", en: "Listening" }
   };
   const LESSONS = { N5: ["L1-12", "L13-25"], N4: ["L26-35", "L36-40", "L41-50"] };
   const PASS_TOTAL = { N5: 80, N4: 90 };
-  const SECTION_POINTS = 60;
-  const SECTION_MIN = Math.round(SECTION_POINTS * 0.32);
+  const SECTION_MIN_RATIO = 0.32;
 
   const DEFAULT_SETTINGS = {
     level: "N5", name: "", source: "bank", section: "all", lesson: "all",
     count: 20, timer: 15, layout: "focus", furigana: true, autoAdvance: false,
-    study: false, lang: "both", theme: "auto",
+    study: false, lang: "both", theme: "auto", listening: true,
     workerUrl: "https://jlpt-mock-exam-proxy.mominurislam.workers.dev", apiKey: "", relayDefault: true,
     telegramUrl: "https://jlpt-mock-exam-proxy.mominurislam.workers.dev/api/telegram", autoTelegram: true
   };
@@ -211,7 +211,8 @@
 
   function sectionKey(raw) {
     const s = String(raw || "");
-    if (s === "vocab" || s === "grammar" || s === "reading") return s;
+    if (s === "vocab" || s === "grammar" || s === "reading" || s === "listening") return s;
+    if (/聴解|listening/i.test(s)) return "listening";
     if (/読解|reading/i.test(s)) return "reading";
     if (/文法|grammar/i.test(s)) return "grammar";
     return "vocab";
@@ -243,13 +244,21 @@
     return core;
   }
 
+  // A stray U+FFFC object-replacement mark survives ruby flattening in some
+  // scraped prompts; it is never part of the Japanese text.
+  function cleanText(value) {
+    return String(value || "")
+      .replace(/[\uFFFC\uFFFF\u200B]/g, "")
+      .replace(/^[\s\u3000]+|[\s\u3000]+$/g, "");
+  }
+
   function normalizeQuestion(raw, level) {
     if (!raw || typeof raw !== "object") return null;
     // Level purity: a question tagged for another level is never accepted.
     if (raw.level && String(raw.level).toUpperCase().indexOf(String(level).toUpperCase()) === -1) return null;
-    const prompt = typeof raw.prompt === "string" ? raw.prompt.trim() : "";
+    const prompt = typeof raw.prompt === "string" ? cleanText(raw.prompt) : "";
     const options = Array.isArray(raw.options)
-      ? raw.options.filter((o) => typeof o === "string" && o.trim()).map((o) => o.trim())
+      ? raw.options.filter((o) => typeof o === "string" && o.trim()).map((o) => cleanText(o))
       : [];
     if (options.length !== 4 || new Set(options).size !== 4) return null;
     let answer = Number(raw.answer);
@@ -300,7 +309,7 @@
       subtype: String(raw.subtype || ""),
       origin: ORIGIN_META[raw.origin] ? raw.origin : "bank",
       lesson: String(raw.lesson || ""),
-      passage: String(raw.passage || ""),
+      passage: String(raw.passage || "").replace(/[\uFFFC\uFFFF\u200B]/g, ""),
       prompt: decoratePrompt(core, canonical, section),
       kana: String(raw.kana || ""),
       options: orderedOptions,
@@ -362,6 +371,33 @@
     }
     marker[level] = true;
     try { localStorage.setItem(STORE.migrated, JSON.stringify(marker)); } catch (err) { /* storage full */ }
+  }
+
+  // 聴解 is built from the bank's own reading passages: the passage becomes the
+  // script that is spoken aloud, and the same prompt and options follow. Ids come
+  // from the section name, so a listening item never collides with the reading item
+  // it was made from and the done ledger keeps the two apart.
+  const listenCache = {};
+  function plainText(html) {
+    return String(html || "")
+      .replace(/<rt[\s\S]*?<\/rt>/gi, "")
+      .replace(/<[^>]+>/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function loadListening(level) {
+    if (listenCache[level]) return listenCache[level];
+    const raw = (window.JLPT_BANKS || {})[level] || [];
+    const items = raw
+      .filter((q) => {
+        const text = plainText(q.passage);
+        return text.length >= 12 && text.length <= 120 && Array.isArray(q.options) && q.options.length === 4;
+      })
+      .map((q) => normalizeQuestion(Object.assign({}, q, { section: "listening", subtype: "聴解 · 問題1 (Listening)" }), level))
+      .filter(Boolean);
+    listenCache[level] = items;
+    return items;
   }
 
   // Pool coverage for the setup screen: what has been finished, what is still unseen.
@@ -522,9 +558,11 @@
   }
 
   const SECTION_SPLIT = [["vocab", 0.4], ["grammar", 0.3], ["reading", 0.3]];
+  const SECTION_SPLIT_LISTENING = [["vocab", 0.34], ["grammar", 0.26], ["reading", 0.25], ["listening", 0.15]];
 
   function fromBank(opts) {
-    const all = loadBank(opts.level);
+    const withListening = !!opts.listening;
+    const all = withListening ? loadBank(opts.level).concat(loadListening(opts.level)) : loadBank(opts.level);
     if (!all.length) throw new Error("No offline questions are available for " + opts.level + ".");
     const filtered = all.filter((q) =>
       (opts.section === "all" || q.section === opts.section) &&
@@ -539,9 +577,12 @@
     const source = fresh.length >= opts.count ? fresh : ordered;
     const picked = [];
 
-    // A whole paper keeps the JLPT mix: 40% vocabulary, 30% grammar, 30% reading.
+    // A whole paper keeps the JLPT mix: vocabulary, grammar, reading and, when the
+    // device can speak Japanese, a listening block taken from the same passages.
     if (opts.section === "all" && opts.count >= 10) {
-      const quota = SECTION_SPLIT.map(([key, share]) => [key, Math.round(opts.count * share)]);
+      const split = withListening && ordered.some((q) => q.section === "listening")
+        ? SECTION_SPLIT_LISTENING : SECTION_SPLIT;
+      const quota = split.map(([key, share]) => [key, Math.round(opts.count * share)]);
       quota[quota.length - 1][1] += opts.count - quota.reduce((sum, pair) => sum + pair[1], 0);
       quota.forEach(([key, want]) => {
         const have = new Set(picked.map((q) => q.id));
@@ -834,7 +875,8 @@
 
   function createExam(opts) {
     const questions = opts.questions || [];
-    return {
+    const timerMinutes = Number(opts.timer) || 0;
+    const exam = {
       id: uid(),
       level: opts.level,
       source: opts.source || "bank",
@@ -843,8 +885,8 @@
       answers: new Array(questions.length).fill(null),
       flags: new Array(questions.length).fill(false),
       layout: opts.layout || state.settings.layout,
-      timerMinutes: Number(opts.timer) || 0,
-      remaining: (Number(opts.timer) || 0) * 60,
+      timerMinutes: timerMinutes,
+      remaining: timerMinutes * 60,
       startedAt: Date.now(),
       timerEndAt: 0,
       paused: false,
@@ -852,11 +894,35 @@
       finishedAt: null,
       elapsed: 0
     };
+    // A timed whole paper is paced by section, the way the real test hands out a
+    // separate clock for each 問題: the chosen minutes are split by question count.
+    if (timerMinutes > 0) {
+      const counts = {};
+      questions.forEach((q) => { counts[q.section] = (counts[q.section] || 0) + 1; });
+      const keys = Object.keys(counts);
+      if (keys.length > 1) {
+        const budget = timerMinutes * 60;
+        const left = {};
+        let used = 0;
+        keys.forEach((key, i) => {
+          const share = i === keys.length - 1 ? budget - used : Math.round((budget * counts[key]) / questions.length);
+          left[key] = Math.max(30, share);
+          used += share;
+        });
+        exam.sectionLeft = left;
+        exam.sectionNow = keys[0];
+      }
+    }
+    return exam;
   }
 
   function currentRemaining(exam) {
     const target = exam || state.exam;
     if (!target || !target.timerMinutes) return 0;
+    if (target.sectionLeft && target.sectionLeft[target.sectionNow] !== undefined) {
+      if (target.paused || !target.timerEndAt) return Math.max(0, target.sectionLeft[target.sectionNow]);
+      return Math.max(0, Math.ceil((target.timerEndAt - Date.now()) / 1000));
+    }
     if (target.paused || !target.timerEndAt) return Math.max(0, target.remaining);
     return Math.max(0, Math.ceil((target.timerEndAt - Date.now()) / 1000));
   }
@@ -894,13 +960,19 @@
       if (exam.answers[i] === q.answer) bucket.correct += 1;
     });
     const keys = Object.keys(sections);
-    keys.forEach((key) => {
+    // Every paper is worth 180 points, like the real test, however many sections
+    // it carries; the odd remainder goes to the last section so the total is exact.
+    const sectionPoints = Math.round(180 / keys.length);
+    const sectionMin = Math.round(sectionPoints * SECTION_MIN_RATIO);
+    keys.forEach((key, i) => {
       const s = sections[key];
-      s.points = Math.round((s.correct / s.total) * SECTION_POINTS);
-      s.min = SECTION_MIN;
-      s.ok = s.points >= SECTION_MIN;
+      const worth = i === keys.length - 1 ? 180 - sectionPoints * (keys.length - 1) : sectionPoints;
+      s.points = Math.round((s.correct / s.total) * worth);
+      s.min = sectionMin;
+      s.ok = s.points >= sectionMin;
+      s.worth = worth;
     });
-    const max = keys.length * SECTION_POINTS;
+    const max = keys.reduce((sum, key) => sum + sections[key].worth, 0);
     const total = keys.reduce((sum, key) => sum + sections[key].points, 0);
     const passTotal = Math.round((max * (PASS_TOTAL[exam.level] || 80)) / 180);
     const correct = exam.questions.filter((q, i) => exam.answers[i] === q.answer).length;
@@ -1017,6 +1089,8 @@
     resetData: resetData,
     normalizeQuestion: normalizeQuestion,
     loadBank: loadBank,
+    loadListening: loadListening,
+    plainText: plainText,
     bankProgress: bankProgress,
     doneIds: doneIds,
     rich: rich,

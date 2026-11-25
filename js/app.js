@@ -141,7 +141,8 @@
       layout: byId("viewSelect").value,
       furigana: byId("furiganaToggle").checked,
       autoAdvance: byId("autoAdvanceToggle").checked,
-      study: byId("studyToggle").checked
+      study: byId("studyToggle").checked,
+      listening: !!state.settings.listening
     };
     Object.assign(state.settings, {
       name: opts.name, source: opts.source, section: opts.section, lesson: opts.lesson,
@@ -391,6 +392,54 @@
 
   const clampIndex = (i) => Math.min(Math.max(0, i), Math.max(0, state.exam.questions.length - 1));
 
+  function jaVoice() {
+    const synth = window.speechSynthesis;
+    if (!synth || !synth.getVoices) return null;
+    const voices = synth.getVoices() || [];
+    return voices.filter((v) => /^ja/i.test(v.lang))[0] || null;
+  }
+
+  function playScript(text, rate) {
+    const synth = window.speechSynthesis;
+    if (!synth || !window.SpeechSynthesisUtterance) return false;
+    synth.cancel();
+    const utter = new SpeechSynthesisUtterance(String(text).replace(/\n+/g, "。"));
+    utter.lang = "ja-JP";
+    utter.rate = rate || 0.95;
+    const voice = jaVoice();
+    if (voice) utter.voice = voice;
+    synth.speak(utter);
+    return true;
+  }
+
+  function listeningBlock(q) {
+    const box = el("div", "listening");
+    const row = el("div", "listen-row");
+    const play = el("button", "btn btn-sm", "▶ Play");
+    play.type = "button";
+    const slow = el("button", "btn btn-sm btn-ghost", "▶ Slowly");
+    slow.type = "button";
+    const show = el("button", "btn btn-sm btn-ghost", "Show script");
+    show.type = "button";
+    row.append(play, slow, show);
+    const note = el("div", "note", jaVoice()
+      ? "聴解 · spoken by your device's Japanese voice. The script opens in the review."
+      : "This device has no Japanese voice, so read the script instead — it turns this into a 読解 item.");
+    const script = el("div", "passage listen-script");
+    script.innerHTML = L.rich(q.passage);
+    const noVoice = !jaVoice();
+    script.hidden = !noVoice;
+    if (noVoice) { play.disabled = true; slow.disabled = true; show.hidden = true; }
+    play.onclick = () => { if (!playScript(L.plainText(q.passage), 0.95)) { script.hidden = false; toast("This browser cannot speak — script shown instead.", true); } };
+    slow.onclick = () => { if (!playScript(L.plainText(q.passage), 0.7)) script.hidden = false; };
+    show.onclick = () => {
+      script.hidden = !script.hidden;
+      show.textContent = script.hidden ? "Show script" : "Hide script";
+    };
+    box.append(row, note, script);
+    return box;
+  }
+
   function renderQuestion(q, index) {
     const exam = state.exam;
     const card = el("article", "q-card card");
@@ -413,7 +462,9 @@
     head.append(flag);
     card.append(head);
 
-    if (q.passage) {
+    if (q.section === "listening" && q.passage) {
+      card.append(listeningBlock(q, index));
+    } else if (q.passage) {
       const passage = el("div", "passage");
       passage.innerHTML = L.rich(q.passage);
       card.append(passage);
@@ -545,6 +596,7 @@
     const exam = state.exam;
     if (!exam) return;
     const next = clampIndex(index);
+    switchSectionClock(exam, next);
     state.current = next;
     $$("#questionsSlot .q-card").forEach((card) => {
       const idx = Number(card.dataset.idx);
@@ -595,7 +647,8 @@
     const exam = state.exam;
     if (!exam || !exam.timerMinutes || exam.graded) { updateTimerChip(); return; }
     exam.paused = false;
-    exam.timerEndAt = Date.now() + Math.max(0, exam.remaining) * 1000;
+    const left = exam.sectionLeft ? (exam.sectionLeft[exam.sectionNow] || 0) : exam.remaining;
+    exam.timerEndAt = Date.now() + Math.max(0, left) * 1000;
     timer.interval = setInterval(onTick, 250);
     updateTimerChip();
   }
@@ -605,16 +658,43 @@
     timer.interval = 0;
   }
 
+  // Moving between 問題 hands the stopwatch over: the section you leave keeps the
+  // time it had left, the one you enter starts on its own clock.
+  function switchSectionClock(exam, next) {
+    if (!exam || !exam.sectionLeft) return;
+    const q = exam.questions[next];
+    if (!q || !q.section || q.section === exam.sectionNow) return;
+    exam.sectionLeft[exam.sectionNow] = L.currentRemaining(exam);
+    exam.sectionNow = q.section;
+    exam.timerEndAt = exam.paused ? 0 : Date.now() + (exam.sectionLeft[q.section] || 0) * 1000;
+  }
+
   function onTick() {
     const exam = state.exam;
     if (!exam || exam.graded || exam.paused) return;
-    exam.remaining = L.currentRemaining(exam);
+    const left = L.currentRemaining(exam);
+    if (exam.sectionLeft) exam.sectionLeft[exam.sectionNow] = left;
+    else exam.remaining = left;
     updateTimerChip();
-    if (exam.remaining <= 0) {
-      stopTimer();
-      toast("Time is up — scoring your paper.");
-      finishExam(true);
+    if (left > 0) return;
+    if (exam.sectionLeft) {
+      const spent = L.SECTION_META[exam.sectionNow];
+      const upcoming = Object.keys(exam.sectionLeft)
+        .filter((key) => key !== exam.sectionNow && exam.sectionLeft[key] > 0);
+      if (upcoming.length) {
+        const key = upcoming[0];
+        const idx = exam.questions.findIndex((q) => q.section === key);
+        exam.sectionNow = key;
+        exam.timerEndAt = Date.now() + exam.sectionLeft[key] * 1000;
+        setFocus(idx, true);
+        toast(spent.label + " time is up — moving to " + L.SECTION_META[key].label +
+          ", " + L.fmtClock(exam.sectionLeft[key]) + ".");
+        return;
+      }
     }
+    stopTimer();
+    toast("Time is up — scoring your paper.");
+    finishExam(true);
   }
 
   function updateTimerChip() {
@@ -628,8 +708,9 @@
       return;
     }
     chip.disabled = false;
-    const remaining = exam.paused ? exam.remaining : L.currentRemaining(exam);
-    chip.textContent = (exam.paused ? "❚❚ " : "") + L.fmtClock(remaining);
+    const remaining = L.currentRemaining(exam);
+    const label = exam.sectionLeft && L.SECTION_META[exam.sectionNow] ? L.SECTION_META[exam.sectionNow].label + " " : "";
+    chip.textContent = (exam.paused ? "❚❚ " : "") + label + L.fmtClock(remaining);
     chip.classList.toggle("warn", remaining < 180 && remaining >= 60);
     chip.classList.toggle("danger", remaining < 60);
     const pauseBtn = byId("pauseBtn");
@@ -737,8 +818,9 @@
     if (exam.candidate) parts.push(exam.candidate);
     const mix = originMix(result.origins);
     if (mix) parts.push(mix);
+    const firstSection = result.keys.length ? result.sections[result.keys[0]] : { min: 0, worth: 60 };
     byId("resultsSub").textContent = parts.join(" · ") + " · pass mark " + result.passTotal + "/" + result.max +
-      " · each section needs " + (result.keys.length ? result.sections[result.keys[0]].min : 0) + "/60";
+      " · each section needs " + firstSection.min + "/" + (firstSection.worth || 60);
 
     renderSectionBars(result);
     renderReview();
@@ -857,11 +939,11 @@
       const meta = L.SECTION_META[key];
       const row = el("div", "sbar" + (s.ok ? "" : " low"));
       const name = el("span", "name", meta.label + " · " + meta.en);
-      const val = el("span", "val", s.correct + " of " + s.total + " correct · " + s.points + " pts" +
+      const val = el("span", "val", s.correct + " of " + s.total + " correct · " + s.points + "/" + (s.worth || 60) + " pts" +
         (s.ok ? "" : " · under the " + min + "-point minimum"));
       const track = el("div", "track");
       const fill = el("div", "fill");
-      fill.style.width = Math.round((s.points / 60) * 100) + "%";
+      fill.style.width = Math.round((s.points / (s.worth || 60)) * 100) + "%";
       track.append(fill);
       row.append(name, val, track);
       wrap.append(row);
@@ -1284,6 +1366,7 @@
     byId("apiKeyInput").value = state.settings.apiKey || "";
     byId("tgUrlInput").value = state.settings.telegramUrl || "";
     byId("tgAutoToggle").checked = state.settings.autoTelegram !== false;
+    byId("listenToggle").checked = state.settings.listening !== false;
     byId("appVersion").textContent = L.VERSION;
     byId("drawer").hidden = false;
     byId("drawerBackdrop").hidden = false;
@@ -1551,6 +1634,11 @@
       state.settings.autoTelegram = byId("tgAutoToggle").checked;
       L.saveSettings();
       toast(state.settings.autoTelegram ? "Results will auto-send after each exam." : "Auto-send off — send results by hand.");
+    });
+    byId("listenToggle").addEventListener("change", () => {
+      state.settings.listening = byId("listenToggle").checked;
+      L.saveSettings();
+      toast(state.settings.listening ? "Papers will include 聴解 listening." : "Listening off — papers stay reading and grammar.");
     });
     byId("clearDataBtn").addEventListener("click", clearAllData);
 
