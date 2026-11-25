@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "6.4.0";
+  const VERSION = "6.4.1";
   const STORE = {
     settings: "jlpt6.settings",
     exam: "jlpt6.exam",
@@ -27,7 +27,7 @@
     level: "N5", name: "", source: "bank", section: "all", lesson: "all",
     count: 20, timer: 15, layout: "focus", furigana: true, autoAdvance: false,
     study: false, lang: "both", theme: "auto",
-    workerUrl: "https://jlpt-mock-exam-proxy.mominurislam.workers.dev", apiKey: "",
+    workerUrl: "https://jlpt-mock-exam-proxy.mominurislam.workers.dev", apiKey: "", relayDefault: true,
     telegramUrl: "https://jlpt-mock-exam-proxy.mominurislam.workers.dev/api/telegram"
   };
 
@@ -137,6 +137,11 @@
   function loadSettings() {
     const saved = readJson(STORE.settings, {}) || {};
     state.settings = Object.assign({}, DEFAULT_SETTINGS, saved);
+    // Older saves stored an empty relay; restore the built-in one once.
+    if (!saved.relayDefault) {
+      if (!state.settings.workerUrl) state.settings.workerUrl = DEFAULT_SETTINGS.workerUrl;
+      state.settings.relayDefault = true;
+    }
     if (!LESSONS[state.settings.level]) state.settings.level = "N5";
     if (state.settings.apiKey === "stored") {
       try { state.settings.apiKey = localStorage.getItem(STORE.settings + ".key") || ""; }
@@ -531,17 +536,24 @@
     const worker = String(state.settings.workerUrl || "").trim().replace(/\/+$/, "");
     let payload = null;
     if (worker) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 30000);
       try {
         const res = await fetch(worker + "/api/gemini", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ promptText: promptText, model: "gemini-flash-latest" })
+          body: JSON.stringify({ promptText: promptText, model: "gemini-flash-latest" }),
+          signal: controller.signal
         });
         const data = await res.json();
         if (data && data.ok && Array.isArray(data.data)) payload = data.data;
-        else if (!state.settings.apiKey) throw new Error((data && data.error) || "Worker request failed.");
+        else if (!state.settings.apiKey) throw new Error((data && data.error) || "AI relay request failed.");
       } catch (err) {
-        if (!state.settings.apiKey) throw err;
+        if (!state.settings.apiKey) {
+          throw new Error(err && err.name === "AbortError" ? "AI relay timed out" : (err && err.message) || "AI relay unreachable");
+        }
+      } finally {
+        clearTimeout(timer);
       }
     }
     if (!payload) payload = await callGeminiDirect(promptText);

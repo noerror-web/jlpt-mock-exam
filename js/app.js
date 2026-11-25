@@ -1453,6 +1453,14 @@
 
     byId("saveApiBtn").addEventListener("click", saveApiSettings);
     byId("clearApiBtn").addEventListener("click", clearApiKey);
+    byId("resetRelayBtn").addEventListener("click", () => {
+      const relay = "https://jlpt-mock-exam-proxy.mominurislam.workers.dev";
+      byId("workerUrlInput").value = relay;
+      L.state.settings.workerUrl = relay;
+      L.state.settings.relayDefault = true;
+      L.saveSettings();
+      toast("Using the built-in AI relay");
+    });
     byId("saveTgBtn").addEventListener("click", saveTelegramSettings);
     byId("testTgBtn").addEventListener("click", testTelegram);
     byId("clearDataBtn").addEventListener("click", clearAllData);

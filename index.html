@@ -269,8 +269,8 @@
 
     <div class="group">
       <h3>AI generation</h3>
-      <label class="field"><span class="tiny muted">Worker URL (optional proxy)</span>
-        <input id="workerUrlInput" placeholder="https://your-worker.workers.dev" autocomplete="off" spellcheck="false" />
+      <label class="field"><span class="tiny muted">AI relay URL (the built-in worker holds a Gemini key)</span>
+        <input id="workerUrlInput" placeholder="https://jlpt-mock-exam-proxy.mominurislam.workers.dev" autocomplete="off" spellcheck="false" />
       </label>
       <label class="field"><span class="tiny muted">Gemini API key (stored on this device only)</span>
         <input id="apiKeyInput" type="password" placeholder="AIza…" autocomplete="off" spellcheck="false" />
@@ -278,6 +278,7 @@
       <div class="row">
         <button type="button" class="btn btn-sm" id="saveApiBtn">Save</button>
         <button type="button" class="btn btn-sm btn-ghost" id="clearApiBtn">Clear key</button>
+        <button type="button" class="btn btn-sm btn-ghost" id="resetRelayBtn">Use built-in relay</button>
       </div>
       <p class="note">Used only when the question source is “AI generated”. A worker URL keeps the key off this device; a direct key is sent straight to Google.</p>
     </div>
