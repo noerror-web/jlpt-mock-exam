@@ -261,7 +261,7 @@
 
   function renderSetup() {
     byId("heroLevel").textContent = state.settings.level;
-    byId("heroCount").textContent = String(L.loadBank(state.settings.level).length);
+    byId("heroCount").textContent = L.loadBank(state.settings.level).length.toLocaleString();
     renderStats();
     renderSectionStats();
     renderBankProgress();
