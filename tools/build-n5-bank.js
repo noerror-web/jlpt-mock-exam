@@ -73,6 +73,54 @@ const N5_KANJI = new Set(
 );
 const n5KanjiOnly = (s) => Array.from(String(s)).every((c) => !hasKanji(c) || N5_KANJI.has(c));
 
+/* ---------------------------------------------------------- kana-only prose */
+
+/* 文法 and 読解 are not kanji questions, so words written with kanji outside
+   the N5 set are shown in hiragana there, the way an N5 paper writes them. */
+const INSTRUCTION_KANA = [
+  ["否定のた形", "ひていのたけい"], ["否定形", "ひていけい"],
+  ["て形", "てけい"], ["ない形", "ないけい"], ["た形", "たけい"], ["ます形", "ますけい"],
+  ["読み方", "よみかた"], ["並べた", "ならべた"], ["言葉", "ことば"],
+  ["意味", "いみ"], ["漢字", "かんじ"], ["形", "かたち"], ["次", "つぎ"]
+];
+/* words the sentence generators use that are not in the vocabulary pool */
+const EXTRA_KANA = [
+  ["東京", "とうきょう"], ["京都", "きょうと"], ["田中", "たなか"],
+  ["料理", "りょうり"], ["英語", "えいご"], ["近く", "ちかく"],
+  ["登りました", "のぼりました"], ["降りました", "ふりました"],
+  ["作りました", "つくりました"], ["考えました", "かんがえました"], ["起きました", "おきました"],
+  ["十八歳", "じゅうはっさい"], ["三冊", "さんさつ"], ["何枚", "なんまい"],
+  ["何冊", "なんさつ"], ["何歳", "なんさい"], ["一杯", "いっぱい"],
+  ["箸", "はし"], ["鍵", "かぎ"]
+];
+const KANA_MAP = new Map();
+let KANA_KEYS = [];
+
+function addKana(kanji, kana) {
+  if (kanji && kana && kanji !== kana && !n5KanjiOnly(kanji)) KANA_MAP.set(kanji, kana);
+}
+
+function kanaize(text) {
+  let out = String(text || "");
+  INSTRUCTION_KANA.forEach(([kanji, kana]) => { out = out.split(kanji).join(kana); });
+  EXTRA_KANA.forEach(([kanji, kana]) => { out = out.split(kanji).join(kana); });
+  for (const key of KANA_KEYS) if (out.includes(key)) out = out.split(key).join(KANA_MAP.get(key));
+  return out;
+}
+
+/* 文字・語彙 prompts quote the word under test in 「」; only the instruction
+   around the quotes may be rewritten, never the word itself. */
+function instructionOnly(text) {
+  return String(text || "").split(/(「[^」]*」)/)
+    .map((seg, i) => {
+      if (i % 2) return seg;
+      let out = seg;
+      INSTRUCTION_KANA.forEach(([kanji, kana]) => { out = out.split(kanji).join(kana); });
+      return out;
+    })
+    .join("");
+}
+
 /* ------------------------------------------------------------- conjugation */
 
 const GODAN = {
@@ -191,10 +239,34 @@ const RULES = {
 
 const questions = [];
 const seenPrompts = new Set();
+/* prompts the served N5 banks and the N4 bank already use, in the same
+   normalised form the validator compares; a generated item that would repeat
+   one is skipped. */
+const reservedPrompts = new Set();
+
+function promptKey(q) {
+  const star = q.starData && Array.isArray(q.starData.ordered)
+    ? "|" + (q.starData.before || "") + (q.starData.after || "") + q.starData.ordered.join("") : "";
+  return ((q.passage ? q.passage + "|" : "") + (typeof q.prompt === "string" ? q.prompt : "") + star)
+    .replace(/\s+/g, "");
+}
 
 function push(q) {
-  const key = (q.passage || "") + "|" + q.prompt;
+  if (/^(文法|読解)/.test(q.section)) {
+    q.prompt = kanaize(q.prompt);
+    if (q.passage) q.passage = kanaize(q.passage);
+    if (q.options) q.options = q.options.map(kanaize);
+    if (q.starData) {
+      q.starData.before = kanaize(q.starData.before);
+      q.starData.after = kanaize(q.starData.after);
+      q.starData.ordered = q.starData.ordered.map(kanaize);
+    }
+  } else {
+    q.prompt = instructionOnly(q.prompt);
+  }
+  const key = promptKey(q);
   if (seenPrompts.has(key)) return false;
+  if (reservedPrompts.has(key)) return false;
   seenPrompts.add(key);
   questions.push(q);
   return true;
@@ -305,21 +377,22 @@ function wrongForms(v, form, correct) {
 }
 
 function verbItem(v, form) {
-  const f = conj(v);
+  const src = v.kanaVerb || v;
+  const f = conj(src);
   const correct = f[form];
-  const wrongs = wrongForms(v, form, correct);
+  const wrongs = wrongForms(src, form, correct);
   const options = uniq([correct].concat(wrongs)).slice(0, 4);
   if (options.length !== 4) return;
   push({
     section: "文法 (N5 Grammar)",
     subtype: "問題5：動詞の形 (Verb Forms)",
     lesson: LESSON,
-    prompt: "「" + v.masu + "」の「" + FORM_NAME[form] + "」は　どれですか。",
+    prompt: "「" + src.masu + "」の「" + FORM_NAME[form] + "」は　どれですか。",
     options,
     answer: 0,
     kana: correct,
-    exp_en: "「" + v.masu + "」 (" + v.meaning + ") → " + FORM_NAME[form] + " 「" + correct + "」.",
-    exp_bn: "「" + v.masu + "」-এর " + BN_FORM[form] + " হলো 「" + correct + "」。"
+    exp_en: "「" + src.masu + "」 (" + v.meaning + ") → " + FORM_NAME[form] + " 「" + correct + "」.",
+    exp_bn: "「" + src.masu + "」-এর " + BN_FORM[form] + " হলো 「" + correct + "」。"
   });
 }
 
@@ -335,7 +408,7 @@ const NADJ_FORM = {
 };
 
 function iAdjItem(entry, form) {
-  const s = entry.word;
+  const s = n5KanjiOnly(entry.word) || !entry.reading ? entry.word : entry.reading;
   if (!/い$/.test(s)) return;
   const stem = s.slice(0, -1);
   const forms = {
@@ -359,7 +432,7 @@ function iAdjItem(entry, form) {
 }
 
 function naAdjItem(entry, form) {
-  const s = entry.word;
+  const s = n5KanjiOnly(entry.word) || !entry.reading ? entry.word : entry.reading;
   const forms = {
     neg: [s + "じゃない", s + "くない", s + "かない", s + "だじゃない"],
     past: [s + "だった", s + "かった", s + "だだった", s + "だったです"],
@@ -486,6 +559,47 @@ function readingItems() {
 const pool = parseWords();
 const verbList = parseVerbs();
 const wordPool = pool.concat(verbList.map((v) => ({ word: v.dict, reading: v.reading, meaning: v.meaning, pos: "v" })));
+
+wordPool.forEach((w) => addKana(w.word, w.reading));
+wordPool.filter((w) => w.reading && !n5KanjiOnly(w.word)).forEach((w) => {
+  if (w.pos === "i") {
+    const ks = w.word.slice(0, -1);
+    const rs = w.reading.slice(0, -1);
+    ["くない", "かった", "くなかった"].forEach((suffix) => addKana(ks + suffix, rs + suffix));
+  } else if (w.pos === "na") {
+    ["じゃない", "だった", "じゃなかった"].forEach((suffix) => addKana(w.word + suffix, w.reading + suffix));
+  }
+});
+verbList.forEach((v) => {
+  if (n5KanjiOnly(v.dict)) return;
+  if (v.group === 3) { addKana(v.dict, v.reading); return; }
+  const kanaMasu = v.reading.slice(0, -1) + "ます";
+  const kanaVerb = { dict: v.reading, masu: kanaMasu, group: v.group };
+  v.kanaVerb = kanaVerb;
+  const forms = conj(v);
+  const kanaForms = conj(kanaVerb);
+  addKana(v.masu, kanaMasu);
+  ["te", "ta", "nai", "masu"].forEach((form) => addKana(forms[form], kanaForms[form]));
+});
+counters.counters.forEach((counter) => {
+  if (n5KanjiOnly(counter.kanji)) return;
+  Object.entries(counter.readings || {}).forEach(([numeral, kana]) => addKana(numeral + counter.kanji, kana));
+});
+KANA_KEYS = [...KANA_MAP.keys()].sort((a, b) => b.length - a.length);
+
+["bank-n5.js", "bank-n5-past.js", "bank-n5-2021-12.js", "bank-n5-web.js", "bank-n4.js"].forEach((file) => {
+  try {
+    const source = fs.readFileSync(path.join(ROOT, "js", "data", file), "utf8");
+    const holder = {};
+    new Function("window", source)(holder);
+    Object.values((holder.JLPT_BANKS) || {}).forEach((list) => {
+      if (!Array.isArray(list)) return;
+      list.forEach((q) => { if (q && typeof q.prompt === "string") reservedPrompts.add(promptKey(q)); });
+    });
+  } catch (e) {
+    /* bank not on disk: nothing to avoid */
+  }
+});
 
 const groups = {
   kanji_reading: [],

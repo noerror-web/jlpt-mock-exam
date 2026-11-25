@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "6.9.5";
+  const VERSION = "6.9.6";
   const STORE = {
     settings: "jlpt6.settings",
     exam: "jlpt6.exam",
