@@ -294,11 +294,14 @@
       <label class="field"><span class="tiny muted">Relay URL (pre-filled with your worker)</span>
         <input id="tgUrlInput" placeholder="https://jlpt-mock-exam-proxy.mominurislam.workers.dev/api/telegram" autocomplete="off" spellcheck="false" />
       </label>
+      <div class="toggle-row">
+        <label class="switch"><input type="checkbox" id="tgAutoToggle" checked /><span>Auto-send results</span></label>
+      </div>
       <div class="row">
         <button type="button" class="btn btn-sm" id="saveTgBtn">Save</button>
         <button type="button" class="btn btn-sm btn-ghost" id="testTgBtn">Send test</button>
       </div>
-      <p class="note">The worker holds the bot token and your chat ID as secrets and only ever sends to you, so nobody else can use your bot. Press “Send to Telegram” on the results screen to push a score.</p>
+      <p class="note">The worker holds the bot token and your chat ID as secrets and only ever sends to you, so nobody else can use your bot. With auto-send on, every scored paper is pushed to Telegram the moment it ends — no button needed. Turn it off to send by hand from the results screen.</p>
     </div>
 
     <div class="group">

@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "6.7.3";
+  const VERSION = "6.7.4";
   const STORE = {
     settings: "jlpt6.settings",
     exam: "jlpt6.exam",
@@ -39,7 +39,7 @@
     count: 20, timer: 15, layout: "focus", furigana: true, autoAdvance: false,
     study: false, lang: "both", theme: "auto",
     workerUrl: "https://jlpt-mock-exam-proxy.mominurislam.workers.dev", apiKey: "", relayDefault: true,
-    telegramUrl: "https://jlpt-mock-exam-proxy.mominurislam.workers.dev/api/telegram"
+    telegramUrl: "https://jlpt-mock-exam-proxy.mominurislam.workers.dev/api/telegram", autoTelegram: true
   };
 
   /* ---------------------------------------------------------------- utils */

@@ -687,6 +687,7 @@
     renderResults();
     if (result.pass) confetti();
     toast(result.pass ? "Passed — well done." : "Scored. Review the answers below.");
+    autoSendResult();
   }
 
   function quitExam() {
@@ -754,6 +755,16 @@
     return lines.join("\n");
   }
 
+  async function postTelegram(url, text) {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: text })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) throw new Error(data.error || "HTTP " + res.status);
+  }
+
   async function telegramSend(text) {
     const url = (state.settings.telegramUrl || "").trim();
     if (!/^https:\/\//.test(url)) {
@@ -762,13 +773,7 @@
       return false;
     }
     try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: text })
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.ok) throw new Error(data.error || "HTTP " + res.status);
+      await postTelegram(url, text);
       return true;
     } catch (err) {
       toast("Telegram failed: " + err.message, true);
@@ -780,6 +785,19 @@
     const text = resultSummary();
     if (!text) return;
     if (await telegramSend(text)) toast("Result sent to Telegram");
+  }
+
+  async function autoSendResult() {
+    if (state.settings.autoTelegram === false) return;
+    const text = resultSummary();
+    if (!text) return;
+    const url = (state.settings.telegramUrl || "").trim();
+    if (!/^https:\/\//.test(url)) return;
+    try {
+      await postTelegram(url, text);
+    } catch (err) {
+      toast("Result not sent to Telegram: " + err.message, true);
+    }
   }
 
   function copyResult() {
@@ -1240,6 +1258,7 @@
     byId("workerUrlInput").value = state.settings.workerUrl || "";
     byId("apiKeyInput").value = state.settings.apiKey || "";
     byId("tgUrlInput").value = state.settings.telegramUrl || "";
+    byId("tgAutoToggle").checked = state.settings.autoTelegram !== false;
     byId("appVersion").textContent = L.VERSION;
     byId("drawer").hidden = false;
     byId("drawerBackdrop").hidden = false;
@@ -1259,8 +1278,9 @@
 
   function saveTelegramSettings() {
     state.settings.telegramUrl = byId("tgUrlInput").value.trim();
+    state.settings.autoTelegram = byId("tgAutoToggle").checked;
     L.saveSettings();
-    toast("Telegram relay URL saved.");
+    toast(state.settings.autoTelegram ? "Telegram saved — results auto-send after each exam." : "Telegram saved — send results by hand.");
   }
 
   async function testTelegram() {
@@ -1502,6 +1522,11 @@
     });
     byId("saveTgBtn").addEventListener("click", saveTelegramSettings);
     byId("testTgBtn").addEventListener("click", testTelegram);
+    byId("tgAutoToggle").addEventListener("change", () => {
+      state.settings.autoTelegram = byId("tgAutoToggle").checked;
+      L.saveSettings();
+      toast(state.settings.autoTelegram ? "Results will auto-send after each exam." : "Auto-send off — send results by hand.");
+    });
     byId("clearDataBtn").addEventListener("click", clearAllData);
 
     $$("[data-close-dialog]").forEach((btn) => btn.addEventListener("click", () => btn.closest("dialog").close()));
