@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "6.9.1";
+  const VERSION = "6.9.2";
   const STORE = {
     settings: "jlpt6.settings",
     exam: "jlpt6.exam",
@@ -223,7 +223,7 @@
   // unambiguous. The wrapper is stripped again when hashing ids, so a question
   // keeps one id before and after it is decorated.
   const KANJI_RE = /[\u4e00-\u9fff]/;
-  const KATA_RE = /[\u30a0-\u30ff]/;
+  const KATA_RE = /[\u30a1-\u30fa]/;
   const INSTRUCTION_FORMS = [
     /^「([^」]+)」の読み方はどれですか。$/,
     /^「([^」]+)」を漢字で書くとどれですか。$/,
@@ -251,7 +251,7 @@
     // screen says what is being asked, so the task is spelled out from the script
     // of the stem and of the options. A （　） blank is already a clear task.
     if (/[。？]/.test(core)) {
-      if (core.indexOf("（") !== -1 || /[<>]/.test(core)) return core;
+      if (core.indexOf("（") !== -1 || /_{2,}|＿/.test(core) || /[<>]/.test(core)) return core;
       // A stem that already asks a question of its own must not be given a second one.
       if (/何|なに|なん|どこ|だれ|誰|いつ|どう|どんな|ですか。/.test(core)) return core;
       if (options.every((o) => /[。？]$/.test(o))) return core + " この文と同じ意味の文はどれですか。";
