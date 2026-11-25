@@ -74,7 +74,7 @@ function checkBank(name, questions, errors) {
 const errors = [];
 const largeOnly = loadBank("js/data/bank-n5-large.js");
 const large = checkBank("N5-large", largeOnly.N5, errors);
-if (large !== 2000) errors.push(`N5-large: expected 2000 questions, found ${large}`);
+if (large < 1200 || large > 2000) errors.push(`N5-large: expected 1200-2000 questions, found ${large}`);
 
 const banks = loadBank(["js/data/bank-n5.js", "js/data/bank-n5-large.js", "js/data/bank-n5-past.js", "js/data/bank-n5-2021-12.js", "js/data/bank-n5-web.js"]);
 const n5 = checkBank("N5", banks.N5, errors);

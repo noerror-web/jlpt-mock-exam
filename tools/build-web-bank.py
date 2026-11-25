@@ -22,6 +22,21 @@ SEC_VOCAB = "文字・語彙 (N5 Vocabulary & Kanji)"
 SEC_GRAM = "文法 (N5 Grammar)"
 SEC_READ = "読解 (N5 Reading)"
 
+# The ~100-kanji set N5 papers are built on (103-kanji reconstruction). Scraped
+# sites call items N5 even when a 表記 answer or distractor uses a harder kanji,
+# so 漢字読み/表記 items are checked against this set and dropped when off-level.
+N5_KANJI = set(
+    "一二三四五六七八九十百千万円年月日時分今週毎午前後半"
+    "上中下外左右東西南北大小高安長新古多少本語人名国"
+    "山川空花木雨火水土金白電気車駅店学校先生友父母子男女"
+    "行来見食飲聞話読書入出買休会何口天手目社立耳言足道間魚"
+)
+KANJI_RE = re.compile(r"[\u4e00-\u9fff]")
+
+
+def n5_kanji_only(text):
+    return all(ch in N5_KANJI for ch in str(text or "") if KANJI_RE.match(ch))
+
 NIHONEZ_SUBTYPE = {
     "kanji-reading": "問題1 漢字読み",
     "orthography": "問題2 表記",
@@ -159,7 +174,16 @@ def valid(item):
     return 0 <= item["answer"] < 4
 
 
+def reading_target(prompt):
+    m = re.search(r"「(.+?)」", prompt) or re.search(r"<u>(.+?)</u>", prompt)
+    return m.group(1) if m else prompt
+
+
 def add(items, section, subtype, prompt, options, answer, exp_en, source, passage=""):
+    if "漢字読み" in subtype and not n5_kanji_only(reading_target(prompt)):
+        return
+    if "表記" in subtype and not n5_kanji_only(options[int(answer)]):
+        return
     item = {"section": section, "subtype": subtype, "lesson": "", "prompt": prompt,
             "options": options, "answer": int(answer), "kana": "",
             "exp_en": exp_en, "exp_bn": "", "source": source}

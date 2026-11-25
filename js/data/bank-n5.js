@@ -81,28 +81,6 @@ window.JLPT_BANKS.N5 = [
     {
       section: "文字・語彙 (N5 Vocabulary & Kanji)",
       subtype: "問題2：表記 (Orthography)",
-      lesson: "L13-25",
-      prompt: "こうえんで　しゃしんを　<u>とり</u>ました。",
-      options: ["撮り", "通り", "取り", "借り"],
-      answer: 0,
-      kana: "こうえんで しゃしんを とりました。",
-      exp_en: "To take a photograph is written with the kanji 「撮る」 (しゃしんを撮る).",
-      exp_bn: "ছবি তোলার ক্ষেত্রে 「撮る」 (撮りました) কাঞ্জি ব্যবহার করা হয়।"
-    },
-    {
-      section: "文字・語彙 (N5 Vocabulary & Kanji)",
-      subtype: "問題2：表記 (Orthography)",
-      lesson: "L1-12",
-      prompt: "まいあさ　6じに　<u>おき</u>ます。",
-      options: ["起き", "行き", "歩き", "聞き"],
-      answer: 0,
-      kana: "まいあさ 6じに おきます。",
-      exp_en: "「おきます」 (to wake up) is written as 「起きます」 in kanji.",
-      exp_bn: "ঘুম থেকে ওঠা বা জাগ্রত হওয়া অর্থে 「起きる」 (起きます) কাঞ্জি বসে।"
-    },
-    {
-      section: "文字・語彙 (N5 Vocabulary & Kanji)",
-      subtype: "問題2：表記 (Orthography)",
       lesson: "L1-12",
       prompt: "つめたい　<u>みず</u>を　のみたいです。",
       options: ["水", "木", "金", "火"],
@@ -393,10 +371,10 @@ window.JLPT_BANKS.N5 = [
       section: "文字・語彙 (N5 Vocabulary & Kanji)",
       subtype: "問題1：漢字読み",
       lesson: "L1-12",
-      prompt: "<u>白</u>い　シャツを　着ています。",
+      prompt: "<u>白</u>い　セーターを　きました。",
       options: ["しろ", "あか", "くろ", "あお"],
       answer: 0,
-      kana: "しろい シャツを きています。",
+      kana: "しろい セーターを きました。",
       exp_en: "「白い」 is read 「しろい」 (white).",
       exp_bn: "「白い」-এর উচ্চারণ 「しろい」 (সাদা)।"
     },
