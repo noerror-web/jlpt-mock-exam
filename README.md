@@ -31,8 +31,15 @@ Open `index.html` from a local web server, or use the hosted copy on GitHub Page
   and it clears. Flashcards work from the mistake bank or the full level bank.
 - **Study tools** — furigana toggle, read-aloud, a kanji popover (kanjiapi), and printable
   papers with an answer key.
-- **Question sources** — offline bank (default), live kanji/vocabulary APIs, or
-  AI-generated questions through Gemini (direct key or your own proxy URL).
+- **Question sources** — smart bank (default; 3,693 N5 and 40 N4 questions: 2,000
+  machine-generated plus 1,693 hand-written, past-paper and scraped items), live
+  kanji/vocabulary APIs, or AI-generated questions through Gemini (direct key or your own
+  proxy URL).
+- **Never the same question twice** — finishing a paper marks its questions done, and the
+  next paper takes only unseen ones, topping up from other sections when one runs dry.
+  The setup screen shows how much of the pool is left, split into generated and bank
+  questions. Once the whole pool is spent, papers recycle the questions answered longest
+  ago, so no paper ever runs dry.
 - **Fresh AI papers** — Gemini writes a new N5 or N4 paper on request. The prompt pins the
   level (no N3+ grammar, vocabulary or kanji), demands JLPT exam wording and section mix,
   and rejects any item tagged for another level. Generated questions are remembered per
@@ -50,6 +57,10 @@ assets/styles.css          design system, light and dark themes
 js/core.js                 data model, question generation, grading, persistence
 js/app.js                  setup, exam UI, timer, results, drills, flashcards, tools
 js/data/bank-n5.js         N5 question bank
+js/data/bank-n5-large.js   2,000 generated N5 questions (tagged origin: generated)
+js/data/bank-n5-past.js    N5 questions from the 2024.7 past paper
+js/data/bank-n5-2021-12.js N5 questions from the 2021.12 and 2017.7 past papers
+js/data/bank-n5-web.js     N5 items scraped from public practice sites
 js/data/bank-n4.js         N4 question bank
 js/data/furigana.js        kanji reading pairs for ruby annotations
 js/data/kanji-readings.js  offline fallback readings for the kanji popover

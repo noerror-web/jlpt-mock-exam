@@ -203,6 +203,31 @@
     });
   }
 
+  // How much of the offline pool this level has used, split by where questions came from.
+  function renderBankProgress() {
+    const slot = byId("bankProgress");
+    if (!slot) return;
+    slot.innerHTML = "";
+    const level = state.settings.level;
+    const p = L.bankProgress(level);
+    if (!p.total) return;
+    const pct = Math.round((p.done / p.total) * 100);
+    const row = el("div", "sbar");
+    row.append(el("span", "name", level + " question pool"));
+    row.append(el("span", "val", p.done.toLocaleString() + " of " + p.total.toLocaleString() + " done"));
+    const track = el("div", "track");
+    const fill = el("div", "fill");
+    fill.style.width = pct + "%";
+    track.append(fill);
+    row.append(track);
+    slot.append(row);
+    const mix = p.generated.toLocaleString() + " generated · " + p.bank.toLocaleString() + " from the question bank";
+    const left = p.fresh
+      ? p.fresh.toLocaleString() + " unseen questions left; each new paper takes only unseen ones."
+      : "Every question has been done — papers now recycle the oldest first.";
+    slot.append(el("p", "muted tiny", left + " (" + mix + ")"));
+  }
+
   function renderBadges() {
     const count = Object.keys(state.mistakes).length;
     byId("mistakeBadge").textContent = String(count);
@@ -239,6 +264,7 @@
     byId("heroCount").textContent = String(L.loadBank(state.settings.level).length);
     renderStats();
     renderSectionStats();
+    renderBankProgress();
     renderBadges();
     renderResume();
     syncLevelButtons();
@@ -676,6 +702,15 @@
 
   /* ---------------------------------------------------------------- results */
 
+  function originMix(origins) {
+    if (!origins) return "";
+    const bits = [];
+    if (origins.generated) bits.push(origins.generated + " generated");
+    if (origins.bank) bits.push(origins.bank + " from the bank");
+    if (origins.live) bits.push(origins.live + " live");
+    return bits.length > 1 ? "mix: " + bits.join(" · ") : "";
+  }
+
   function renderResults() {
     if (!state.lastResult) return;
     const exam = state.lastResult.exam;
@@ -695,6 +730,8 @@
     byId("resultsTitle").textContent = exam.level + " · " + (exam.source === "mistakes" ? "mistake drill" : exam.source === "gemini" ? "AI exam" : exam.source === "online" ? "live practice" : "mock exam");
     const parts = [result.correct + " of " + result.totalQ + " correct", "took " + L.fmtDuration(exam.elapsed)];
     if (exam.candidate) parts.push(exam.candidate);
+    const mix = originMix(result.origins);
+    if (mix) parts.push(mix);
     byId("resultsSub").textContent = parts.join(" · ") + " · pass mark " + result.passTotal + "/" + result.max;
 
     renderSectionBars(result);

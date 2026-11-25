@@ -4,14 +4,23 @@
 (function () {
   "use strict";
 
-  const VERSION = "6.6.3";
+  const VERSION = "6.7.0";
   const STORE = {
     settings: "jlpt6.settings",
     exam: "jlpt6.exam",
     mistakes: "jlpt6.mistakes",
     stats: "jlpt6.stats",
     generated: "jlpt6.generated",
-    served: "jlpt6.served"
+    served: "jlpt6.served",
+    done: "jlpt6.done"
+  };
+
+  // Where a question came from. "generated" is the machine-built pool,
+  // "bank" is the curated / scraped / past-paper pool, "live" is a remote API.
+  const ORIGIN_META = {
+    generated: { label: "Generated", en: "generated pool" },
+    bank: { label: "Bank", en: "question bank" },
+    live: { label: "Live", en: "live API" }
   };
 
   const SECTION_META = {
@@ -184,7 +193,8 @@
   function saveStats() { writeJson(STORE.stats, state.stats); }
 
   function resetData() {
-    [STORE.settings, STORE.settings + ".key", STORE.exam, STORE.mistakes, STORE.stats].forEach((key) => {
+    [STORE.settings, STORE.settings + ".key", STORE.exam, STORE.mistakes, STORE.stats,
+      STORE.served, STORE.done, STORE.generated].forEach((key) => {
       try { localStorage.removeItem(key); } catch (err) { /* ignore */ }
     });
     state.settings = Object.assign({}, DEFAULT_SETTINGS);
@@ -254,6 +264,7 @@
       section: section,
       sectionLabel: rawSection && rawSection !== section ? rawSection : SECTION_META[section].label,
       subtype: String(raw.subtype || ""),
+      origin: ORIGIN_META[raw.origin] ? raw.origin : "bank",
       lesson: String(raw.lesson || ""),
       passage: String(raw.passage || ""),
       prompt: finalPrompt,
@@ -274,6 +285,24 @@
     const bank = raw.map((q) => normalizeQuestion(q, level)).filter(Boolean);
     bankCache[level] = bank;
     return bank;
+  }
+
+  // Pool coverage for the setup screen: what has been finished, what is still unseen.
+  function bankProgress(level) {
+    const list = loadBank(level);
+    const done = new Set(doneIds(level));
+    const out = { total: list.length, done: 0, fresh: 0, generated: 0, bank: 0, live: 0, generatedFresh: 0, bankFresh: 0 };
+    list.forEach((q) => {
+      const origin = q.origin || "bank";
+      out[origin] = (out[origin] || 0) + 1;
+      if (done.has(q.id)) out.done += 1;
+      else {
+        out.fresh += 1;
+        if (origin === "generated") out.generatedFresh += 1;
+        if (origin === "bank") out.bankFresh += 1;
+      }
+    });
+    return out;
   }
 
   /* ---------------------------------------------------------------- furigana */
@@ -359,15 +388,45 @@
 
   function rememberServed(level, picked) {
     const store = readJson(STORE.served, {});
-    store[level] = servedIds(level).concat(picked.map((q) => q.id)).slice(-1600);
+    store[level] = servedIds(level).concat(picked.map((q) => q.id)).slice(-8000);
     try { localStorage.setItem(STORE.served, JSON.stringify(store)); } catch (err) { /* storage full */ }
   }
 
-  // Unseen questions first, then the ones served longest ago.
+  // Questions finished in a graded exam, in completion order.
+  function doneIds(level) {
+    const store = readJson(STORE.done, {});
+    return Array.isArray(store[level]) ? store[level] : [];
+  }
+
+  function markDone(level, questions) {
+    const store = readJson(STORE.done, {});
+    const list = Array.isArray(store[level]) ? store[level] : [];
+    const have = new Set(list);
+    questions.forEach((q) => {
+      if (!q || !q.id || have.has(q.id)) return;
+      have.add(q.id);
+      list.push(q.id);
+    });
+    store[level] = list.slice(-20000);
+    try { localStorage.setItem(STORE.done, JSON.stringify(store)); } catch (err) { /* storage full */ }
+  }
+
+  // Never-seen questions first, then papers started but never finished, then the
+  // questions completed longest ago — so a paper only repeats once the pool is spent.
   function freshFirst(list, level) {
-    const seen = new Set(servedIds(level));
-    return shuffle(list.filter((q) => !seen.has(q.id)))
-      .concat(shuffle(list.filter((q) => seen.has(q.id))));
+    const done = doneIds(level);
+    const rank = new Map(done.map((id, i) => [id, i]));
+    const served = new Set(servedIds(level));
+    const fresh = [];
+    const started = [];
+    const recycled = [];
+    list.forEach((q) => {
+      if (rank.has(q.id)) recycled.push(q);
+      else if (served.has(q.id)) started.push(q);
+      else fresh.push(q);
+    });
+    recycled.sort((a, b) => rank.get(a.id) - rank.get(b.id));
+    return shuffle(fresh).concat(shuffle(started)).concat(recycled);
   }
 
   const SECTION_SPLIT = [["vocab", 0.4], ["grammar", 0.3], ["reading", 0.3]];
@@ -380,6 +439,11 @@
       lessonFits(q, opts.lesson));
     const pool = filtered.length ? filtered : all;
     const ordered = freshFirst(pool, opts.level);
+    // While the pool still holds enough unseen questions, build the paper from those
+    // alone — a section that ran dry is topped up from other sections, never repeated.
+    const done = new Set(doneIds(opts.level));
+    const fresh = ordered.filter((q) => !done.has(q.id));
+    const source = fresh.length >= opts.count ? fresh : ordered;
     const picked = [];
 
     // A whole paper keeps the JLPT mix: 40% vocabulary, 30% grammar, 30% reading.
@@ -388,13 +452,13 @@
       quota[quota.length - 1][1] += opts.count - quota.reduce((sum, pair) => sum + pair[1], 0);
       quota.forEach(([key, want]) => {
         const have = new Set(picked.map((q) => q.id));
-        ordered.filter((q) => q.section === key && !have.has(q.id)).slice(0, want).forEach((q) => picked.push(q));
+        source.filter((q) => q.section === key && !have.has(q.id)).slice(0, want).forEach((q) => picked.push(q));
       });
     }
 
     if (picked.length < opts.count) {
       const have = new Set(picked.map((q) => q.id));
-      ordered.forEach((q) => {
+      source.forEach((q) => {
         if (picked.length < opts.count && !have.has(q.id)) { picked.push(q); have.add(q.id); }
       });
     }
@@ -433,6 +497,7 @@
           section: "文字・語彙 (" + opts.level + " Vocabulary & Kanji)",
           subtype: "問題2：表記",
           lesson: "online",
+          origin: "live",
           prompt: "「" + w.word + "」の読み方は　どれですか。",
           options: options,
           answer: options.indexOf(w.furigana),
@@ -459,6 +524,7 @@
           section: "文字・語彙 (" + opts.level + " Vocabulary & Kanji)",
           subtype: "問題4：意味",
           lesson: "online",
+          origin: "live",
           prompt: "「" + d.kanji + "」の意味として　いちばん　いいものは　どれですか。",
           options: options,
           answer: options.indexOf(correct),
@@ -620,7 +686,7 @@
       const payload = await requestGemini(geminiPrompt(opts, avoid));
       payload.forEach((raw) => {
         if (collected.length >= wanted) return;
-        const q = normalizeQuestion(raw, level);
+        const q = normalizeQuestion(Object.assign({}, raw, { origin: raw.origin || "generated" }), level);
         if (!q) return;
         if (q.section === "reading" && !String(q.passage || "").trim()) return;
         const key = promptKey(q);
@@ -745,6 +811,8 @@
     const total = keys.reduce((sum, key) => sum + sections[key].points, 0);
     const passTotal = Math.round((max * (PASS_TOTAL[exam.level] || 80)) / 180);
     const correct = exam.questions.filter((q, i) => exam.answers[i] === q.answer).length;
+    const origins = { generated: 0, bank: 0, live: 0 };
+    exam.questions.forEach((q) => { origins[q.origin || "bank"] += 1; });
     return {
       sections: sections,
       keys: keys,
@@ -753,7 +821,8 @@
       passTotal: passTotal,
       pass: total >= passTotal && keys.every((key) => sections[key].ok),
       correct: correct,
-      totalQ: exam.questions.length
+      totalQ: exam.questions.length,
+      origins: origins
     };
   }
 
@@ -792,6 +861,7 @@
       bucket.correct += s.correct;
     });
     saveStats();
+    markDone(exam.level, exam.questions);
   }
 
   function streakCount() {
@@ -828,6 +898,7 @@
     VERSION: VERSION,
     STORE: STORE,
     SECTION_META: SECTION_META,
+    ORIGIN_META: ORIGIN_META,
     LESSONS: LESSONS,
     DEFAULT_SETTINGS: DEFAULT_SETTINGS,
     state: state,
@@ -852,6 +923,8 @@
     resetData: resetData,
     normalizeQuestion: normalizeQuestion,
     loadBank: loadBank,
+    bankProgress: bankProgress,
+    doneIds: doneIds,
     rich: rich,
     furiganize: furiganize,
     speak: speak,
