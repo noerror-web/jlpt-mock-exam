@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "6.7.1";
+  const VERSION = "6.7.2";
   const STORE = {
     settings: "jlpt6.settings",
     exam: "jlpt6.exam",
@@ -504,8 +504,9 @@
       lessonFits(q, opts.lesson));
     const pool = filtered.length ? filtered : all;
     const ordered = freshFirst(pool, opts.level);
-    // While the pool still holds enough unseen questions, build the paper from those
-    // alone — a section that ran dry is topped up from other sections, never repeated.
+    // Sections keep their shape: each quota is drawn from that section's own queue,
+    // which is unseen first and only repeats once that section has nothing unseen
+    // left. The rest of the paper is topped up from unseen questions elsewhere.
     const done = new Set(doneIds(opts.level));
     const fresh = ordered.filter((q) => !done.has(q.id));
     const source = fresh.length >= opts.count ? fresh : ordered;
@@ -513,11 +514,11 @@
 
     // A whole paper keeps the JLPT mix: 40% vocabulary, 30% grammar, 30% reading.
     if (opts.section === "all" && opts.count >= 10) {
-      const quota = SECTION_SPLIT.map(([key, share], i) => [key, Math.round(opts.count * share)]);
+      const quota = SECTION_SPLIT.map(([key, share]) => [key, Math.round(opts.count * share)]);
       quota[quota.length - 1][1] += opts.count - quota.reduce((sum, pair) => sum + pair[1], 0);
       quota.forEach(([key, want]) => {
         const have = new Set(picked.map((q) => q.id));
-        source.filter((q) => q.section === key && !have.has(q.id)).slice(0, want).forEach((q) => picked.push(q));
+        ordered.filter((q) => q.section === key && !have.has(q.id)).slice(0, want).forEach((q) => picked.push(q));
       });
     }
 

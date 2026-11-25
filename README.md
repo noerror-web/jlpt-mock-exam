@@ -36,10 +36,10 @@ Open `index.html` from a local web server, or use the hosted copy on GitHub Page
   kanji/vocabulary APIs, or AI-generated questions through Gemini (direct key or your own
   proxy URL).
 - **Never the same question twice** — finishing a paper marks its questions done, and the
-  next paper takes only unseen ones, topping up from other sections when one runs dry.
-  The setup screen shows how much of the pool is left, split into generated and bank
-  questions. Once the whole pool is spent, papers recycle the questions answered longest
-  ago, so no paper ever runs dry.
+  next paper takes unseen ones first, section by section, so a paper keeps its vocabulary,
+  grammar and reading share. A section only starts reusing questions once its own pool is
+  spent. The setup screen shows how much of the pool is left, split into generated and
+  bank questions. Once the whole pool is spent, papers recycle the oldest first.
 - **Fresh AI papers** — Gemini writes a new N5 or N4 paper on request. The prompt pins the
   level (no N3+ grammar, vocabulary or kanji), demands JLPT exam wording and section mix,
   and rejects any item tagged for another level. Generated questions are remembered per

@@ -223,7 +223,7 @@
     slot.append(row);
     const mix = p.generated.toLocaleString() + " generated · " + p.bank.toLocaleString() + " from the question bank";
     const left = p.fresh
-      ? p.fresh.toLocaleString() + " unseen questions left; each new paper takes only unseen ones."
+      ? p.fresh.toLocaleString() + " unseen questions left; papers take unseen first and only reuse a section once its own pool is empty."
       : "Every question has been done — papers now recycle the oldest first.";
     slot.append(el("p", "muted tiny", left + " (" + mix + ")"));
   }
