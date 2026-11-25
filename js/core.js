@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "6.7.4";
+  const VERSION = "6.8.0";
   const STORE = {
     settings: "jlpt6.settings",
     exam: "jlpt6.exam",
@@ -217,6 +217,32 @@
     return "vocab";
   }
 
+  // A bare kana stem with kanji options is an orthography item, and a bare kanji
+  // stem with kana options is a reading item; spelling out the task makes both
+  // unambiguous. The wrapper is stripped again when hashing ids, so a question
+  // keeps one id before and after it is decorated.
+  const KANJI_RE = /[\u4e00-\u9fff]/;
+  const INSTRUCTION_FORMS = [
+    /^「([^」]+)」の読み方はどれですか。$/,
+    /^「([^」]+)」を漢字で書くとどれですか。$/
+  ];
+
+  function promptCore(prompt) {
+    for (let i = 0; i < INSTRUCTION_FORMS.length; i++) {
+      const m = INSTRUCTION_FORMS[i].exec(prompt);
+      if (m) return m[1];
+    }
+    return prompt;
+  }
+
+  function decoratePrompt(core, options, section) {
+    if (section !== "vocab" || !core || /[。？]|「|」|どれですか|ください/.test(core)) return core;
+    const kanjiOptions = options.filter((o) => KANJI_RE.test(o)).length;
+    if (kanjiOptions >= 3 && !KANJI_RE.test(core)) return "「" + core + "」を漢字で書くとどれですか。";
+    if (kanjiOptions === 0 && KANJI_RE.test(core)) return "「" + core + "」の読み方はどれですか。";
+    return core;
+  }
+
   function normalizeQuestion(raw, level) {
     if (!raw || typeof raw !== "object") return null;
     // Level purity: a question tagged for another level is never accepted.
@@ -251,6 +277,7 @@
 
     const finalPrompt = prompt || (starData ? "次の言葉を並べたとき、★に入るものはどれですか。" : "");
     if (!finalPrompt) return null;
+    const core = promptCore(finalPrompt);
 
     // Stable option order per question, so the answer is not always option A
     // while ids and option order stay identical across reloads: sort first, then
@@ -258,14 +285,14 @@
     // question gives back the same ids and the same option order.
     const correctText = options[answer];
     const canonical = options.slice().sort();
-    const orderedOptions = seededShuffle(canonical, finalPrompt + "|" + canonical.join("|"));
+    const orderedOptions = seededShuffle(canonical, core + "|" + canonical.join("|"));
     answer = orderedOptions.indexOf(correctText);
     if (answer === -1) return null;
 
     const section = sectionKey(raw.section);
     const rawSection = String(raw.section || "");
     return {
-      id: "q" + hashString(section + "|" + finalPrompt + "|" + canonical.join("|") +
+      id: "q" + hashString(section + "|" + core + "|" + canonical.join("|") +
         (starData ? "|" + starData.before + starData.after : "")),
       level: level || state.settings.level,
       section: section,
@@ -274,7 +301,7 @@
       origin: ORIGIN_META[raw.origin] ? raw.origin : "bank",
       lesson: String(raw.lesson || ""),
       passage: String(raw.passage || ""),
-      prompt: finalPrompt,
+      prompt: decoratePrompt(core, canonical, section),
       kana: String(raw.kana || ""),
       options: orderedOptions,
       answer: answer,

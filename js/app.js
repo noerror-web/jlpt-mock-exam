@@ -725,7 +725,11 @@
     byId("scoreLabel").textContent = "/ " + result.max;
 
     const verdict = byId("verdict");
-    verdict.textContent = result.pass ? "Pass" : "Below pass mark";
+    const failed = result.keys.filter((key) => !result.sections[key].ok);
+    const failedNames = failed.map((key) => L.SECTION_META[key].en);
+    verdict.textContent = result.pass ? "Pass"
+      : failedNames.length ? "Below pass mark — " + failedNames.join(", ") + " under the minimum"
+      : "Below pass mark";
     verdict.className = "verdict " + (result.pass ? "pass" : "fail");
 
     byId("resultsTitle").textContent = exam.level + " · " + (exam.source === "mistakes" ? "mistake drill" : exam.source === "gemini" ? "AI exam" : exam.source === "online" ? "live practice" : "mock exam");
@@ -733,11 +737,13 @@
     if (exam.candidate) parts.push(exam.candidate);
     const mix = originMix(result.origins);
     if (mix) parts.push(mix);
-    byId("resultsSub").textContent = parts.join(" · ") + " · pass mark " + result.passTotal + "/" + result.max;
+    byId("resultsSub").textContent = parts.join(" · ") + " · pass mark " + result.passTotal + "/" + result.max +
+      " · each section needs " + (result.keys.length ? result.sections[result.keys[0]].min : 0) + "/60";
 
     renderSectionBars(result);
     renderReview();
     byId("reviewWrongBtn").disabled = result.correct === result.totalQ;
+    syncTelegramButton();
   }
 
   function resultSummary() {
@@ -752,7 +758,17 @@
       const s = result.sections[key];
       lines.push(L.SECTION_META[key].en + ": " + s.correct + "/" + s.total);
     });
+    lines.push("#JLPT " + exam.level + " " + result.total + "/" + result.max + " " + (result.pass ? "PASS" : "FAIL") +
+      " " + result.keys.map((key) => key + "=" + result.sections[key].points).join(" "));
     return lines.join("\n");
+  }
+
+  function syncTelegramButton() {
+    const btn = byId("telegramBtn");
+    if (!btn) return;
+    const sent = !!(state.lastResult && state.lastResult.sent);
+    btn.textContent = sent ? "Sent to Telegram" : "Send to Telegram";
+    btn.disabled = sent;
   }
 
   async function postTelegram(url, text) {
@@ -784,7 +800,12 @@
   async function sendResultTelegram() {
     const text = resultSummary();
     if (!text) return;
-    if (await telegramSend(text)) toast("Result sent to Telegram");
+    if (state.lastResult.sent) { toast("Already sent to Telegram."); return; }
+    if (await telegramSend(text)) {
+      state.lastResult.sent = true;
+      syncTelegramButton();
+      toast("Result sent to Telegram");
+    }
   }
 
   async function autoSendResult() {
@@ -795,6 +816,8 @@
     if (!/^https:\/\//.test(url)) return;
     try {
       await postTelegram(url, text);
+      state.lastResult.sent = true;
+      syncTelegramButton();
     } catch (err) {
       toast("Result not sent to Telegram: " + err.message, true);
     }
@@ -828,12 +851,14 @@
   function renderSectionBars(result) {
     const wrap = byId("sectionBars");
     wrap.innerHTML = "";
+    const min = result.keys.length ? result.sections[result.keys[0]].min : 0;
     result.keys.forEach((key) => {
       const s = result.sections[key];
       const meta = L.SECTION_META[key];
       const row = el("div", "sbar" + (s.ok ? "" : " low"));
       const name = el("span", "name", meta.label + " · " + meta.en);
-      const val = el("span", "val", s.correct + " of " + s.total + " correct · " + s.points + " pts");
+      const val = el("span", "val", s.correct + " of " + s.total + " correct · " + s.points + " pts" +
+        (s.ok ? "" : " · under the " + min + "-point minimum"));
       const track = el("div", "track");
       const fill = el("div", "fill");
       fill.style.width = Math.round((s.points / 60) * 100) + "%";

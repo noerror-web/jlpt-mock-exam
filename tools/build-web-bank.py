@@ -159,10 +159,12 @@ def valid(item):
     return 0 <= item["answer"] < 4
 
 
-def add(items, section, subtype, prompt, options, answer, exp_en, source):
+def add(items, section, subtype, prompt, options, answer, exp_en, source, passage=""):
     item = {"section": section, "subtype": subtype, "lesson": "", "prompt": prompt,
             "options": options, "answer": int(answer), "kana": "",
             "exp_en": exp_en, "exp_bn": "", "source": source}
+    if passage:
+        item["passage"] = passage
     if valid(item):
         items.append(item)
 
@@ -195,9 +197,16 @@ def from_nihonez(items):
 def from_quizzes(items):
     for f in sorted(glob.glob(os.path.join(ROOT, "cache", "web", "minnanihongo", "*", "*.json"))):
         cat = os.path.basename(os.path.dirname(f))
-        if cat == "listening":
-            continue
         d = json.load(open(f))
+        # One vocabulary quiz is filed under reading/ on the site; the title is
+        # the reliable label, so prefer it when it names a different skill.
+        title = (d.get("meta") or {}).get("title", "")
+        for name in ("Vocabulary", "Kanji", "Grammar", "Reading"):
+            if re.search(name, title, re.I):
+                cat = name.lower()
+                break
+        if cat == "listening" or cat not in QUIZ_SUBTYPE:
+            continue
         sec, subtype = QUIZ_SUBTYPE[cat]
         sec_label = {"vocabulary": SEC_VOCAB, "reading": SEC_READ}.get(sec, SEC_GRAM)
         for q in d.get("questions", []):
@@ -238,8 +247,16 @@ def from_jt4y(items):
         exp = "The answer is 「%s」." % q["options"][q["answer"]]
         if q.get("answer_text") and norm(q["answer_text"]) != norm(q["options"][q["answer"]]):
             exp += " (answer key: %s)" % q["answer_text"]
-        add(items, q["section"], q["subtype"], stem, q["options"], q["answer"], exp,
-            "japanesetest4you.com · " + q["url"].rsplit("/", 1)[-1])
+        slug = q["url"].rsplit("/", 1)[-1]
+        # The scraped file tags every jt4y item 文法・読解, which sectionKey reads
+        # as reading; the page name says which skill the exercise really tests.
+        section = q["section"]
+        if re.search(r"reading-exercise", slug):
+            section = SEC_READ
+        elif re.search(r"(grammar|vocabulary|kanji)-exercise", slug):
+            section = SEC_GRAM if "grammar" in slug else SEC_VOCAB
+        add(items, section, q["subtype"], stem, q["options"], q["answer"], exp,
+            "japanesetest4you.com · " + slug, q.get("passage", ""))
 
 
 def bank_prompts():
