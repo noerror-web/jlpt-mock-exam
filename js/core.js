@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "6.9.0";
+  const VERSION = "6.9.1";
   const STORE = {
     settings: "jlpt6.settings",
     exam: "jlpt6.exam",
@@ -223,9 +223,15 @@
   // unambiguous. The wrapper is stripped again when hashing ids, so a question
   // keeps one id before and after it is decorated.
   const KANJI_RE = /[\u4e00-\u9fff]/;
+  const KATA_RE = /[\u30a0-\u30ff]/;
   const INSTRUCTION_FORMS = [
     /^「([^」]+)」の読み方はどれですか。$/,
-    /^「([^」]+)」を漢字で書くとどれですか。$/
+    /^「([^」]+)」を漢字で書くとどれですか。$/,
+    /^「([^」]+)」をカタカナで書くとどれですか。$/,
+    /^(.*[。？])\s*この文を漢字で書くとどれですか。$/,
+    /^(.*[。？])\s*この文の読み方はどれですか。$/,
+    /^(.*[。？])\s*この文と同じ意味の文はどれですか。$/,
+    /^(.*[。？])\s*この文をカタカナで書くとどれですか。$/
   ];
 
   function promptCore(prompt) {
@@ -237,10 +243,30 @@
   }
 
   function decoratePrompt(core, options, section) {
-    if (section !== "vocab" || !core || /[。？]|「|」|どれですか|ください/.test(core)) return core;
+    if (section !== "vocab" || !core) return core;
+    if (/「|」|どれですか|ください/.test(core)) return core;
     const kanjiOptions = options.filter((o) => KANJI_RE.test(o)).length;
+    const katakanaOptions = options.filter((o) => KATA_RE.test(o)).length;
+    // Whole-sentence stems carry the same ambiguity as bare words: nothing on
+    // screen says what is being asked, so the task is spelled out from the script
+    // of the stem and of the options. A （　） blank is already a clear task.
+    if (/[。？]/.test(core)) {
+      if (core.indexOf("（") !== -1 || /[<>]/.test(core)) return core;
+      // A stem that already asks a question of its own must not be given a second one.
+      if (/何|なに|なん|どこ|だれ|誰|いつ|どう|どんな|ですか。/.test(core)) return core;
+      if (options.every((o) => /[。？]$/.test(o))) return core + " この文と同じ意味の文はどれですか。";
+      if (kanjiOptions >= 3 && !KANJI_RE.test(core)) {
+        // Options that are single kanji cannot stand for the whole sentence.
+        if (options.every((o) => o.length === 1)) return core;
+        return core + " この文を漢字で書くとどれですか。";
+      }
+      if (kanjiOptions === 0 && KANJI_RE.test(core)) return core + " この文の読み方はどれですか。";
+      if (katakanaOptions >= 3 && !KATA_RE.test(core) && !KANJI_RE.test(core)) return core + " この文をカタカナで書くとどれですか。";
+      return core;
+    }
     if (kanjiOptions >= 3 && !KANJI_RE.test(core)) return "「" + core + "」を漢字で書くとどれですか。";
     if (kanjiOptions === 0 && KANJI_RE.test(core)) return "「" + core + "」の読み方はどれですか。";
+    if (katakanaOptions >= 3 && !KATA_RE.test(core) && !KANJI_RE.test(core)) return "「" + core + "」をカタカナで書くとどれですか。";
     return core;
   }
 
@@ -586,20 +612,33 @@
       quota[quota.length - 1][1] += opts.count - quota.reduce((sum, pair) => sum + pair[1], 0);
       quota.forEach(([key, want]) => {
         const have = new Set(picked.map((q) => q.id));
-        ordered.filter((q) => q.section === key && !have.has(q.id)).slice(0, want).forEach((q) => picked.push(q));
+        const content = new Set(picked.map(contentKey));
+        ordered.filter((q) => q.section === key && !have.has(q.id) && !content.has(contentKey(q)))
+          .slice(0, want).forEach((q) => picked.push(q));
       });
     }
 
     if (picked.length < opts.count) {
       const have = new Set(picked.map((q) => q.id));
+      const content = new Set(picked.map(contentKey));
       source.forEach((q) => {
-        if (picked.length < opts.count && !have.has(q.id)) { picked.push(q); have.add(q.id); }
+        if (picked.length < opts.count && !have.has(q.id) && !content.has(contentKey(q))) {
+          picked.push(q);
+          have.add(q.id);
+          content.add(contentKey(q));
+        }
       });
     }
 
     const result = picked.slice(0, opts.count);
+    if (result.length < opts.count) {
+      const have = new Set(result.map((q) => q.id));
+      source.forEach((q) => {
+        if (result.length < opts.count && !have.has(q.id)) { result.push(q); have.add(q.id); }
+      });
+    }
     rememberServed(opts.level, result);
-    return result;
+    return result.slice(0, opts.count);
   }
 
   async function fetchJson(url, timeoutMs) {
@@ -836,6 +875,15 @@
     return collected;
   }
 
+  // Listening items are derived from the same passages the reading pool holds, so
+  // identity has to be judged on content as well as id: one passage asked twice in
+  // one paper, once as 読解 and once as 聴解, is the same question twice. Options are
+  // part of the key because template stems (the ★ word-ordering ones) are shared by
+  // every item built from them.
+  function contentKey(q) {
+    return String(q.passage || "") + "|" + String(q.prompt || "") + "|" + (q.options || []).join("|");
+  }
+
   async function buildQuestions(opts) {
     state.generation = { requested: opts.count, used: "bank", got: 0, reason: "" };
     if (opts.source === "online") {
@@ -930,7 +978,10 @@
   function saveExam() {
     const exam = state.exam;
     if (!exam || exam.graded) return;
-    if (exam.timerMinutes && !exam.paused) exam.remaining = currentRemaining(exam);
+    if (exam.timerMinutes && !exam.paused) {
+      if (exam.sectionLeft) exam.sectionLeft[exam.sectionNow] = Math.max(0, currentRemaining(exam));
+      else exam.remaining = currentRemaining(exam);
+    }
     writeJson(STORE.exam, exam);
   }
 

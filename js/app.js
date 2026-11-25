@@ -642,6 +642,15 @@
 
   /* ---------------------------------------------------------------- timer */
 
+  // With per-section clocks the paper's own `remaining` is not kept up to date, so
+  // the time a paper took is the whole budget minus what every section has left.
+  function paperRemaining(exam) {
+    if (!exam.sectionLeft) return Math.max(0, exam.remaining || 0);
+    const live = L.currentRemaining(exam);
+    return Object.keys(exam.sectionLeft).reduce((sum, key) =>
+      sum + (key === exam.sectionNow ? Math.max(0, live) : Math.max(0, exam.sectionLeft[key] || 0)), 0);
+  }
+
   function startTimer() {
     stopTimer();
     const exam = state.exam;
@@ -724,9 +733,7 @@
     const exam = state.exam;
     if (!exam || !exam.timerMinutes || exam.graded) return;
     if (exam.paused) {
-      exam.paused = false;
-      exam.timerEndAt = Date.now() + exam.remaining * 1000;
-      timer.interval = setInterval(onTick, 250);
+      startTimer();
       toast("Timer resumed.");
     } else {
       exam.remaining = L.currentRemaining(exam);
@@ -757,7 +764,7 @@
     exam.graded = true;
     exam.finishedAt = Date.now();
     exam.elapsed = exam.timerMinutes
-      ? Math.max(0, exam.timerMinutes * 60 - Math.max(0, exam.remaining))
+      ? Math.max(0, Math.round(exam.timerMinutes * 60 - paperRemaining(exam)))
       : Math.round((exam.finishedAt - exam.startedAt) / 1000);
     const result = L.gradeExam(exam);
     L.recordResults(exam, result);
@@ -774,7 +781,9 @@
   function quitExam() {
     const exam = state.exam;
     if (!exam) return;
-    if (exam.timerMinutes && !exam.paused) exam.remaining = L.currentRemaining(exam);
+    if (exam.timerMinutes && !exam.paused && !exam.sectionLeft) {
+      exam.remaining = L.currentRemaining(exam);
+    }
     L.saveExam();
     state.exam = null;
     showView("setup");
