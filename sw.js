@@ -5,7 +5,7 @@
  * Works from a GitHub Pages subpath (/jlpt-mock-exam/).
  */
 
-const VERSION = "v6.4.1";
+const VERSION = "v6.6.3";
 const CACHE_NAME = "jlpt-exam-lab-" + VERSION;
 
 const APP_SHELL = [
@@ -16,6 +16,10 @@ const APP_SHELL = [
   "./js/core.js",
   "./js/app.js",
   "./js/data/bank-n5.js",
+  "./js/data/bank-n5-large.js",
+  "./js/data/bank-n5-past.js",
+  "./js/data/bank-n5-2021-12.js",
+  "./js/data/bank-n5-web.js",
   "./js/data/bank-n4.js",
   "./js/data/furigana.js",
   "./js/data/kanji-readings.js",

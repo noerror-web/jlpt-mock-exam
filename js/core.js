@@ -4,13 +4,14 @@
 (function () {
   "use strict";
 
-  const VERSION = "6.4.1";
+  const VERSION = "6.6.3";
   const STORE = {
     settings: "jlpt6.settings",
     exam: "jlpt6.exam",
     mistakes: "jlpt6.mistakes",
     stats: "jlpt6.stats",
-    generated: "jlpt6.generated"
+    generated: "jlpt6.generated",
+    served: "jlpt6.served"
   };
 
   const SECTION_META = {
@@ -265,9 +266,14 @@
     };
   }
 
+  const bankCache = {};
+
   function loadBank(level) {
+    if (bankCache[level]) return bankCache[level];
     const raw = (window.JLPT_BANKS || {})[level] || [];
-    return raw.map((q) => normalizeQuestion(q, level)).filter(Boolean);
+    const bank = raw.map((q) => normalizeQuestion(q, level)).filter(Boolean);
+    bankCache[level] = bank;
+    return bank;
   }
 
   /* ---------------------------------------------------------------- furigana */
@@ -339,21 +345,63 @@
 
   /* ---------------------------------------------------------------- generation */
 
+  // Generated local items cover the whole N5 course, so they answer to either half.
+  function lessonFits(q, wanted) {
+    if (!wanted || wanted === "all") return true;
+    if (!q.lesson) return true;
+    return q.lesson === wanted || q.lesson === "L1-25";
+  }
+
+  function servedIds(level) {
+    const store = readJson(STORE.served, {});
+    return Array.isArray(store[level]) ? store[level] : [];
+  }
+
+  function rememberServed(level, picked) {
+    const store = readJson(STORE.served, {});
+    store[level] = servedIds(level).concat(picked.map((q) => q.id)).slice(-1600);
+    try { localStorage.setItem(STORE.served, JSON.stringify(store)); } catch (err) { /* storage full */ }
+  }
+
+  // Unseen questions first, then the ones served longest ago.
+  function freshFirst(list, level) {
+    const seen = new Set(servedIds(level));
+    return shuffle(list.filter((q) => !seen.has(q.id)))
+      .concat(shuffle(list.filter((q) => seen.has(q.id))));
+  }
+
+  const SECTION_SPLIT = [["vocab", 0.4], ["grammar", 0.3], ["reading", 0.3]];
+
   function fromBank(opts) {
     const all = loadBank(opts.level);
     if (!all.length) throw new Error("No offline questions are available for " + opts.level + ".");
     const filtered = all.filter((q) =>
       (opts.section === "all" || q.section === opts.section) &&
-      (opts.lesson === "all" || q.lesson === opts.lesson));
+      lessonFits(q, opts.lesson));
     const pool = filtered.length ? filtered : all;
-    const picked = shuffle(pool).slice(0, opts.count);
-    if (picked.length < opts.count) {
-      const seen = new Set(picked.map((q) => q.id));
-      shuffle(all).forEach((q) => {
-        if (picked.length < opts.count && !seen.has(q.id)) { picked.push(q); seen.add(q.id); }
+    const ordered = freshFirst(pool, opts.level);
+    const picked = [];
+
+    // A whole paper keeps the JLPT mix: 40% vocabulary, 30% grammar, 30% reading.
+    if (opts.section === "all" && opts.count >= 10) {
+      const quota = SECTION_SPLIT.map(([key, share], i) => [key, Math.round(opts.count * share)]);
+      quota[quota.length - 1][1] += opts.count - quota.reduce((sum, pair) => sum + pair[1], 0);
+      quota.forEach(([key, want]) => {
+        const have = new Set(picked.map((q) => q.id));
+        ordered.filter((q) => q.section === key && !have.has(q.id)).slice(0, want).forEach((q) => picked.push(q));
       });
     }
-    return picked;
+
+    if (picked.length < opts.count) {
+      const have = new Set(picked.map((q) => q.id));
+      ordered.forEach((q) => {
+        if (picked.length < opts.count && !have.has(q.id)) { picked.push(q); have.add(q.id); }
+      });
+    }
+
+    const result = picked.slice(0, opts.count);
+    rememberServed(opts.level, result);
+    return result;
   }
 
   async function fetchJson(url, timeoutMs) {
