@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "6.9.2";
+  const VERSION = "6.9.4";
   const STORE = {
     settings: "jlpt6.settings",
     exam: "jlpt6.exam",
@@ -447,6 +447,23 @@
   /* ---------------------------------------------------------------- furigana */
 
   const FURI = (window.JLPT_FURIGANA_PAIRS || []).slice().sort((a, b) => b[0].length - a[0].length);
+  const RUBY_MARKUP = /^(?:[^<>&]*|<ruby>[^<>&]+<rt>[^<>&]+<\/rt><\/ruby>)+$/;
+
+  // Some pairs store the finished ruby markup as their reading ("食べて" → "<ruby>食<rt>た</rt></ruby>べて").
+  // Build real ruby elements from it instead of printing the tags as furigana text.
+  function markedReading(reading) {
+    const frag = document.createDocumentFragment();
+    reading.replace(/(<ruby>)([^<>&]+)(<rt>)([^<>&]+)(<\/rt><\/ruby>)|([^<]+)/g, (m, open, base, rtOpen, rtText, close, plain) => {
+      if (plain) { frag.append(plain); return; }
+      const ruby = document.createElement("ruby");
+      ruby.append(base);
+      const rt = document.createElement("rt");
+      rt.textContent = rtText;
+      ruby.append(rt);
+      frag.append(ruby);
+    });
+    return frag;
+  }
 
   function rubyFragment(text) {
     let pieces = [text];
@@ -460,12 +477,17 @@
         let pos = 0;
         while ((pos = piece.indexOf(word, idx)) !== -1) {
           if (pos > idx) next.push(piece.slice(idx, pos));
-          const ruby = document.createElement("ruby");
-          ruby.textContent = word;
-          const rt = document.createElement("rt");
-          rt.textContent = reading;
-          ruby.appendChild(rt);
-          next.push(ruby);
+          if (reading.includes("<") && RUBY_MARKUP.test(reading)) {
+            next.push(markedReading(reading));
+          } else {
+            const clean = reading.includes("<") ? reading.replace(/<[^>]*>/g, "") : reading;
+            const ruby = document.createElement("ruby");
+            ruby.textContent = word;
+            const rt = document.createElement("rt");
+            rt.textContent = clean;
+            ruby.appendChild(rt);
+            next.push(ruby);
+          }
           idx = pos + word.length;
         }
         if (idx < piece.length) next.push(piece.slice(idx));
