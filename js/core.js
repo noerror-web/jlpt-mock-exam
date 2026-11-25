@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "6.7.0";
+  const VERSION = "6.7.1";
   const STORE = {
     settings: "jlpt6.settings",
     exam: "jlpt6.exam",
@@ -12,7 +12,8 @@
     stats: "jlpt6.stats",
     generated: "jlpt6.generated",
     served: "jlpt6.served",
-    done: "jlpt6.done"
+    done: "jlpt6.done",
+    migrated: "jlpt6.migrated"
   };
 
   // Where a question came from. "generated" is the machine-built pool,
@@ -177,11 +178,14 @@
       if (!entry || !entry.q) return;
       const q = normalizeQuestion(entry.q, entry.q.level);
       if (!q) return;
-      clean[id] = {
+      // Key by the question's own id, not the stored key: an entry written under an
+      // older id scheme would otherwise never match its question again.
+      const prev = clean[q.id];
+      clean[q.id] = {
         q: q,
-        wrong: Number(entry.wrong) || 0,
-        right: Number(entry.right) || 0,
-        lastAt: Number(entry.lastAt) || 0
+        wrong: Math.max(Number(entry.wrong) || 0, prev ? prev.wrong : 0),
+        right: Math.max(Number(entry.right) || 0, prev ? prev.right : 0),
+        lastAt: Math.max(Number(entry.lastAt) || 0, prev ? prev.lastAt : 0)
       };
     });
     state.mistakes = clean;
@@ -194,7 +198,7 @@
 
   function resetData() {
     [STORE.settings, STORE.settings + ".key", STORE.exam, STORE.mistakes, STORE.stats,
-      STORE.served, STORE.done, STORE.generated].forEach((key) => {
+      STORE.served, STORE.done, STORE.generated, STORE.migrated].forEach((key) => {
       try { localStorage.removeItem(key); } catch (err) { /* ignore */ }
     });
     state.settings = Object.assign({}, DEFAULT_SETTINGS);
@@ -249,16 +253,19 @@
     if (!finalPrompt) return null;
 
     // Stable option order per question, so the answer is not always option A
-    // while ids stay identical across reloads.
+    // while ids and option order stay identical across reloads: sort first, then
+    // shuffle from a content-only seed, so normalizing an already-normalized
+    // question gives back the same ids and the same option order.
     const correctText = options[answer];
-    const orderedOptions = seededShuffle(options, finalPrompt + "|" + options.join("|"));
+    const canonical = options.slice().sort();
+    const orderedOptions = seededShuffle(canonical, finalPrompt + "|" + canonical.join("|"));
     answer = orderedOptions.indexOf(correctText);
     if (answer === -1) return null;
 
     const section = sectionKey(raw.section);
     const rawSection = String(raw.section || "");
     return {
-      id: "q" + hashString(section + "|" + finalPrompt + "|" + options.join("|") +
+      id: "q" + hashString(section + "|" + finalPrompt + "|" + canonical.join("|") +
         (starData ? "|" + starData.before + starData.after : "")),
       level: level || state.settings.level,
       section: section,
@@ -282,9 +289,52 @@
   function loadBank(level) {
     if (bankCache[level]) return bankCache[level];
     const raw = (window.JLPT_BANKS || {})[level] || [];
-    const bank = raw.map((q) => normalizeQuestion(q, level)).filter(Boolean);
+    const bank = raw.map((q) => normalizeQuestion(q, level)).filter(Boolean)
+      // A 読解 item with no passage cannot be answered, so it never reaches a paper.
+      .filter((q) => !(q.section === "reading" && !String(q.passage || "").trim()));
     bankCache[level] = bank;
+    if (raw.length) migrateLedger(level, raw, bank);
     return bank;
+  }
+
+  // Question ids are content hashes. Until 6.7.1 they also depended on the option
+  // order, so a saved paper renumbered itself on resume. Carry an older ledger over
+  // once by mapping each legacy id to the stable one.
+  function legacyId(raw) {
+    if (!raw || typeof raw !== "object") return "";
+    const prompt = typeof raw.prompt === "string" ? raw.prompt.trim() : "";
+    const options = Array.isArray(raw.options)
+      ? raw.options.filter((o) => typeof o === "string" && o.trim()).map((o) => o.trim())
+      : [];
+    const star = raw.starData && Array.isArray(raw.starData.ordered) && raw.starData.ordered.length === 4
+      ? { before: String(raw.starData.before || ""), after: String(raw.starData.after || "") }
+      : null;
+    const finalPrompt = prompt || (star ? "次の言葉を並べたとき、★に入るものはどれですか。" : "");
+    return "q" + hashString(sectionKey(raw.section) + "|" + finalPrompt + "|" + options.join("|") +
+      (star ? "|" + star.before + star.after : ""));
+  }
+
+  function migrateLedger(level, raw, bank) {
+    const marker = readJson(STORE.migrated, {});
+    if (marker[level]) return;
+    const map = new Map();
+    raw.forEach((item) => {
+      const q = normalizeQuestion(item, level);
+      if (!q) return;
+      const legacy = legacyId(item);
+      if (legacy && legacy !== q.id) map.set(legacy, q.id);
+    });
+    if (map.size) {
+      [STORE.done, STORE.served].forEach((key) => {
+        const store = readJson(key, {});
+        const list = Array.isArray(store[level]) ? store[level] : [];
+        if (!list.length) return;
+        store[level] = list.map((id) => map.get(id) || id);
+        try { localStorage.setItem(key, JSON.stringify(store)); } catch (err) { /* storage full */ }
+      });
+    }
+    marker[level] = true;
+    try { localStorage.setItem(STORE.migrated, JSON.stringify(marker)); } catch (err) { /* storage full */ }
   }
 
   // Pool coverage for the setup screen: what has been finished, what is still unseen.
@@ -408,6 +458,21 @@
       list.push(q.id);
     });
     store[level] = list.slice(-20000);
+    try { localStorage.setItem(STORE.done, JSON.stringify(store)); } catch (err) { /* storage full */ }
+  }
+
+  // Union of a done ledger from an export file with the one on this device.
+  function mergeDone(incoming) {
+    if (!incoming || typeof incoming !== "object") return;
+    const store = readJson(STORE.done, {});
+    Object.keys(incoming).forEach((level) => {
+      const list = Array.isArray(store[level]) ? store[level] : [];
+      const have = new Set(list);
+      (Array.isArray(incoming[level]) ? incoming[level] : []).forEach((id) => {
+        if (typeof id === "string" && !have.has(id)) { have.add(id); list.push(id); }
+      });
+      store[level] = list.slice(-20000);
+    });
     try { localStorage.setItem(STORE.done, JSON.stringify(store)); } catch (err) { /* storage full */ }
   }
 
@@ -890,7 +955,8 @@
       exportedAt: new Date().toISOString(),
       settings: settings,
       mistakes: state.mistakes,
-      stats: state.stats
+      stats: state.stats,
+      done: readJson(STORE.done, {})
     };
   }
 
@@ -933,6 +999,7 @@
     createExam: createExam,
     currentRemaining: currentRemaining,
     saveExam: saveExam,
+    mergeDone: mergeDone,
     loadSavedExam: loadSavedExam,
     clearSavedExam: clearSavedExam,
     gradeExam: gradeExam,

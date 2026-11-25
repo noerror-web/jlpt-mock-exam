@@ -31,8 +31,8 @@ Open `index.html` from a local web server, or use the hosted copy on GitHub Page
   and it clears. Flashcards work from the mistake bank or the full level bank.
 - **Study tools** — furigana toggle, read-aloud, a kanji popover (kanjiapi), and printable
   papers with an answer key.
-- **Question sources** — smart bank (default; 3,693 N5 and 40 N4 questions: 2,000
-  machine-generated plus 1,693 hand-written, past-paper and scraped items), live
+- **Question sources** — smart bank (default; 3,595 N5 and 40 N4 served questions: 2,000
+  machine-generated plus 1,595 hand-written, past-paper and scraped items), live
   kanji/vocabulary APIs, or AI-generated questions through Gemini (direct key or your own
   proxy URL).
 - **Never the same question twice** — finishing a paper marks its questions done, and the

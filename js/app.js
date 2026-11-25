@@ -1148,6 +1148,7 @@
           state.stats = Object.assign({}, state.stats, data.stats);
           L.saveStats();
         }
+        if (data.done && typeof data.done === "object") L.mergeDone(data.done);
         if (data.settings && typeof data.settings === "object") {
           const incoming = Object.assign({}, data.settings);
           delete incoming.apiKey;

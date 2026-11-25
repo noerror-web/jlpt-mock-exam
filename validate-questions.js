@@ -96,6 +96,13 @@ const allPrompts = new Set();
 if (n5 < 20) errors.push(`N5 bank is small (${n5} questions)`);
 if (n4 < 20) errors.push(`N4 bank is small (${n4} questions)`);
 
+// A 読解 item without a passage cannot be answered; the loader drops these, so the
+// served pool is smaller than the raw count. Report the gap instead of hiding it.
+const unreadable = [].concat(banks.N5 || [], banks4.N4 || [])
+  .filter((q) => q && !q.passage && /読解|reading/i.test(String(q.section || "")));
+const unreadableN5 = (banks.N5 || [])
+  .filter((q) => q && !q.passage && /読解|reading/i.test(String(q.section || ""))).length;
+
 if (errors.length) {
   console.error("Question bank validation failed:");
   errors.forEach((message) => console.error("  ✗ " + message));
@@ -103,4 +110,7 @@ if (errors.length) {
 }
 
 console.log(`Validated ${n5} N5 and ${n4} N4 questions.`);
+if (unreadable.length) {
+  console.log(`Skipped ${unreadable.length} reading items with no passage — served N5 pool: ${n5 - unreadableN5}.`);
+}
 console.log("✓ All question banks passed validation.");
