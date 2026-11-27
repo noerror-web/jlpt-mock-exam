@@ -473,7 +473,7 @@
     if (q.starData) card.append(starFrame(q));
 
     const prompt = el("div", "q-text");
-    prompt.innerHTML = (q.noFurigana ? L.safeRich : L.rich)(q.prompt);
+    prompt.innerHTML = (q.noFurigana ? L.probeRich : L.rich)(q.prompt);
     card.append(prompt);
 
     card.append(renderOptions(q, index));
@@ -1134,7 +1134,7 @@
     byId("flashCounter").textContent = (deck.index + 1) + " / " + deck.cards.length;
     byId("flashFill").style.width = ((deck.index + 1) / deck.cards.length) * 100 + "%";
     byId("flashMastered").textContent = deck.mastered + " mastered";
-    byId("flashFront").innerHTML = (q.noFurigana ? L.safeRich : L.rich)(q.prompt);
+    byId("flashFront").innerHTML = (q.noFurigana ? L.probeRich : L.rich)(q.prompt);
     byId("flashAnswer").innerHTML = "✔ " + L.rich(q.options[q.answer]) + (q.kana ? " · " + L.escapeHtml(q.kana) : "");
     const exp = byId("flashExpl");
     exp.innerHTML = state.settings.lang === "bn" && q.exp_bn ? L.safeRich(q.exp_bn) : L.safeRich(q.exp_en || "");

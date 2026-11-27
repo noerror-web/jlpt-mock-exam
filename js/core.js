@@ -524,6 +524,14 @@
 
   function rich(text) { return furiganize(safeRich(text)); }
 
+  // Rendering for prompts whose answer IS a reading: no furigana, and any ruby
+  // markup embedded in the stored text is flattened first so it cannot leak.
+  function probeRich(text) {
+    return safeRich(String(text)
+      .replace(/<rt[^>]*>[\s\S]*?<\/rt>/gi, "")
+      .replace(/<\/?ruby[^>]*>/gi, ""));
+  }
+
   /* ---------------------------------------------------------------- speech */
 
   function speak(text) {
@@ -1172,6 +1180,7 @@
     bankProgress: bankProgress,
     doneIds: doneIds,
     rich: rich,
+    probeRich: probeRich,
     furiganize: furiganize,
     speak: speak,
     buildQuestions: buildQuestions,
