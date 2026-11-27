@@ -473,7 +473,7 @@
     if (q.starData) card.append(starFrame(q));
 
     const prompt = el("div", "q-text");
-    prompt.innerHTML = L.rich(q.prompt);
+    prompt.innerHTML = (q.noFurigana ? L.safeRich : L.rich)(q.prompt);
     card.append(prompt);
 
     card.append(renderOptions(q, index));
@@ -973,9 +973,9 @@
     verdict.textContent = correct ? "✓ Correct" : "✕ Incorrect";
     wrap.append(verdict);
     const answerLine = el("div", "answer-line");
-    answerLine.innerHTML = L.safeRich(q.options[q.answer]);
+    answerLine.innerHTML = L.rich(q.options[q.answer]);
     wrap.append(answerLine);
-    if (q.kana) wrap.append(el("div", "q-kana", q.kana));
+    if (q.kana && !q.noFurigana) wrap.append(el("div", "q-kana", q.kana));
     const exp = el("div");
     exp.innerHTML = explanationHTML(q, state.settings.lang);
     wrap.append(exp);
@@ -1008,7 +1008,7 @@
       if (k === chosen && k !== q.answer) row.classList.add("is-wrong");
       row.append(el("span", "marker", String.fromCharCode(65 + k)));
       const text = el("span");
-      text.innerHTML = L.safeRich(option);
+      text.innerHTML = L.rich(option);
       row.append(text);
       opts.append(row);
     });
@@ -1062,7 +1062,7 @@
       const sum = el("summary", "linkish", "Show answer");
       details.append(sum);
       const body = el("div", "pc-answer");
-      body.innerHTML = "✔ " + L.safeRich(q.options[q.answer]) + (q.kana ? " · " + L.escapeHtml(q.kana) : "");
+      body.innerHTML = "✔ " + L.rich(q.options[q.answer]) + (q.kana ? " · " + L.escapeHtml(q.kana) : "");
       details.append(body);
       const exp = el("div");
       exp.innerHTML = explanationHTML(q, state.settings.lang);
@@ -1134,8 +1134,8 @@
     byId("flashCounter").textContent = (deck.index + 1) + " / " + deck.cards.length;
     byId("flashFill").style.width = ((deck.index + 1) / deck.cards.length) * 100 + "%";
     byId("flashMastered").textContent = deck.mastered + " mastered";
-    byId("flashFront").innerHTML = L.rich(q.prompt);
-    byId("flashAnswer").innerHTML = "✔ " + L.safeRich(q.options[q.answer]) + (q.kana ? " · " + L.escapeHtml(q.kana) : "");
+    byId("flashFront").innerHTML = (q.noFurigana ? L.safeRich : L.rich)(q.prompt);
+    byId("flashAnswer").innerHTML = "✔ " + L.rich(q.options[q.answer]) + (q.kana ? " · " + L.escapeHtml(q.kana) : "");
     const exp = byId("flashExpl");
     exp.innerHTML = state.settings.lang === "bn" && q.exp_bn ? L.safeRich(q.exp_bn) : L.safeRich(q.exp_en || "");
     byId("flashExplBn").innerHTML = state.settings.lang !== "en" && q.exp_bn ? L.safeRich(q.exp_bn) : "";

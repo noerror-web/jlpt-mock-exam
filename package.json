@@ -1,0 +1,26 @@
+{
+  "name": "jlpt-mock-exam",
+  "version": "1.0.0",
+  "description": "A free JLPT N5 and N4 practice app: timed mock exams with JLPT-style scoring, instant feedback in English and Bengali, mistake drills, flashcards, furigana and a kanji dictionary. It is a static site with no build step and works offline once loaded.",
+  "main": "sw.js",
+  "scripts": {
+    "build:furigana": "node tools/build-furigana.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/noerror-web/jlpt-mock-exam.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/noerror-web/jlpt-mock-exam/issues"
+  },
+  "homepage": "https://github.com/noerror-web/jlpt-mock-exam#readme",
+  "dependencies": {},
+  "private": true,
+  "devDependencies": {
+    "kuromoji": "^0.1.12"
+  }
+}

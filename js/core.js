@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "6.9.6";
+  const VERSION = "6.10.0";
   const STORE = {
     settings: "jlpt6.settings",
     exam: "jlpt6.exam",
@@ -313,7 +313,6 @@
     const finalPrompt = prompt || (starData ? "次の言葉を並べたとき、★に入るものはどれですか。" : "");
     if (!finalPrompt) return null;
     const core = promptCore(finalPrompt);
-
     // Stable option order per question, so the answer is not always option A
     // while ids and option order stay identical across reloads: sort first, then
     // shuffle from a content-only seed, so normalizing an already-normalized
@@ -326,6 +325,11 @@
 
     const section = sectionKey(raw.section);
     const rawSection = String(raw.section || "");
+    const decorated = decoratePrompt(core, canonical, section);
+    // A prompt that asks for a reading must not carry furigana (or the kana
+    // hint): the reading is the thing being tested. Check the prompt as served,
+    // since decoratePrompt spells bare-kanji stems out as 読み方 questions.
+    const noFurigana = /読み方|よみかた/.test(decorated);
     return {
       id: "q" + hashString(section + "|" + core + "|" + canonical.join("|") +
         (starData ? "|" + starData.before + starData.after : "")),
@@ -336,7 +340,8 @@
       origin: ORIGIN_META[raw.origin] ? raw.origin : "bank",
       lesson: String(raw.lesson || ""),
       passage: String(raw.passage || "").replace(/[\uFFFC\uFFFF\u200B]/g, ""),
-      prompt: decoratePrompt(core, canonical, section),
+      prompt: decorated,
+      noFurigana: noFurigana,
       kana: String(raw.kana || ""),
       options: orderedOptions,
       answer: answer,
